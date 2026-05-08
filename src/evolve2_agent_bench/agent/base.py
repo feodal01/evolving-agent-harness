@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -93,7 +94,7 @@ class BaselineLangChainAgent:
             raw = self._invoke(iteration, user_content)
             try:
                 action = self._parse_action(raw)
-            except (json.JSONDecodeError, ValidationError) as exc:
+            except (json.JSONDecodeError, ValidationError, ValueError) as exc:
                 self.traces.append_agent(
                     "invalid_action",
                     {"iteration": iteration, "error": str(exc), "raw": raw},
@@ -179,6 +180,8 @@ class BaselineLangChainAgent:
                 return AgentAction.model_validate(json.loads(candidate))
             except (json.JSONDecodeError, ValidationError):
                 continue
+        if tool_call := _parse_tool_call_action(raw):
+            return AgentAction.model_validate(tool_call)
         return AgentAction.model_validate(json.loads(raw))
 
     def _execute(self, tools: WorkspaceTools, action: AgentAction) -> dict[str, Any]:
@@ -235,3 +238,32 @@ def _json_object_spans(raw: str) -> list[tuple[int, int]]:
                     spans.append((start, index + 1))
                     start = None
     return spans
+
+
+_TOOL_CALL_RE = re.compile(
+    r"^\s*(?:<\|tool_call\>)?\s*call:(?P<action>[a-z_]+)\s*(?P<args>\{.*\})\s*(?:<tool_call\|>)?\s*$",
+    re.DOTALL,
+)
+_BARE_KEY_RE = re.compile(r'(?<=[{,])\s*([A-Za-z_][A-Za-z0-9_]*)\s*:')
+
+
+def _parse_tool_call_action(raw: str) -> dict[str, Any] | None:
+    match = _TOOL_CALL_RE.match(raw)
+    if not match:
+        return None
+    args = _load_tool_call_args(match.group("args"))
+    return {
+        "thought": "Execute parsed tool call.",
+        "action": match.group("action"),
+        "args": args,
+    }
+
+
+def _load_tool_call_args(raw_args: str) -> dict[str, Any]:
+    try:
+        loaded = json.loads(raw_args)
+    except json.JSONDecodeError:
+        loaded = json.loads(_BARE_KEY_RE.sub(r'"\1":', raw_args))
+    if not isinstance(loaded, dict):
+        raise ValueError("Tool-call arguments must be a JSON object.")
+    return loaded
