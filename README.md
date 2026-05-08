@@ -13,7 +13,7 @@ This project is a small laboratory for pushing harness engineering as far as pos
 ## Design Principles
 
 1. Git is the experiment control system.
-   `main` contains the mainstream agent. Every hypothesis gets its own `hyp/<date>-<slug>` branch. Failed branches are not deleted; they remain as evidence. Only Pareto-improving hypotheses are merged.
+   `main` contains the mainstream agent. Every hypothesis gets its own `hyp/HXXXX-<slug>` branch. Failed branches are not deleted; they remain as evidence. Only Pareto-improving hypotheses are merged.
 
 2. The central memory is explicit.
    `artifacts/meta/hypothesis-index.jsonl` gives a compact status index, while `artifacts/meta/hypotheses/` stores full hypothesis dossiers from proposal through result. The project should not rely on chat history.
@@ -88,11 +88,12 @@ The intended loop:
 2. Inspect the latest `result.json` and `trace.jsonl`.
 3. Classify the failure mode.
 4. Read relevant local references or papers if the hypothesis needs them.
-5. Create `hyp/<date>-<slug>`.
+5. Create `hyp/HXXXX-<slug>`.
 6. Make one narrow code or prompt change.
 7. Run the same comparison task set.
 8. Fill the result section in the hypothesis dossier and update `artifacts/meta/hypothesis-index.jsonl`.
-9. Merge into `main` only if the hypothesis improves Pareto efficiency.
+9. Push the hypothesis branch.
+10. Merge into `main` only if the hypothesis improves Pareto efficiency. For rejected or inconclusive hypotheses, keep the branch and publish only the central hypothesis artifacts back to `main`.
 
 Pareto efficiency means the change improves at least one important metric without an unacceptable regression elsewhere. Primary metric is SWE-bench solve rate; secondary metrics include wall time, token usage, invalid actions, tool calls, patch size, and failure class.
 

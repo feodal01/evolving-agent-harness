@@ -19,24 +19,27 @@ Git is part of the experimental method.
 
 - `main` contains the mainstream version of the evolving agent.
 - Every hypothesis gets its own branch from current `main`.
-- Branch names should be stable and descriptive: `hyp/<YYYYMMDD>-<short-hypothesis>`.
-- Commit all code, doc, and ledger changes for the hypothesis branch.
+- Branch names should be stable and descriptive: `hyp/HXXXX-<short-hypothesis>`.
+- Commit all code, doc, and hypothesis artifact changes for the hypothesis branch.
+- Push every hypothesis branch to `origin`, whether it is confirmed, rejected, or inconclusive.
 - Merge into `main` only if the hypothesis is confirmed by the agreed benchmark comparison.
 - Do not delete failed hypothesis branches. They are historical evidence and may be revisited.
 - Failed branches must still end with a commit that records the tested hypothesis, run ids, metrics, failure class, and decision in its dossier under `artifacts/meta/hypotheses/`.
-- Do not start a new hypothesis branch from an unconfirmed hypothesis branch. Start from `main` unless the ledger explicitly records a dependency.
+- Do not start a new hypothesis branch from an unconfirmed hypothesis branch. Start from `main` unless the hypothesis dossier explicitly records a dependency.
 
 Branch lifecycle:
 
 1. Start clean on `main`.
-2. Create `hyp/<date>-<slug>`.
+2. Create `hyp/HXXXX-<slug>`.
 3. Create a hypothesis dossier before implementation.
 4. Implement one narrow change.
 5. Run validation and benchmark comparison.
 6. Update the dossier and compact hypothesis index with final metrics and decision.
 7. Commit the complete hypothesis artifact.
-8. If confirmed, merge the branch into `main` with a merge commit whose message summarizes the evidence.
-9. If rejected, leave the branch unmerged and keep it available.
+8. Push the hypothesis branch to `origin`.
+9. If confirmed, merge the branch into `main` with a merge commit whose message summarizes the evidence, then push `main`.
+10. If rejected or inconclusive, do not merge the code. Copy or cherry-pick only the final dossier and index status into `main` as a registry-only commit, then push `main`.
+11. Leave rejected and inconclusive branches available on `origin`.
 
 Merge commit descriptions must be exhaustive enough for a future meta-agent to understand the decision without reading chat. Include:
 
@@ -50,6 +53,22 @@ Merge commit descriptions must be exhaustive enough for a future meta-agent to u
 - known residual risks.
 
 Rejected branch final commit messages should include the same fields and clearly state `Decision: rejected`.
+
+## Publishing Results
+
+Every completed hypothesis has two durable locations:
+
+1. The hypothesis branch on `origin`, containing the exact tested code and the full dossier.
+2. The `main` branch meta registry, containing the central index entry and final dossier text.
+
+The publishing rule depends on the decision:
+
+- Confirmed: merge the hypothesis branch into `main`; push the branch and `main`.
+- Rejected: push the hypothesis branch; do not merge its code; update only `artifacts/meta/hypothesis-index.jsonl` and the hypothesis dossier on `main`; push `main`.
+- Inconclusive: push the hypothesis branch; do not merge its code; update only the index and dossier on `main`; push `main`.
+- Superseded: push the branch if it contains unique work; update the index/dossier on `main` with the superseding hypothesis id; push `main`.
+
+Do not leave a completed hypothesis only in a local branch. If the branch is not pushed, future meta-agents cannot inspect the tested code. If `main` is not updated, future meta-agents cannot discover the result from the central registry.
 
 ## Hypothesis Artifacts
 
@@ -291,7 +310,10 @@ Use small experiments:
 7. Fill the result sections in the hypothesis dossier.
 8. Update `artifacts/meta/hypothesis-index.jsonl`.
 9. Commit the branch with the complete hypothesis evidence.
-10. Merge only if the hypothesis is confirmed.
+10. Push the hypothesis branch.
+11. Publish the result back to `main`:
+    - confirmed: merge code and dossier;
+    - rejected or inconclusive: registry-only update with dossier and index, no code merge.
 
 Good experiment examples:
 
@@ -370,12 +392,39 @@ For every work cycle:
 4. Summarize the latest trace with `scripts/summarize_trace.py`.
 5. If generating a new hypothesis family, read `docs/references/research/agent-evolution-literature.md`.
 6. If the hypothesis touches LangChain or LangGraph behavior, read the relevant local files under `docs/references/langchain/curated/`.
-7. Choose one hypothesis and create `hyp/<date>-<slug>`.
+7. Choose one hypothesis and create `hyp/HXXXX-<slug>`.
 8. Edit code or docs.
 9. Run `uv run python -m compileall -q src scripts`.
 10. Run the fixed comparison task.
 11. Fill the result section in the dossier and update the hypothesis index status.
 12. Commit the branch with exhaustive evidence in the commit message.
-13. Report the delta: baseline run, candidate run, metric changes, Pareto assessment, and merge decision.
+13. Push the hypothesis branch to `origin`.
+14. Return to `main` and publish the central registry result:
+    - for confirmed hypotheses, merge the branch and push `main`;
+    - for rejected or inconclusive hypotheses, bring over only `artifacts/meta/hypothesis-index.jsonl` and the relevant dossier, commit, and push `main`.
+15. Report the delta: branch, branch push status, main registry commit, baseline run, candidate run, metric changes, Pareto assessment, and merge decision.
 
 If a run fails before writing `trace.jsonl`, fix observability before optimizing agent behavior.
+
+## Minimal Prompt Contract For Subagents
+
+A subagent should be able to complete a cycle from this prompt alone:
+
+```text
+Run one meta-optimization cycle using docs/META_OPTIMIZATION.md.
+```
+
+That means the subagent must discover and execute the full workflow from this file:
+
+- read the manual and current hypothesis artifacts;
+- inspect baseline traces;
+- create the next `HXXXX` id;
+- create and push a hypothesis branch;
+- create and maintain the dossier;
+- run validation and benchmark comparison when credentials are available;
+- record result metrics and decision;
+- publish the branch to `origin`;
+- update `main` central registry and push `main`;
+- avoid merging rejected or inconclusive code into `main`.
+
+If credentials or runtime dependencies are missing, the subagent must still push the hypothesis branch if code was changed, mark the hypothesis `inconclusive`, publish the registry-only result to `main`, and document the blocker in the dossier.
