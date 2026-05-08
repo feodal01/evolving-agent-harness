@@ -16,7 +16,7 @@ This project is a small laboratory for pushing harness engineering as far as pos
    `main` contains the mainstream agent. Every hypothesis gets its own `hyp/<date>-<slug>` branch. Failed branches are not deleted; they remain as evidence. Only Pareto-improving hypotheses are merged.
 
 2. The central memory is explicit.
-   `artifacts/meta/experiment-ledger.jsonl` records hypotheses, branches, run ids, metrics, findings, Pareto assessment, and decisions. The project should not rely on chat history.
+   `artifacts/meta/hypothesis-index.jsonl` gives a compact status index, while `artifacts/meta/hypotheses/` stores full hypothesis dossiers from proposal through result. The project should not rely on chat history.
 
 3. Use LangChain instead of inventing an agent framework.
    The evolving agent is written on LangChain. The meta-agent improves it by editing ordinary Python code: prompts, tool schemas, parsing, memory, context handling, middleware, LangGraph control flow, and evaluation hooks.
@@ -34,9 +34,10 @@ This project is a small laboratory for pushing harness engineering as far as pos
 
 - `src/evolve2_agent_bench/agent/`: evolving LangChain coding agent.
 - `src/evolve2_agent_bench/bench/`: SWE-bench runner and evaluation orchestration.
-- `src/evolve2_agent_bench/meta/`: helpers for experiment ledger updates.
+- `src/evolve2_agent_bench/meta/`: helpers for meta artifacts.
 - `docs/META_OPTIMIZATION.md`: self-contained operating manual for the meta-agent.
-- `artifacts/meta/experiment-ledger.jsonl`: central hypothesis and result ledger.
+- `artifacts/meta/hypothesis-index.jsonl`: compact index of hypothesis dossiers and statuses.
+- `artifacts/meta/hypotheses/`: full hypothesis dossiers, from proposal through result.
 - `docs/references/langchain/`: offline LangChain and LangGraph documentation, including curated Python references.
 - `docs/references/research/agent-evolution-literature.md`: research frame for generating hypothesis families.
 - `artifacts/runs/<run_id>/`: ignored local run traces and benchmark outputs.
@@ -75,7 +76,7 @@ Each run writes a directory under `artifacts/runs/<run_id>/` containing:
 - `evaluation_stdout.log` and `evaluation_stderr.log`: SWE-bench harness output.
 - `result.json`: compact outcome summary.
 
-Large traces stay in per-run JSONL files; the meta ledger stores references and metrics, not copied traces.
+Large traces stay in per-run JSONL files; hypothesis dossiers store references and metrics, not copied traces.
 
 ## Meta-Agent Workflow
 
@@ -90,7 +91,7 @@ The intended loop:
 5. Create `hyp/<date>-<slug>`.
 6. Make one narrow code or prompt change.
 7. Run the same comparison task set.
-8. Append the result to `artifacts/meta/experiment-ledger.jsonl`.
+8. Fill the result section in the hypothesis dossier and update `artifacts/meta/hypothesis-index.jsonl`.
 9. Merge into `main` only if the hypothesis improves Pareto efficiency.
 
 Pareto efficiency means the change improves at least one important metric without an unacceptable regression elsewhere. Primary metric is SWE-bench solve rate; secondary metrics include wall time, token usage, invalid actions, tool calls, patch size, and failure class.

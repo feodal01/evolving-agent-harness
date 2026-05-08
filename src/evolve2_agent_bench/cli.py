@@ -11,7 +11,6 @@ from rich import print
 
 from evolve2_agent_bench.bench.swebench_runner import run_one_task
 from evolve2_agent_bench.config import DEFAULT_MODEL, OpenRouterConfig
-from evolve2_agent_bench.meta.ledger import append_baseline_record
 
 
 app = typer.Typer(no_args_is_help=True)
@@ -60,5 +59,4 @@ def run_task(
         max_iterations=max_iterations,
         evaluation_timeout=evaluation_timeout,
     )
-    append_baseline_record(root, result)
     print(json.dumps(result, indent=2, ensure_ascii=False))

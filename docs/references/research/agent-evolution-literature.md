@@ -94,7 +94,7 @@ Possible direction, not a hypothesis:
 
 - Maintain multiple prompt or protocol variants on separate branches.
 - Keep variants that improve a failure class, solve rate, or cost without unacceptable regressions.
-- Use `experiment-ledger.jsonl` as the Pareto archive.
+- Use `hypothesis-index.jsonl` and per-hypothesis dossiers as the Pareto archive.
 
 ### Search And Deliberation
 

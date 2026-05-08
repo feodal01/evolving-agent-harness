@@ -7,11 +7,11 @@ This is the operating manual for the meta-LLM. The meta-LLM does not solve SWE-b
 There are two layers:
 
 - Evolving agent: code under `src/evolve2_agent_bench/agent/`. This is the agent evaluated on SWE-bench Verified and evolved over time.
-- Meta layer: this manual, `artifacts/meta/experiment-ledger.jsonl`, git branches, and run traces. This layer decides which hypothesis to test next.
+- Meta layer: this manual, `artifacts/meta/hypothesis-index.jsonl`, per-hypothesis dossiers, git branches, and run traces. This layer decides which hypothesis to test next.
 
 The benchmark runner under `src/evolve2_agent_bench/bench/` prepares a task repository, runs the evolving agent, writes a patch, sends the patch to the SWE-bench harness, and records traces.
 
-Do not treat chat memory as the source of truth. Use repository files, `trace.jsonl`, `result.json`, git history, branch names, and the experiment ledger.
+Do not treat chat memory as the source of truth. Use repository files, `trace.jsonl`, `result.json`, git history, branch names, the hypothesis index, and hypothesis dossiers.
 
 ## Git Workflow For Hypotheses
 
@@ -23,17 +23,17 @@ Git is part of the experimental method.
 - Commit all code, doc, and ledger changes for the hypothesis branch.
 - Merge into `main` only if the hypothesis is confirmed by the agreed benchmark comparison.
 - Do not delete failed hypothesis branches. They are historical evidence and may be revisited.
-- Failed branches must still end with a commit that records the tested hypothesis, run ids, metrics, failure class, and decision in `artifacts/meta/experiment-ledger.jsonl`.
+- Failed branches must still end with a commit that records the tested hypothesis, run ids, metrics, failure class, and decision in its dossier under `artifacts/meta/hypotheses/`.
 - Do not start a new hypothesis branch from an unconfirmed hypothesis branch. Start from `main` unless the ledger explicitly records a dependency.
 
 Branch lifecycle:
 
 1. Start clean on `main`.
 2. Create `hyp/<date>-<slug>`.
-3. Add a pending ledger record or write the hypothesis in the commit message before implementation.
+3. Create a hypothesis dossier before implementation.
 4. Implement one narrow change.
 5. Run validation and benchmark comparison.
-6. Update the ledger with final metrics and decision.
+6. Update the dossier and compact hypothesis index with final metrics and decision.
 7. Commit the complete hypothesis artifact.
 8. If confirmed, merge the branch into `main` with a merge commit whose message summarizes the evidence.
 9. If rejected, leave the branch unmerged and keep it available.
@@ -51,63 +51,115 @@ Merge commit descriptions must be exhaustive enough for a future meta-agent to u
 
 Rejected branch final commit messages should include the same fields and clearly state `Decision: rejected`.
 
-## Central Hypothesis Artifact
+## Hypothesis Artifacts
 
-The central artifact is:
+Hypotheses have two artifact levels:
 
 ```text
-artifacts/meta/experiment-ledger.jsonl
+artifacts/meta/hypothesis-index.jsonl
+artifacts/meta/hypotheses/<hypothesis-id>-<slug>.md
 ```
 
-It is append-only JSONL. Every hypothesis must have a record, including failed, inconclusive, and infrastructure-only experiments.
+The index is compact JSONL. It exists for fast scanning and status lookup. The dossier is the full lifecycle document and should hold the long text.
 
-Required fields:
+Every hypothesis must have a stable id before code changes begin. Use `H0001`, `H0002`, and so on. The branch slug should match the dossier slug when practical:
+
+```text
+hyp/H0002-structured-edit-tool
+artifacts/meta/hypotheses/H0002-structured-edit-tool.md
+```
+
+Index record shape:
 
 ```json
 {
-  "experiment_id": "YYYYMMDD-HHMMSS-short-label",
-  "branch": "hyp/YYYYMMDD-short-label",
-  "status": "baseline | pending | confirmed | rejected | inconclusive",
-  "parent_branch": "main",
-  "parent_agent_git_sha": "git sha before the change, or uncommitted",
-  "candidate_git_sha": "git sha after the change, or uncommitted",
-  "hypothesis": "Specific expected improvement and metric.",
-  "change_summary": "Files changed and behavior changed.",
-  "task_ids": ["astropy__astropy-12907"],
-  "baseline_run_ids": ["previous comparable run id"],
-  "candidate_run_ids": ["new run id"],
-  "metrics": {
-    "baseline": {
-      "resolved": 0,
-      "wall_seconds": 119.284,
-      "llm_calls": 1,
-      "tool_calls": 1,
-      "invalid_action_count": 0,
-      "prompt_tokens": 685,
-      "completion_tokens": 1800,
-      "patch_bytes": 0,
-      "failure_class": "no_patch"
-    },
-    "candidate": {
-      "resolved": 0,
-      "wall_seconds": 80.0,
-      "llm_calls": 1,
-      "tool_calls": 1,
-      "invalid_action_count": 0,
-      "prompt_tokens": 600,
-      "completion_tokens": 900,
-      "patch_bytes": 0,
-      "failure_class": "no_patch"
-    }
-  },
-  "pareto_assessment": "Dominates baseline on completion_tokens and wall_seconds; no solve-rate improvement.",
-  "finding": "What happened and the evidence path.",
-  "decision": "keep unmerged | merge to main | expand task set | superseded by experiment id",
-  "next_action": "One concrete next step."
+  "hypothesis_id": "H0002",
+  "title": "Structured edit tool reduces no_patch failures",
+  "status": "proposed | running | confirmed | rejected | inconclusive | superseded | baseline",
+  "branch": "hyp/H0002-structured-edit-tool",
+  "dossier": "artifacts/meta/hypotheses/H0002-structured-edit-tool.md",
+  "created_at": "YYYY-MM-DD",
+  "updated_at": "YYYY-MM-DD"
 }
 ```
 
-Evidence paths should point to files such as `artifacts/runs/<run_id>/trace.jsonl`. Do not copy full traces into the ledger.
+The index should not contain long hypotheses, detailed metrics, or findings. Put those in the dossier.
+
+## Hypothesis Dossier Template
+
+Create the dossier before changing code.
+
+```markdown
+# H0002 Structured Edit Tool Reduces No-Patch Failures
+
+Status: proposed
+
+Branch: `hyp/H0002-structured-edit-tool`
+
+Created: YYYY-MM-DD
+Updated: YYYY-MM-DD
+
+## Hypothesis
+
+If ..., then ..., measured by ...
+
+## Motivation
+
+What trace failure or literature mechanism motivates this?
+
+## Baseline Evidence
+
+- Baseline branch/commit:
+- Baseline run ids:
+- Trace paths:
+- Failure class:
+- Key observed events:
+
+## Proposed Change
+
+Smallest code/doc surface to change. Include non-goals.
+
+## Test Plan
+
+- Validation commands:
+- Benchmark task ids:
+- Max iterations / timeout:
+- Metrics to compare:
+- Stop condition:
+
+## Expected Pareto Movement
+
+- Primary metric:
+- Secondary metrics:
+- Regression risks:
+
+## Result
+
+Fill after running.
+
+## Metrics
+
+| Metric | Baseline | Candidate | Delta |
+| --- | --- | --- | --- |
+
+## Pareto Assessment
+
+Fill after running.
+
+## Decision
+
+One of: merge to main, keep unmerged, rerun, expand task set, superseded by Hxxxx.
+
+## Evidence Links
+
+- Candidate run:
+- Candidate trace:
+- Commit:
+```
+
+The proposal sections can be long. The result sections are filled after the run. This separation is intentional: the meta-agent should first make a falsifiable plan, then execute it, then write the outcome.
+
+Evidence paths should point to files such as `artifacts/runs/<run_id>/trace.jsonl`. Do not copy full traces into the dossier.
 
 ## First Commands
 
@@ -236,9 +288,10 @@ Use small experiments:
 4. Change the smallest relevant surface.
 5. Run the same task again.
 6. Compare metrics against the parent run.
-7. Record the result in `artifacts/meta/experiment-ledger.jsonl`.
-8. Commit the branch with the complete hypothesis evidence.
-9. Merge only if the hypothesis is confirmed.
+7. Fill the result sections in the hypothesis dossier.
+8. Update `artifacts/meta/hypothesis-index.jsonl`.
+9. Commit the branch with the complete hypothesis evidence.
+10. Merge only if the hypothesis is confirmed.
 
 Good experiment examples:
 
@@ -258,7 +311,7 @@ Allowed change surfaces:
 - `src/evolve2_agent_bench/agent/actions.py`: action schema.
 - `src/evolve2_agent_bench/agent/tools.py`: tool behavior and observations.
 - `src/evolve2_agent_bench/bench/swebench_runner.py`: benchmark orchestration and artifact writing.
-- this manual and meta ledger under `artifacts/meta/`.
+- this manual and hypothesis artifacts under `artifacts/meta/`.
 
 Keep benchmark leakage rules intact. Never expose gold patch, `test_patch`, `FAIL_TO_PASS`, or `PASS_TO_PASS` to the evolving agent.
 
@@ -313,7 +366,7 @@ For every work cycle:
 
 1. `git status --short --branch`
 2. Ensure the starting point is `main` unless continuing a documented hypothesis branch.
-3. Read this manual, latest ledger entries, and latest comparable `result.json`.
+3. Read this manual, latest hypothesis dossiers, and latest comparable `result.json`.
 4. Summarize the latest trace with `scripts/summarize_trace.py`.
 5. If generating a new hypothesis family, read `docs/references/research/agent-evolution-literature.md`.
 6. If the hypothesis touches LangChain or LangGraph behavior, read the relevant local files under `docs/references/langchain/curated/`.
@@ -321,7 +374,7 @@ For every work cycle:
 8. Edit code or docs.
 9. Run `uv run python -m compileall -q src scripts`.
 10. Run the fixed comparison task.
-11. Append or update the ledger record.
+11. Fill the result section in the dossier and update the hypothesis index status.
 12. Commit the branch with exhaustive evidence in the commit message.
 13. Report the delta: baseline run, candidate run, metric changes, Pareto assessment, and merge decision.
 
