@@ -1,1 +1,2 @@
 {"created_at":"2026-05-08","dossier":"artifacts/meta/hypotheses/H0001-baseline-agent.md","hypothesis_id":"H0001","status":"baseline","title":"Baseline agent and harness evidence"}
+{"created_at":"2026-05-08","dossier":"artifacts/meta/hypotheses/H0002-block-repro-writes.md","hypothesis_id":"H0002","status":"rejected","title":"Block reproduction file writes","branch":"hyp/H0002-block-repro-writes","updated_at":"2026-05-08"}

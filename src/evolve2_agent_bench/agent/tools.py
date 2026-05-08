@@ -9,6 +9,7 @@ from evolve2_agent_bench.trace import RunTraces
 
 
 MAX_TOOL_OUTPUT = 12000
+REPRODUCTION_FILE_SUFFIXES = {".py", ".sh", ".txt", ".md"}
 
 
 @dataclass(frozen=True)
@@ -23,6 +24,22 @@ def _resolve_inside(root: Path, requested: str) -> Path:
     if target != root_resolved and root_resolved not in target.parents:
         raise ValueError(f"Path escapes workspace: {requested}")
     return target
+
+
+def _is_root_reproduction_file(requested: str) -> bool:
+    path = Path(requested)
+    if len(path.parts) != 1:
+        return False
+    if path.suffix.lower() not in REPRODUCTION_FILE_SUFFIXES:
+        return False
+    stem = path.stem.lower()
+    return (
+        stem == "repro"
+        or stem.startswith("repro_")
+        or stem.startswith("repro-")
+        or stem.startswith("reproduce")
+        or stem.startswith("scratch")
+    )
 
 
 @dataclass(frozen=True)
@@ -134,6 +151,23 @@ class WorkspaceTools:
             "tool_call",
             {"stream": "tool", "tool_name": "write_file", "tool_input": tool_input},
         )
+        if _is_root_reproduction_file(path):
+            output = (
+                f"Rejected scratch reproduction file: {path}. "
+                "Use run_shell with an inline heredoc for temporary reproduction, "
+                "or edit tracked source/test files for the final patch."
+            )
+            self.traces.append(
+                "tool_result",
+                {
+                    "stream": "tool",
+                    "tool_name": "write_file",
+                    "ok": False,
+                    "tool_input": tool_input,
+                    "tool_output": output,
+                },
+            )
+            return ToolResult(ok=False, output=output)
         target = _resolve_inside(self.root, path)
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(content, encoding="utf-8")
