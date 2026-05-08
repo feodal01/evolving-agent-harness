@@ -1,0 +1,22 @@
+[project]
+name = "evolve2-agent-bench"
+version = "0.1.0"
+description = "Observable LangChain SWE-bench harness for evolving coding agents."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "datasets>=3.0",
+    "langchain>=0.3",
+    "langchain-openai>=0.3",
+    "pydantic>=2.8",
+    "rich>=13.7",
+    "swebench>=4.0.0",
+    "typer>=0.12",
+]
+
+[project.scripts]
+evolve2 = "evolve2_agent_bench.cli:app"
+
+[build-system]
+requires = ["uv_build>=0.9.18,<0.10.0"]
+build-backend = "uv_build"

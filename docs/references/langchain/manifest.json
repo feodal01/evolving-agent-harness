@@ -1,0 +1,180 @@
+{
+  "downloaded_at": "2026-05-08",
+  "source_index": "https://docs.langchain.com/llms.txt",
+  "source_full": "https://docs.langchain.com/llms-full.txt",
+  "files": [
+    {
+      "file": "docs/references/langchain/curated/concepts-context.md",
+      "source": "https://docs.langchain.com/oss/python/concepts/context",
+      "bytes": 9244,
+      "sha256": "1c676f1adc67e8c25117406b3387bc087c853fc9f3ebc7b89b7a8ee6d4bd8d6f"
+    },
+    {
+      "file": "docs/references/langchain/curated/concepts-memory.md",
+      "source": "https://docs.langchain.com/oss/python/concepts/memory",
+      "bytes": 13701,
+      "sha256": "435c4f2314a82e476e56f0a4d930010530ae8afd65a02e622ff77770d89530e0"
+    },
+    {
+      "file": "docs/references/langchain/curated/concepts-products.md",
+      "source": "https://docs.langchain.com/oss/python/concepts/products",
+      "bytes": 8625,
+      "sha256": "bf1d67a2ee7b0d77b7fee39b0ff455851a1f5f50a9a9f6aa5bb669117282a374"
+    },
+    {
+      "file": "docs/references/langchain/curated/langchain-agents.md",
+      "source": "https://docs.langchain.com/oss/python/langchain/agents",
+      "bytes": 23223,
+      "sha256": "c475ca75b3719acbb406602a22af2dbb38c88aca7fcf7ed4ead8fdf609f440f2"
+    },
+    {
+      "file": "docs/references/langchain/curated/langchain-context-engineering.md",
+      "source": "https://docs.langchain.com/oss/python/langchain/context-engineering",
+      "bytes": 44027,
+      "sha256": "6b44d24b49040b3062ab3c7453c09c72133389a34e3f3f27cd8ee81ce9b461c2"
+    },
+    {
+      "file": "docs/references/langchain/curated/langchain-tools.md",
+      "source": "https://docs.langchain.com/oss/python/langchain/tools",
+      "bytes": 10623,
+      "sha256": "9d9bdff81eb9a46878d14c6d90b48de0b2fe82d4bbb7373260755478a8550089"
+    },
+    {
+      "file": "docs/references/langchain/curated/langchain-middleware-overview.md",
+      "source": "https://docs.langchain.com/oss/python/langchain/middleware/overview",
+      "bytes": 2864,
+      "sha256": "d8b7dc97d8f8269af2434f01e52020e4dcdf07f093705f6653e970c236fbc87f"
+    },
+    {
+      "file": "docs/references/langchain/curated/langchain-middleware-built-in.md",
+      "source": "https://docs.langchain.com/oss/python/langchain/middleware/built-in",
+      "bytes": 19265,
+      "sha256": "a265a91c5fe3446487b9d56b667fd9ad3fd72ebcc144faec55234c9b30455788"
+    },
+    {
+      "file": "docs/references/langchain/curated/langchain-middleware-custom.md",
+      "source": "https://docs.langchain.com/oss/python/langchain/middleware/custom",
+      "bytes": 34694,
+      "sha256": "d705435b604d784525eae8c32f7495527f952ce1a0f9faedf1853ce3be44a75f"
+    },
+    {
+      "file": "docs/references/langchain/curated/langchain-short-term-memory.md",
+      "source": "https://docs.langchain.com/oss/python/langchain/short-term-memory",
+      "bytes": 5093,
+      "sha256": "a7b73e443fbba16c8b599542742296e039205a8133e265f011d4c8d3c31a66ba"
+    },
+    {
+      "file": "docs/references/langchain/curated/langchain-long-term-memory.md",
+      "source": "https://docs.langchain.com/oss/python/langchain/long-term-memory",
+      "bytes": 35507,
+      "sha256": "e929f7a83b9530eb1bef82e11b0a0bf7100246633c6144f229de42d52cd8fae0"
+    },
+    {
+      "file": "docs/references/langchain/curated/langchain-structured-output.md",
+      "source": "https://docs.langchain.com/oss/python/langchain/structured-output",
+      "bytes": 26615,
+      "sha256": "14dad36c047d5a2aa954316f5e4451ed55758b32db9fb175e21d30c1a3bf33e0"
+    },
+    {
+      "file": "docs/references/langchain/curated/langchain-runtime.md",
+      "source": "https://docs.langchain.com/oss/python/langchain/runtime",
+      "bytes": 5646,
+      "sha256": "e8abce5428ba9a3b99d7058d7c83c03e6817fbaa3c29e60bbdceb9fc3d2c15da"
+    },
+    {
+      "file": "docs/references/langchain/curated/langchain-streaming.md",
+      "source": "https://docs.langchain.com/oss/python/langchain/streaming",
+      "bytes": 44777,
+      "sha256": "bef56889ac36d8b6546b3566002b83d3b5af5a7b864b78b59d8a593c8d728a32"
+    },
+    {
+      "file": "docs/references/langchain/curated/langchain-observability.md",
+      "source": "https://docs.langchain.com/oss/python/langchain/observability",
+      "bytes": 2424,
+      "sha256": "451a6f57cbb5a346c332db58da18d1f6ed2ad55b203b2f849955a238e586c866"
+    },
+    {
+      "file": "docs/references/langchain/curated/langchain-agent-evals.md",
+      "source": "https://docs.langchain.com/oss/python/langchain/test/evals",
+      "bytes": 15608,
+      "sha256": "8dce53d95766d8a003ec319c11f2e228d39f498291a3d50e440a3cce2a3dd4b5"
+    },
+    {
+      "file": "docs/references/langchain/curated/langchain-unit-testing.md",
+      "source": "https://docs.langchain.com/oss/python/langchain/test/unit-testing",
+      "bytes": 1206,
+      "sha256": "e2ab5929fdabb1c59c601e0c0377cc0627ff1f745b0c8967de3d0c082dd99a77"
+    },
+    {
+      "file": "docs/references/langchain/curated/langchain-multi-agent-index.md",
+      "source": "https://docs.langchain.com/oss/python/langchain/multi-agent/index",
+      "bytes": 16572,
+      "sha256": "20793f3e1bfdebc092e5c70ced38aa511ae7b480a4ac9a24d913c2ea25ffcf8e"
+    },
+    {
+      "file": "docs/references/langchain/curated/langchain-subagents.md",
+      "source": "https://docs.langchain.com/oss/python/langchain/multi-agent/subagents",
+      "bytes": 3141,
+      "sha256": "390d0673595819c648e2e306477137cc71c86c31b6f50753999ef60605cc15e5"
+    },
+    {
+      "file": "docs/references/langchain/curated/langchain-custom-workflow.md",
+      "source": "https://docs.langchain.com/oss/python/langchain/multi-agent/custom-workflow",
+      "bytes": 2865,
+      "sha256": "e64135b607a466a961fe7ed246b8a2b8a6c1a2a36fda4e558004f9e810663e4b"
+    },
+    {
+      "file": "docs/references/langchain/curated/langgraph-overview.md",
+      "source": "https://docs.langchain.com/oss/python/langgraph/overview",
+      "bytes": 6694,
+      "sha256": "8a3f6e93a263df46cda161040cd62af0e0249da8c12eef4f9f25e717499090e1"
+    },
+    {
+      "file": "docs/references/langchain/curated/langgraph-add-memory.md",
+      "source": "https://docs.langchain.com/oss/python/langgraph/add-memory",
+      "bytes": 12857,
+      "sha256": "ab855f73777c13a27aa02e04d18711e12a1ba4168ba3f539447427c98d08a977"
+    },
+    {
+      "file": "docs/references/langchain/curated/langgraph-thinking.md",
+      "source": "https://docs.langchain.com/oss/python/langgraph/thinking-in-langgraph",
+      "bytes": 7849,
+      "sha256": "8ad86f7211eaf7f2836e6d167bb4a29b0f335005d492eff7969ca72ea122aa14"
+    },
+    {
+      "file": "docs/references/langchain/curated/langgraph-runtime.md",
+      "source": "https://docs.langchain.com/oss/python/langgraph/pregel",
+      "bytes": 3479,
+      "sha256": "41f49b3aeb2f82b89a0847f9adb48009dc03a8a12b38900817693f4cc68c0767"
+    },
+    {
+      "file": "docs/references/langchain/curated/langgraph-fault-tolerance.md",
+      "source": "https://docs.langchain.com/oss/python/langgraph/fault-tolerance",
+      "bytes": 8296,
+      "sha256": "df1e380fc1fbd462fca2f604c015d6a3289e3a4fe9c9f56b962199a36a4d35ed"
+    },
+    {
+      "file": "docs/references/langchain/curated/langgraph-time-travel.md",
+      "source": "https://docs.langchain.com/oss/python/langgraph/use-time-travel",
+      "bytes": 2287,
+      "sha256": "f3817dbb50ccff1729e135430c65368ec16581fc1e9988385fa460e45ecf67d1"
+    }
+  ],
+  "raw_files": [
+    {
+      "file": "docs/references/langchain/llms.txt",
+      "bytes": 106709,
+      "sha256": "2da188f8519e0dcf633cf6c42a8257b0c0ef763568d173c2d5e7d21ae2ef48c1"
+    },
+    {
+      "file": "docs/references/langchain/llms-full.txt",
+      "bytes": 10503182,
+      "sha256": "aff222b7997c1cae0f5c1f75beace3e412377c2e897a0d10ab1d2eed26122aba"
+    },
+    {
+      "file": "docs/references/langchain/langgraph-llms.txt",
+      "bytes": 1962,
+      "sha256": "a5ca1e724b5a0d5b5f3c204ad03c2e73d0c82716f4980554166b99eb9883c803"
+    }
+  ]
+}
