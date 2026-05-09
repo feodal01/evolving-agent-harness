@@ -84,6 +84,8 @@ Large traces stay in per-run JSONL files; hypothesis dossiers store references a
 
 Read [docs/META_OPTIMIZATION.md](docs/META_OPTIMIZATION.md) before changing the agent.
 
+For a top-level `/goal` that coordinates multiple hypothesis workers, use [docs/ORCHESTRATOR_PROMPT.md](docs/ORCHESTRATOR_PROMPT.md). That prompt is only for the orchestrator, not for a single hypothesis-testing subagent.
+
 The intended loop:
 
 1. Start from `main`.

@@ -544,6 +544,8 @@ If a run fails before writing `trace.jsonl`, fix observability before optimizing
 
 ## Minimal Prompt Contract For Subagents
 
+For multi-worker orchestration, use `docs/ORCHESTRATOR_PROMPT.md` as the `/goal` prompt. That orchestrator prompt is only for the coordinator that spawns and supervises multiple hypothesis-testing subagents. Do not use it as the prompt for a single hypothesis worker.
+
 A subagent should be able to complete a cycle from this prompt alone:
 
 ```text
