@@ -173,12 +173,20 @@ class BaselineLangChainAgent:
         return content.strip()
 
     def _parse_action(self, raw: str) -> AgentAction:
+        parsed_actions: list[AgentAction] = []
         for start, end in _json_object_spans(raw):
             candidate = raw[start:end]
             try:
-                return AgentAction.model_validate(json.loads(candidate))
+                parsed_actions.append(AgentAction.model_validate(json.loads(candidate)))
             except (json.JSONDecodeError, ValidationError):
                 continue
+        if parsed_actions:
+            return parsed_actions[-1]
+
+        provider_action = _parse_provider_tool_call(raw)
+        if provider_action is not None:
+            return provider_action
+
         return AgentAction.model_validate(json.loads(raw))
 
     def _execute(self, tools: WorkspaceTools, action: AgentAction) -> dict[str, Any]:
@@ -235,3 +243,50 @@ def _json_object_spans(raw: str) -> list[tuple[int, int]]:
                     spans.append((start, index + 1))
                     start = None
     return spans
+
+
+def _parse_provider_tool_call(raw: str) -> AgentAction | None:
+    text = raw.strip()
+    if text.startswith("<|tool_call>"):
+        text = text[len("<|tool_call>") :]
+    if text.endswith("<tool_call|>"):
+        text = text[: -len("<tool_call|>")]
+    text = text.strip()
+    if not text.startswith("call:"):
+        return None
+
+    payload = text[len("call:") :].strip()
+    if payload.startswith("{"):
+        try:
+            return AgentAction.model_validate(json.loads(payload))
+        except (json.JSONDecodeError, ValidationError):
+            return None
+
+    action_name, separator, args_text = payload.partition("{")
+    if not separator or not args_text.endswith("}"):
+        return None
+    action_name = action_name.strip()
+    if action_name not in {"run_shell", "read_file", "write_file", "finish"}:
+        return None
+    args_text = args_text[:-1].strip()
+    args = _parse_provider_args(args_text)
+    if args is None:
+        return None
+    return AgentAction.model_validate(
+        {
+            "thought": f"Parsed provider-style {action_name} call.",
+            "action": action_name,
+            "args": args,
+        }
+    )
+
+
+def _parse_provider_args(args_text: str) -> dict[str, Any] | None:
+    key, separator, value = args_text.partition(":")
+    if not separator:
+        return None
+    key = key.strip()
+    value = value.strip()
+    if not key.isidentifier() or len(value) < 2 or value[0] != '"' or value[-1] != '"':
+        return None
+    return {key: value[1:-1]}
