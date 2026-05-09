@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -40,6 +41,8 @@ Actions:
 - finish args: {"summary": "what changed and what was tested"}
 
 Prefer rg, sed, python scripts, and focused tests. Inspect before editing. Keep the patch minimal.
+You must create a tracked source or test diff before finishing. Reproduction files and untracked
+scratch files do not count as a patch.
 """
 
 
@@ -121,7 +124,26 @@ class BaselineLangChainAgent:
                     "action_args": action.args.model_dump(),
                 },
             )
-            result = self._execute(tools, action)
+            if action.action == "finish" and not _has_tracked_diff(workspace):
+                result = {
+                    "ok": False,
+                    "output": (
+                        "Finish rejected: git diff is empty. Edit a tracked source or test file "
+                        "before finishing; untracked reproduction files do not count."
+                    ),
+                }
+                self.traces.append_agent(
+                    "finish_rejected",
+                    {
+                        "iteration": iteration,
+                        "reason": "empty_tracked_diff",
+                        "observation": result["output"],
+                    },
+                )
+            else:
+                result = self._execute(tools, action)
+                if action.action != "finish":
+                    result = _with_patch_status(workspace, result)
             self.traces.append_agent(
                 "agent_observation",
                 {
@@ -142,7 +164,7 @@ class BaselineLangChainAgent:
                     ensure_ascii=False,
                 )
             )
-            if action.action == "finish":
+            if action.action == "finish" and result["ok"]:
                 args = action.args
                 if not isinstance(args, FinishArgs):
                     raise TypeError("finish action received non-finish args")
@@ -243,3 +265,32 @@ def _json_object_spans(raw: str) -> list[tuple[int, int]]:
                     spans.append((start, index + 1))
                     start = None
     return spans
+
+
+def _has_tracked_diff(workspace: Path) -> bool:
+    return bool(_tracked_diff_files(workspace))
+
+
+def _tracked_diff_files(workspace: Path) -> list[str]:
+    proc = subprocess.run(
+        ["git", "diff", "--name-only"],
+        cwd=workspace,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=30,
+        check=True,
+    )
+    return [line for line in proc.stdout.splitlines() if line.strip()]
+
+
+def _with_patch_status(workspace: Path, result: dict[str, Any]) -> dict[str, Any]:
+    diff_files = _tracked_diff_files(workspace)
+    if diff_files:
+        status = "Tracked patch status: current diff files: " + ", ".join(diff_files[:20])
+    else:
+        status = (
+            "Tracked patch status: empty. Before finishing, edit a tracked source or test file; "
+            "untracked reproduction files do not count."
+        )
+    return {**result, "output": f"{result['output']}\n\n{status}"}
