@@ -143,4 +143,5 @@ Keep unmerged. Do not merge H0004 code to `main`. Publish the hypothesis branch 
 - Candidate trace: `artifacts/runs/20260508-184725-astropy__astropy-12907/trace.jsonl`
 - Extended candidate run: `artifacts/runs/20260508-190035-astropy__astropy-12907/result.json`
 - Extended candidate trace: `artifacts/runs/20260508-190035-astropy__astropy-12907/trace.jsonl`
-- Commit:
+- Hypothesis branch commit: `a6e91d7`
+- Main registry commit: `ce284f9`
