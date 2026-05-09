@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -96,6 +97,7 @@ class BaselineLangChainAgent:
             },
         )
 
+        shell_command_counts: dict[str, int] = {}
         for iteration in range(1, max_iterations + 1):
             user_content = "\n\n".join(conversation)
             raw = self._invoke(iteration, user_content)
@@ -122,26 +124,17 @@ class BaselineLangChainAgent:
                 },
             )
             result = self._execute(tools, action)
-            self.traces.append_agent(
-                "agent_observation",
-                {
-                    "iteration": iteration,
-                    "action": action.action,
-                    "ok": result["ok"],
-                    "observation": result["output"],
-                },
+            repeat_count = _record_shell_repeat(action, shell_command_counts)
+            observation_payload = _build_observation_payload(
+                workspace=workspace,
+                iteration=iteration,
+                action=action.action,
+                ok=result["ok"],
+                output=result["output"],
+                shell_repeat_count=repeat_count,
             )
-            conversation.append(
-                json.dumps(
-                    {
-                        "iteration": iteration,
-                        "action": action.action,
-                        "ok": result["ok"],
-                        "observation": result["output"],
-                    },
-                    ensure_ascii=False,
-                )
-            )
+            self.traces.append_agent("agent_observation", observation_payload)
+            conversation.append(json.dumps(observation_payload, ensure_ascii=False))
             if action.action == "finish":
                 args = action.args
                 if not isinstance(args, FinishArgs):
@@ -213,6 +206,122 @@ class BaselineLangChainAgent:
         else:
             raise ValueError(f"Unknown action: {action.action}")
         return {"ok": result.ok, "output": result.output}
+
+
+def _record_shell_repeat(action: AgentAction, command_counts: dict[str, int]) -> int | None:
+    if action.action != "run_shell":
+        return None
+    args = action.args
+    if not isinstance(args, ShellArgs):
+        raise TypeError("run_shell action received non-shell args")
+    command_counts[args.command] = command_counts.get(args.command, 0) + 1
+    return command_counts[args.command]
+
+
+def _build_observation_payload(
+    *,
+    workspace: Path,
+    iteration: int,
+    action: str,
+    ok: bool,
+    output: str,
+    shell_repeat_count: int | None,
+) -> dict[str, Any]:
+    patch_status = _workspace_patch_status(workspace)
+    payload: dict[str, Any] = {
+        "iteration": iteration,
+        "action": action,
+        "ok": ok,
+        "observation": output,
+        "patch_status": patch_status,
+    }
+    if shell_repeat_count is not None:
+        payload["shell_repeat_count"] = shell_repeat_count
+        if shell_repeat_count > 1:
+            payload["repeat_note"] = (
+                "This exact shell command has already run. Prefer a different evidence-gathering "
+                "step or edit a tracked source file."
+            )
+    if (
+        action != "finish"
+        and iteration >= 3
+        and patch_status.get("tracked_patch_bytes") == 0
+    ):
+        payload["progress_hint"] = (
+            "No tracked patch exists yet. If localization evidence is sufficient, inspect or edit "
+            "tracked source/test files instead of continuing reproduction."
+        )
+    return payload
+
+
+def _workspace_patch_status(workspace: Path) -> dict[str, Any]:
+    diff = _run_git_status_command(
+        workspace,
+        ["diff", "--no-ext-diff", "--binary"],
+        timeout_seconds=30,
+    )
+    shortstat = _run_git_status_command(
+        workspace,
+        ["diff", "--shortstat"],
+        timeout_seconds=10,
+    )
+    status = _run_git_status_command(
+        workspace,
+        ["status", "--short"],
+        timeout_seconds=10,
+    )
+    if diff.returncode != 0 or shortstat.returncode != 0 or status.returncode != 0:
+        return {
+            "ok": False,
+            "error": "\n".join(
+                message
+                for message in (diff.stderr, shortstat.stderr, status.stderr)
+                if message
+            ).strip()
+            or "git status command failed",
+        }
+
+    status_lines = [line for line in status.stdout.splitlines() if line.strip()]
+    tracked_files = [
+        line[3:] if len(line) > 3 else line
+        for line in status_lines
+        if not line.startswith("?? ")
+    ]
+    untracked_files = [
+        line[3:] if len(line) > 3 else line
+        for line in status_lines
+        if line.startswith("?? ")
+    ]
+    return {
+        "ok": True,
+        "tracked_patch_bytes": len(diff.stdout.encode("utf-8")),
+        "tracked_diff_shortstat": shortstat.stdout.strip(),
+        "tracked_changed_files": tracked_files[:20],
+        "tracked_changed_file_count": len(tracked_files),
+        "untracked_file_count": len(untracked_files),
+        "untracked_files_preview": untracked_files[:10],
+    }
+
+
+def _run_git_status_command(
+    workspace: Path, args: list[str], timeout_seconds: int
+) -> subprocess.CompletedProcess[str]:
+    try:
+        return subprocess.run(
+            ["git", *args],
+            cwd=workspace,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=timeout_seconds,
+        )
+    except subprocess.TimeoutExpired as exc:
+        return subprocess.CompletedProcess(
+            args=["git", *args],
+            returncode=124,
+            stdout=exc.stdout or "",
+            stderr=f"git {' '.join(args)} timed out after {timeout_seconds} seconds",
+        )
 
 
 def _json_object_spans(raw: str) -> list[tuple[int, int]]:
