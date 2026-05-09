@@ -94,14 +94,18 @@ The intended loop:
 6. Choose the best effort/result tradeoff.
 7. Create `hyp/HXXXX-<slug>`.
 8. Make one narrow code or prompt change.
-9. Run the same comparison task set.
-10. Fill the result section in the hypothesis dossier and update `artifacts/meta/hypothesis-index.jsonl`.
-11. Push the hypothesis branch.
-12. Merge into `main` only if the hypothesis improves Pareto efficiency. For rejected or inconclusive hypotheses, keep the branch and publish only the central hypothesis artifacts back to `main`.
+9. Run the one-task gate first.
+10. If it passes, run the fixed three-task promotion gate.
+11. If the three-task gate passes, ask the user before any full SWE-bench Verified run.
+12. Fill the result section in the hypothesis dossier and update `artifacts/meta/hypothesis-index.jsonl`.
+13. Push the hypothesis branch.
+14. Merge into `main` only if the hypothesis improves Pareto efficiency. For rejected or inconclusive hypotheses, keep the branch and publish only the central hypothesis artifacts back to `main`.
 
 Pareto efficiency means the change improves at least one important metric without an unacceptable regression elsewhere. Patch publication is a gating metric, the primary metric is SWE-bench solve rate, and secondary metrics include wall time, token usage, invalid actions, tool calls, patch size, and failure class.
 
 Wall time and token usage are required but noisy. They are merge evidence only for comparable terminal runs, especially when both baseline and candidate publish a patch. If a run does not publish a patch or stops on the iteration cap, time and tokens are diagnostic rather than proof of better efficiency. Use the stable benchmark profile from `docs/META_OPTIMIZATION.md`; low iteration caps such as 4, 8, 16, or 32 are smoke checks, not decision runs. Do not set an agent completion-token cap unless the hypothesis is specifically about response budget.
+
+Validation scales in stages: first `astropy__astropy-12907`, then the fixed three-task set `astropy__astropy-12907`, `django__django-11099`, and `sympy__sympy-20590` if the first gate passes. A full benchmark run is only a next-step recommendation after the three-task gate and requires explicit user approval.
 
 ## Offline References
 

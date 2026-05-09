@@ -34,6 +34,8 @@ Do not stop to ask the user for routine approval. Ask the user only for hard blo
 - the worktree has conflicting user changes that would be overwritten;
 - the benchmark result is impossible to interpret because required artifacts are missing or corrupt.
 
+A full SWE-bench Verified run is not routine benchmark work. It requires explicit user approval every time. The meta-agent may run the one-task and three-task gates in this manual autonomously, but must stop and ask before launching the full benchmark.
+
 If a blocker occurs after code changes were made, finish the hypothesis lifecycle as `inconclusive`: push the hypothesis branch if possible, publish a registry-only result to `main`, and document the blocker in the dossier.
 
 ## Git Workflow For Hypotheses
@@ -165,6 +167,7 @@ Smallest code/doc surface to change. Include non-goals.
 
 - Validation commands:
 - Benchmark task ids:
+- Validation stage: one-task gate | three-task promotion gate | full benchmark approval request
 - Max iterations / timeout:
 - Agent max tokens:
 - Metrics to compare:
@@ -344,6 +347,32 @@ A candidate is not automatically better if it only adds complexity, cost, or wal
 
 When tradeoffs are unclear, keep both candidates and run a larger fixed task set. Do not declare a global improvement from one task unless the failure mode is purely infrastructural, such as action parsing or trace completeness.
 
+## Validation Scale
+
+Use a staged validation ladder for behavior-changing hypotheses:
+
+1. One-task gate: run the primary comparison task first. This is the cheap falsification step and the default place to reject weak hypotheses.
+2. Three-task promotion gate: if the one-task gate improves the merge criteria, rerun both the baseline and candidate on the fixed three-task promotion set.
+3. Full benchmark: if the three-task gate still confirms the hypothesis, record it as a strong signal and ask the user for explicit approval before running the full SWE-bench Verified benchmark.
+
+The primary comparison task is:
+
+```text
+astropy__astropy-12907
+```
+
+The fixed three-task promotion set is:
+
+```text
+astropy__astropy-12907
+django__django-11099
+sympy__sympy-20590
+```
+
+Run every task with the stable benchmark profile unless the hypothesis explicitly changes the profile. The same task ids, model, iteration cap, response-token policy, and timeout must be used for baseline and candidate. If the candidate passes one task but regresses the three-task set, do not merge; document the single-task result as a local win and mark the decision `keep unmerged`, `rerun`, or `expand task set`.
+
+Do not run the full benchmark without the user's explicit approval. A successful three-task promotion gate is a strong signal to request that approval, not permission to proceed automatically.
+
 ## Benchmark Run Profile
 
 Use this stable comparison profile unless the hypothesis explicitly changes one of these parameters:
@@ -370,13 +399,14 @@ Use small experiments:
 4. Score the candidates by effort and expected result.
 5. Choose the best effort/result tradeoff and write the dossier.
 6. Change the smallest relevant surface.
-7. Run the same task again.
-8. Compare metrics against the parent run.
-9. Fill the result sections in the hypothesis dossier.
-10. Update `artifacts/meta/hypothesis-index.jsonl`.
-11. Commit the branch with the complete hypothesis evidence.
-12. Push the hypothesis branch.
-13. Publish the result back to `main`:
+7. Run the one-task gate against the parent run.
+8. If the one-task gate passes, run the fixed three-task promotion gate.
+9. Compare metrics against the parent run at the largest completed gate.
+10. Fill the result sections in the hypothesis dossier.
+11. Update `artifacts/meta/hypothesis-index.jsonl`.
+12. Commit the branch with the complete hypothesis evidence.
+13. Push the hypothesis branch.
+14. Publish the result back to `main`:
     - confirmed: merge code and dossier;
     - rejected or inconclusive: registry-only update with dossier and index, no code merge.
 
@@ -499,14 +529,16 @@ For every work cycle:
 8. Choose the best effort/result tradeoff and create `hyp/HXXXX-<slug>`.
 9. Edit code or docs.
 10. Run `uv run python -m compileall -q src scripts`.
-11. Load `.env` and run the fixed comparison task with the stable benchmark profile.
-12. Fill the result section in the dossier and update the hypothesis index status.
-13. Commit the branch with exhaustive evidence in the commit message.
-14. Push the hypothesis branch to `origin`.
-15. Return to `main` and publish the central registry result:
+11. Load `.env` and run the one-task gate with the stable benchmark profile.
+12. If the one-task gate passes the merge criteria, run the fixed three-task promotion gate with the same profile.
+13. If the three-task gate passes, stop and ask the user before any full SWE-bench Verified run.
+14. Fill the result section in the dossier and update the hypothesis index status.
+15. Commit the branch with exhaustive evidence in the commit message.
+16. Push the hypothesis branch to `origin`.
+17. Return to `main` and publish the central registry result:
     - for confirmed hypotheses, merge the branch and push `main`;
     - for rejected or inconclusive hypotheses, bring over only `artifacts/meta/hypothesis-index.jsonl` and the relevant dossier, commit, and push `main`.
-16. Report the delta: branch, branch push status, main registry commit, baseline run, candidate run, metric changes, Pareto assessment, and merge decision.
+18. Report the delta: branch, branch push status, main registry commit, baseline run, candidate run, metric changes, Pareto assessment, and merge decision.
 
 If a run fails before writing `trace.jsonl`, fix observability before optimizing agent behavior.
 

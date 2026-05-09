@@ -39,6 +39,7 @@ Smallest code/doc surface to change. Include non-goals.
 
 - Validation commands:
 - Benchmark task ids:
+- Validation stage: one-task gate | three-task promotion gate | full benchmark approval request
 - Max iterations / timeout:
 - Agent max tokens:
 - Metrics to compare:
