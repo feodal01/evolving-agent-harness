@@ -13,6 +13,29 @@ The benchmark runner under `src/evolve2_agent_bench/bench/` prepares a task repo
 
 Do not treat chat memory as the source of truth. Use repository files, `trace.jsonl`, `result.json`, git history, branch names, the hypothesis index, and hypothesis dossiers.
 
+## Autonomy Contract
+
+During a meta-optimization session, the meta-agent works autonomously. The user has already granted permission to:
+
+- choose the next hypothesis id and branch name;
+- create and switch branches;
+- edit code, docs, and meta artifacts within the repository rules;
+- run validation and benchmark commands;
+- commit hypothesis branches;
+- push hypothesis branches;
+- publish registry-only updates on `main`;
+- merge confirmed hypotheses into `main` when the dossier evidence supports the merge.
+
+Do not stop to ask the user for routine approval. Ask the user only for hard blockers that cannot be resolved from repository context, such as:
+
+- the OpenRouter model/API is unavailable after retrying the documented check;
+- required credentials are missing from `.env`;
+- Docker, git, uv, or SWE-bench infrastructure is unavailable in a way that prevents the run;
+- the worktree has conflicting user changes that would be overwritten;
+- the benchmark result is impossible to interpret because required artifacts are missing or corrupt.
+
+If a blocker occurs after code changes were made, finish the hypothesis lifecycle as `inconclusive`: push the hypothesis branch if possible, publish a registry-only result to `main`, and document the blocker in the dossier.
+
 ## Git Workflow For Hypotheses
 
 Git is part of the experimental method.
@@ -186,9 +209,13 @@ From the repo root:
 
 ```bash
 uv sync
-export OPENROUTER_API_KEY=...
+set -a
+source .env
+set +a
 uv run evolve2 model-check
 ```
+
+The OpenRouter key must come from local `.env`. Do not print the key, commit it, or copy it into hypothesis dossiers. `.env` is git-ignored.
 
 Run one benchmark task:
 
@@ -303,15 +330,17 @@ Use small experiments:
 
 1. Start on `main` and create a hypothesis branch.
 2. Select one failure mode from the latest trace.
-3. Write a hypothesis before editing code.
-4. Change the smallest relevant surface.
-5. Run the same task again.
-6. Compare metrics against the parent run.
-7. Fill the result sections in the hypothesis dossier.
-8. Update `artifacts/meta/hypothesis-index.jsonl`.
-9. Commit the branch with the complete hypothesis evidence.
-10. Push the hypothesis branch.
-11. Publish the result back to `main`:
+3. Generate three candidate hypotheses before editing code.
+4. Score the candidates by effort and expected result.
+5. Choose the best effort/result tradeoff and write the dossier.
+6. Change the smallest relevant surface.
+7. Run the same task again.
+8. Compare metrics against the parent run.
+9. Fill the result sections in the hypothesis dossier.
+10. Update `artifacts/meta/hypothesis-index.jsonl`.
+11. Commit the branch with the complete hypothesis evidence.
+12. Push the hypothesis branch.
+13. Publish the result back to `main`:
     - confirmed: merge code and dossier;
     - rejected or inconclusive: registry-only update with dossier and index, no code merge.
 
@@ -326,6 +355,44 @@ Bad experiment examples:
 - "Make the agent smarter."
 - "Rewrite the whole harness."
 - "Add many tools and see what happens."
+
+## Generating Candidate Hypotheses
+
+Before choosing a branch hypothesis, generate exactly three candidates. Each candidate should be specific enough to test but not yet implemented.
+
+Inputs to candidate generation:
+
+- latest comparable `trace.jsonl` and `result.json`;
+- current hypothesis dossiers, especially rejected and inconclusive ones;
+- `docs/references/research/agent-evolution-literature.md`;
+- relevant LangChain/LangGraph curated docs under `docs/references/langchain/curated/`;
+- if internet is available and the idea is unclear, search for high-quality GitHub examples of similar LangChain, LangGraph, SWE-agent, or SWE-bench harness patterns for inspiration. Prefer examples from maintained repositories, official examples, or well-documented benchmark agents. Record only the link and the mechanism; do not copy large code.
+
+Score each candidate with T-shirt sizes:
+
+- Effort: `S`, `M`, `L`, or `XL`.
+- Expected result: `S`, `M`, `L`, or `XL`.
+- Confidence: `low`, `medium`, or `high`.
+
+Use this table in the dossier before the final hypothesis:
+
+```markdown
+## Candidate Hypotheses Considered
+
+| Candidate | Mechanism | Evidence source | Effort | Expected result | Confidence | Why not / why chosen |
+| --- | --- | --- | --- | --- | --- | --- |
+| A | ... | trace + literature/GitHub refs | S | M | medium | chosen because ... |
+| B | ... | ... | M | L | low | rejected because ... |
+| C | ... | ... | L | L | medium | rejected because ... |
+```
+
+Selection rule:
+
+- Prefer the candidate with the best expected-result-to-effort ratio.
+- Prefer `S` or `M` effort unless a larger hypothesis is clearly justified by repeated failures.
+- Prefer hypotheses with direct trace evidence over abstract literature appeal.
+- Literature and GitHub examples should inspire mechanisms, not override local trace evidence.
+- Do not choose a hypothesis that mainly repeats a rejected dossier unless it explains what changed.
 
 Allowed change surfaces:
 
@@ -380,7 +447,7 @@ The required conversion is:
 paper mechanism -> local failure class -> one branch hypothesis -> benchmark comparison -> ledger decision
 ```
 
-Do not create a branch from a paper idea until there is trace evidence that the idea targets an observed failure.
+Do not create a branch from a paper idea until there is trace evidence that the idea targets an observed failure. If internet is available, the meta-agent may also search GitHub for implementation examples after the trace/literature mapping is clear.
 
 ## Minimum Meta-Agent Loop
 
@@ -392,17 +459,18 @@ For every work cycle:
 4. Summarize the latest trace with `scripts/summarize_trace.py`.
 5. If generating a new hypothesis family, read `docs/references/research/agent-evolution-literature.md`.
 6. If the hypothesis touches LangChain or LangGraph behavior, read the relevant local files under `docs/references/langchain/curated/`.
-7. Choose one hypothesis and create `hyp/HXXXX-<slug>`.
-8. Edit code or docs.
-9. Run `uv run python -m compileall -q src scripts`.
-10. Run the fixed comparison task.
-11. Fill the result section in the dossier and update the hypothesis index status.
-12. Commit the branch with exhaustive evidence in the commit message.
-13. Push the hypothesis branch to `origin`.
-14. Return to `main` and publish the central registry result:
+7. Generate three candidate hypotheses with effort/result/confidence scores.
+8. Choose the best effort/result tradeoff and create `hyp/HXXXX-<slug>`.
+9. Edit code or docs.
+10. Run `uv run python -m compileall -q src scripts`.
+11. Load `.env` and run the fixed comparison task.
+12. Fill the result section in the dossier and update the hypothesis index status.
+13. Commit the branch with exhaustive evidence in the commit message.
+14. Push the hypothesis branch to `origin`.
+15. Return to `main` and publish the central registry result:
     - for confirmed hypotheses, merge the branch and push `main`;
     - for rejected or inconclusive hypotheses, bring over only `artifacts/meta/hypothesis-index.jsonl` and the relevant dossier, commit, and push `main`.
-15. Report the delta: branch, branch push status, main registry commit, baseline run, candidate run, metric changes, Pareto assessment, and merge decision.
+16. Report the delta: branch, branch push status, main registry commit, baseline run, candidate run, metric changes, Pareto assessment, and merge decision.
 
 If a run fails before writing `trace.jsonl`, fix observability before optimizing agent behavior.
 
@@ -418,6 +486,7 @@ That means the subagent must discover and execute the full workflow from this fi
 
 - read the manual and current hypothesis artifacts;
 - inspect baseline traces;
+- generate and score three candidate hypotheses;
 - create the next `HXXXX` id;
 - create and push a hypothesis branch;
 - create and maintain the dossier;
@@ -427,4 +496,4 @@ That means the subagent must discover and execute the full workflow from this fi
 - update `main` central registry and push `main`;
 - avoid merging rejected or inconclusive code into `main`.
 
-If credentials or runtime dependencies are missing, the subagent must still push the hypothesis branch if code was changed, mark the hypothesis `inconclusive`, publish the registry-only result to `main`, and document the blocker in the dossier.
+Credentials should be loaded from `.env`. If credentials or runtime dependencies are missing, the subagent must still push the hypothesis branch if code was changed, mark the hypothesis `inconclusive`, publish the registry-only result to `main`, and document the blocker in the dossier.

@@ -11,6 +11,14 @@ Updated: YYYY-MM-DD
 
 If ..., then ..., measured by ...
 
+## Candidate Hypotheses Considered
+
+| Candidate | Mechanism | Evidence source | Effort | Expected result | Confidence | Why not / why chosen |
+| --- | --- | --- | --- | --- | --- | --- |
+| A | ... | trace + literature/GitHub refs | S | M | medium | chosen because ... |
+| B | ... | ... | M | L | low | rejected because ... |
+| C | ... | ... | L | L | medium | rejected because ... |
+
 ## Motivation
 
 What trace failure or literature mechanism motivates this?

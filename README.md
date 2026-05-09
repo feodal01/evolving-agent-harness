@@ -47,10 +47,12 @@ This project is a small laboratory for pushing harness engineering as far as pos
 
 ```bash
 uv sync
-export OPENROUTER_API_KEY=...
+set -a
+source .env
+set +a
 ```
 
-The default model is `google/gemma-4-26b-a4b-it` through OpenRouter.
+The OpenRouter key is expected in local `.env` as `OPENROUTER_API_KEY=...`. `.env` is ignored by git. The default model is `google/gemma-4-26b-a4b-it` through OpenRouter.
 
 ## Smoke Check
 
@@ -87,13 +89,15 @@ The intended loop:
 1. Start from `main`.
 2. Inspect the latest `result.json` and `trace.jsonl`.
 3. Classify the failure mode.
-4. Read relevant local references or papers if the hypothesis needs them.
-5. Create `hyp/HXXXX-<slug>`.
-6. Make one narrow code or prompt change.
-7. Run the same comparison task set.
-8. Fill the result section in the hypothesis dossier and update `artifacts/meta/hypothesis-index.jsonl`.
-9. Push the hypothesis branch.
-10. Merge into `main` only if the hypothesis improves Pareto efficiency. For rejected or inconclusive hypotheses, keep the branch and publish only the central hypothesis artifacts back to `main`.
+4. Read relevant local references, papers, and useful GitHub examples if the hypothesis needs them.
+5. Generate three candidate hypotheses with effort/result/confidence scores.
+6. Choose the best effort/result tradeoff.
+7. Create `hyp/HXXXX-<slug>`.
+8. Make one narrow code or prompt change.
+9. Run the same comparison task set.
+10. Fill the result section in the hypothesis dossier and update `artifacts/meta/hypothesis-index.jsonl`.
+11. Push the hypothesis branch.
+12. Merge into `main` only if the hypothesis improves Pareto efficiency. For rejected or inconclusive hypotheses, keep the branch and publish only the central hypothesis artifacts back to `main`.
 
 Pareto efficiency means the change improves at least one important metric without an unacceptable regression elsewhere. Primary metric is SWE-bench solve rate; secondary metrics include wall time, token usage, invalid actions, tool calls, patch size, and failure class.
 
