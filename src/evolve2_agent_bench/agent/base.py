@@ -54,20 +54,23 @@ class BaselineLangChainAgent:
         self,
         config: OpenRouterConfig,
         traces: RunTraces,
-        max_tokens: int,
+        max_tokens: int | None,
     ) -> None:
         self.config = config
         self.traces = traces
+        model_kwargs: dict[str, Any] = {}
+        if max_tokens is not None:
+            model_kwargs["max_tokens"] = max_tokens
         self.llm = ChatOpenAI(
             model=config.model,
             api_key=config.api_key,
             base_url=config.base_url,
             temperature=0,
-            max_tokens=max_tokens,
             default_headers={
                 "HTTP-Referer": "http://localhost/evolve2",
                 "X-Title": "evolve2-agent-bench",
             },
+            **model_kwargs,
         )
 
     def run(self, workspace: Path, task: dict[str, Any], max_iterations: int) -> AgentResult:

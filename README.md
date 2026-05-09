@@ -63,7 +63,7 @@ uv run evolve2 model-check
 ## Run One SWE-bench Verified Task
 
 ```bash
-uv run evolve2 run-task --instance-id astropy__astropy-12907 --max-iterations 100 --agent-max-tokens 4096 --evaluation-timeout 1800
+uv run evolve2 run-task --instance-id astropy__astropy-12907 --max-iterations 100 --evaluation-timeout 1800
 ```
 
 Each run writes a directory under `artifacts/runs/<run_id>/` containing:
@@ -101,7 +101,7 @@ The intended loop:
 
 Pareto efficiency means the change improves at least one important metric without an unacceptable regression elsewhere. Patch publication is a gating metric, the primary metric is SWE-bench solve rate, and secondary metrics include wall time, token usage, invalid actions, tool calls, patch size, and failure class.
 
-Wall time and token usage are required but noisy. They are merge evidence only for comparable terminal runs, especially when both baseline and candidate publish a patch. If a run does not publish a patch or stops on the iteration cap, time and tokens are diagnostic rather than proof of better efficiency. Use the stable benchmark profile from `docs/META_OPTIMIZATION.md`; low iteration caps such as 4, 8, 16, or 32 are smoke checks, not decision runs.
+Wall time and token usage are required but noisy. They are merge evidence only for comparable terminal runs, especially when both baseline and candidate publish a patch. If a run does not publish a patch or stops on the iteration cap, time and tokens are diagnostic rather than proof of better efficiency. Use the stable benchmark profile from `docs/META_OPTIMIZATION.md`; low iteration caps such as 4, 8, 16, or 32 are smoke checks, not decision runs. Do not set an agent completion-token cap unless the hypothesis is specifically about response budget.
 
 ## Offline References
 

@@ -230,7 +230,7 @@ The OpenRouter key must come from local `.env`. Do not print the key, commit it,
 Run one benchmark task:
 
 ```bash
-uv run evolve2 run-task --instance-id astropy__astropy-12907 --max-iterations 100 --agent-max-tokens 4096 --evaluation-timeout 1800
+uv run evolve2 run-task --instance-id astropy__astropy-12907 --max-iterations 100 --evaluation-timeout 1800
 ```
 
 Summarize a run:
@@ -351,14 +351,14 @@ Use this stable comparison profile unless the hypothesis explicitly changes one 
 ```text
 model: google/gemma-4-26b-a4b-it
 temperature: 0
-agent_max_tokens: 4096
+agent_max_tokens: unset
 max_iterations: 100
 evaluation_timeout: 1800
 ```
 
 `max_iterations` is an emergency guardrail for clearly broken loops, not a short work budget. A cap such as 4, 8, 16, or 32 is acceptable for smoke checks and debugging only; it is not a decision run for merge or rejection. If a candidate reaches the cap before publishing a patch, increase the cap or classify the run as inconclusive unless the trace proves repeated non-progress behavior.
 
-`agent_max_tokens` changes agent behavior because it controls how much reasoning and action text the model can emit per call. Keep it fixed across baseline and candidate comparisons unless the hypothesis is specifically about completion budget.
+`agent_max_tokens` changes agent behavior because it controls how much reasoning and action text the model can emit per call. Leave it unset for normal decision runs. Set it only when the hypothesis is specifically about completion budget, and then keep it fixed across baseline and candidate comparisons.
 
 ## How To Evolve The Agent
 

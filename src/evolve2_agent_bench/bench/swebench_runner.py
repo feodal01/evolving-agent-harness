@@ -185,7 +185,7 @@ def run_one_task(
     instance_id: str,
     config: OpenRouterConfig,
     max_iterations: int,
-    agent_max_tokens: int,
+    agent_max_tokens: int | None,
     evaluation_timeout: int,
 ) -> dict[str, Any]:
     run_id = make_run_id(instance_id)

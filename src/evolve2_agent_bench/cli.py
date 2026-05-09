@@ -52,9 +52,12 @@ def run_task(
         typer.Option(min=1, max=200, help="Emergency loop cap, not a short work budget."),
     ] = 100,
     agent_max_tokens: Annotated[
-        int,
-        typer.Option(min=256, help="Maximum completion tokens for each agent LLM call."),
-    ] = 4096,
+        int | None,
+        typer.Option(
+            min=256,
+            help="Optional maximum completion tokens for each agent LLM call. Unset by default.",
+        ),
+    ] = None,
     evaluation_timeout: Annotated[int, typer.Option(min=60)] = 1800,
 ) -> None:
     root = project_root()
