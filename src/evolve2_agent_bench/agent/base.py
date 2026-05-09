@@ -157,10 +157,34 @@ class BaselineLangChainAgent:
         return AgentResult(summary=summary, iterations=max_iterations)
 
     def _invoke(self, iteration: int, user_content: str) -> str:
-        started = time.monotonic()
-        response = self.llm.invoke(
-            [SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=user_content)]
+        messages = [SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=user_content)]
+        raw = self._invoke_once(iteration, messages, recovery_attempt=0)
+        if raw.strip():
+            return raw.strip()
+
+        recovery_instruction = (
+            "The previous model response was empty. Return exactly one valid JSON object "
+            "matching the action schema now, with no markdown."
         )
+        self.traces.append_agent(
+            "empty_model_response_recovery",
+            {"iteration": iteration, "recovery_attempt": 1},
+        )
+        raw = self._invoke_once(
+            iteration,
+            [*messages, HumanMessage(content=recovery_instruction)],
+            recovery_attempt=1,
+        )
+        return raw.strip()
+
+    def _invoke_once(
+        self,
+        iteration: int,
+        messages: list[SystemMessage | HumanMessage],
+        recovery_attempt: int,
+    ) -> str:
+        started = time.monotonic()
+        response = self.llm.invoke(messages)
         elapsed = time.monotonic() - started
         content = str(response.content)
         usage = response.response_metadata.get("token_usage") or response.response_metadata.get("usage")
@@ -169,16 +193,14 @@ class BaselineLangChainAgent:
             {
                 "iteration": iteration,
                 "model": self.config.model,
+                "recovery_attempt": recovery_attempt,
                 "elapsed_seconds": round(elapsed, 3),
                 "usage": usage,
-                "messages": [
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": user_content},
-                ],
+                "messages": [_message_trace(message) for message in messages],
                 "response": content,
             },
         )
-        return content.strip()
+        return content
 
     def _parse_action(self, raw: str) -> AgentAction:
         for start, end in _json_object_spans(raw):
@@ -243,3 +265,11 @@ def _json_object_spans(raw: str) -> list[tuple[int, int]]:
                     spans.append((start, index + 1))
                     start = None
     return spans
+
+
+def _message_trace(message: SystemMessage | HumanMessage) -> dict[str, str]:
+    if isinstance(message, SystemMessage):
+        role = "system"
+    else:
+        role = "user"
+    return {"role": role, "content": str(message.content)}
