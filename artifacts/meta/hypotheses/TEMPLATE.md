@@ -40,6 +40,7 @@ Smallest code/doc surface to change. Include non-goals.
 - Validation commands:
 - Benchmark task ids:
 - Max iterations / timeout:
+- Agent max tokens:
 - Metrics to compare:
 - Stop condition:
 
@@ -57,6 +58,15 @@ Fill after running.
 
 | Metric | Baseline | Candidate | Delta |
 | --- | --- | --- | --- |
+| Resolved instances | | | |
+| Patch published / patch bytes | | | |
+| Empty patch instances | | | |
+| Wall seconds | | | |
+| Prompt tokens | | | |
+| Completion tokens | | | |
+| Total tokens | | | |
+| Invalid actions | | | |
+| Tool calls | | | |
 
 ## Pareto Assessment
 

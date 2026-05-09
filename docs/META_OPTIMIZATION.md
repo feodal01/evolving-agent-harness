@@ -166,6 +166,7 @@ Smallest code/doc surface to change. Include non-goals.
 - Validation commands:
 - Benchmark task ids:
 - Max iterations / timeout:
+- Agent max tokens:
 - Metrics to compare:
 - Stop condition:
 
@@ -183,6 +184,15 @@ Fill after running.
 
 | Metric | Baseline | Candidate | Delta |
 | --- | --- | --- | --- |
+| Resolved instances | | | |
+| Patch published / patch bytes | | | |
+| Empty patch instances | | | |
+| Wall seconds | | | |
+| Prompt tokens | | | |
+| Completion tokens | | | |
+| Total tokens | | | |
+| Invalid actions | | | |
+| Tool calls | | | |
 
 ## Pareto Assessment
 
@@ -220,7 +230,7 @@ The OpenRouter key must come from local `.env`. Do not print the key, commit it,
 Run one benchmark task:
 
 ```bash
-uv run evolve2 run-task --instance-id astropy__astropy-12907 --max-iterations 8 --evaluation-timeout 1800
+uv run evolve2 run-task --instance-id astropy__astropy-12907 --max-iterations 100 --agent-max-tokens 4096 --evaluation-timeout 1800
 ```
 
 Summarize a run:
@@ -306,6 +316,10 @@ Common failure classes:
 
 Pareto optimization means a change is preferred only when it improves at least one important metric without an unacceptable regression in another important metric.
 
+Gating metric:
+
+- `patch_published`: the run produced a non-empty tracked source diff that was submitted to SWE-bench evaluation. A candidate that cannot publish a patch is not mergeable as an agent improvement, even if it shows diagnostic progress such as fewer invalid actions or better localization.
+
 Primary metric:
 
 - `resolved`: number of SWE-bench tasks solved.
@@ -320,9 +334,31 @@ Secondary metrics:
 - `invalid_action_count`: lower is better.
 - `failure_class`: moving from `evaluation_error` to `bad_patch`, or from `no_patch` to `bad_patch`, can be progress even before resolution improves.
 
-A candidate is Pareto-dominant when it has equal or better `resolved` and improves at least one secondary metric without materially worsening the rest. A candidate is not automatically better if it only adds complexity, cost, or wall time without changing failure class or solve rate.
+A candidate is Pareto-dominant when it has equal or better `patch_published`, equal or better `resolved`, and improves at least one secondary metric without materially worsening the rest. Patch publication dominates diagnostic progress: if one run publishes a patch and the other does not, the patch-publishing run is the better harness candidate unless the patch path is clearly invalid or infrastructurally broken.
+
+Diagnostic improvements belong in the dossier but are not merge criteria by themselves. Examples include lower invalid action count, more source reads, earlier shell execution, better natural-language localization, or a cleaner failure explanation. These can justify another hypothesis or a larger comparison, but they do not justify merging code to `main` unless they lead to patch publication, solve-rate improvement, or a confirmed infrastructure fix.
+
+Wall time and token counts are required metrics, but they are noisy. Do not declare a time or token efficiency improvement from one run alone. For efficiency claims, use at least two comparable runs per side or a fixed multi-task comparison set. Time and token metrics are meaningful merge evidence only for comparable terminal states, especially when both baseline and candidate publish patches. If a run stops before publishing a patch, or stops because the iteration cap fired, time and tokens are diagnostic only.
+
+A candidate is not automatically better if it only adds complexity, cost, or wall time without changing patch publication, failure class, or solve rate.
 
 When tradeoffs are unclear, keep both candidates and run a larger fixed task set. Do not declare a global improvement from one task unless the failure mode is purely infrastructural, such as action parsing or trace completeness.
+
+## Benchmark Run Profile
+
+Use this stable comparison profile unless the hypothesis explicitly changes one of these parameters:
+
+```text
+model: google/gemma-4-26b-a4b-it
+temperature: 0
+agent_max_tokens: 4096
+max_iterations: 100
+evaluation_timeout: 1800
+```
+
+`max_iterations` is an emergency guardrail for clearly broken loops, not a short work budget. A cap such as 4, 8, 16, or 32 is acceptable for smoke checks and debugging only; it is not a decision run for merge or rejection. If a candidate reaches the cap before publishing a patch, increase the cap or classify the run as inconclusive unless the trace proves repeated non-progress behavior.
+
+`agent_max_tokens` changes agent behavior because it controls how much reasoning and action text the model can emit per call. Keep it fixed across baseline and candidate comparisons unless the hypothesis is specifically about completion budget.
 
 ## How To Evolve The Agent
 
@@ -463,7 +499,7 @@ For every work cycle:
 8. Choose the best effort/result tradeoff and create `hyp/HXXXX-<slug>`.
 9. Edit code or docs.
 10. Run `uv run python -m compileall -q src scripts`.
-11. Load `.env` and run the fixed comparison task.
+11. Load `.env` and run the fixed comparison task with the stable benchmark profile.
 12. Fill the result section in the dossier and update the hypothesis index status.
 13. Commit the branch with exhaustive evidence in the commit message.
 14. Push the hypothesis branch to `origin`.

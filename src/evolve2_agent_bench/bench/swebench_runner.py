@@ -185,6 +185,7 @@ def run_one_task(
     instance_id: str,
     config: OpenRouterConfig,
     max_iterations: int,
+    agent_max_tokens: int,
     evaluation_timeout: int,
 ) -> dict[str, Any]:
     run_id = make_run_id(instance_id)
@@ -217,6 +218,7 @@ def run_one_task(
             "dataset": DATASET_NAME,
             "split": SPLIT,
             "max_iterations": max_iterations,
+            "agent_max_tokens": agent_max_tokens,
             "evaluation_timeout": evaluation_timeout,
         },
     )
@@ -225,7 +227,7 @@ def run_one_task(
     traces.append("workspace_prepare_start", {"stream": "run", "worktree_dir": str(paths.worktree_dir)})
     workspace = prepare_workspace(task, paths)
     traces.append("workspace_prepare_finish", {"stream": "run", "workspace": str(workspace)})
-    agent = BaselineLangChainAgent(config=config, traces=traces)
+    agent = BaselineLangChainAgent(config=config, traces=traces, max_tokens=agent_max_tokens)
     agent_result = agent.run(workspace=workspace, task=task, max_iterations=max_iterations)
     patch = make_patch(workspace, paths.run_dir / "patch.diff")
     traces.append(

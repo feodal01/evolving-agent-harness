@@ -47,7 +47,14 @@ def run_task(
         typer.Option(help="SWE-bench Verified instance id."),
     ] = "astropy__astropy-12907",
     model: Annotated[str, typer.Option(help="OpenRouter model id.")] = DEFAULT_MODEL,
-    max_iterations: Annotated[int, typer.Option(min=1, max=40)] = 8,
+    max_iterations: Annotated[
+        int,
+        typer.Option(min=1, max=200, help="Emergency loop cap, not a short work budget."),
+    ] = 100,
+    agent_max_tokens: Annotated[
+        int,
+        typer.Option(min=256, help="Maximum completion tokens for each agent LLM call."),
+    ] = 4096,
     evaluation_timeout: Annotated[int, typer.Option(min=60)] = 1800,
 ) -> None:
     root = project_root()
@@ -57,6 +64,7 @@ def run_task(
         instance_id=instance_id,
         config=config,
         max_iterations=max_iterations,
+        agent_max_tokens=agent_max_tokens,
         evaluation_timeout=evaluation_timeout,
     )
     print(json.dumps(result, indent=2, ensure_ascii=False))

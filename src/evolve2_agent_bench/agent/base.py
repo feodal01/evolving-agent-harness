@@ -50,7 +50,12 @@ class AgentResult:
 
 
 class BaselineLangChainAgent:
-    def __init__(self, config: OpenRouterConfig, traces: RunTraces) -> None:
+    def __init__(
+        self,
+        config: OpenRouterConfig,
+        traces: RunTraces,
+        max_tokens: int,
+    ) -> None:
         self.config = config
         self.traces = traces
         self.llm = ChatOpenAI(
@@ -58,7 +63,7 @@ class BaselineLangChainAgent:
             api_key=config.api_key,
             base_url=config.base_url,
             temperature=0,
-            max_tokens=1800,
+            max_tokens=max_tokens,
             default_headers={
                 "HTTP-Referer": "http://localhost/evolve2",
                 "X-Title": "evolve2-agent-bench",
