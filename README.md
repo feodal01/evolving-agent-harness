@@ -82,11 +82,11 @@ Large traces stay in per-run JSONL files; hypothesis dossiers store references a
 
 ## Meta-Agent Workflow
 
-Read [docs/META_OPTIMIZATION.md](docs/META_OPTIMIZATION.md) before changing the agent.
+Read [docs/META_OPTIMIZATION.md](docs/META_OPTIMIZATION.md) before changing the agent in a single hypothesis branch.
 
 For a top-level `/goal` that coordinates multiple hypothesis workers, use [docs/ORCHESTRATOR_PROMPT.md](docs/ORCHESTRATOR_PROMPT.md). That prompt is only for the orchestrator, not for a single hypothesis-testing subagent.
 
-The intended loop:
+The single-hypothesis worker loop:
 
 1. Start from `main`.
 2. Inspect the latest `result.json` and `trace.jsonl`.

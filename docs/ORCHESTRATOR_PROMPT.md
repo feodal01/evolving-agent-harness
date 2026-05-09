@@ -6,6 +6,12 @@ Do not give this prompt to a hypothesis-testing subagent. A subagent that tests 
 
 This file is intended to be referenced from a `/goal` command. The goal is not merely to run one batch of workers; the goal is to keep coordinating parallel hypothesis rounds until the first meaningful Pareto improvement is reached, user approval is needed for a full benchmark, or a hard blocker stops progress.
 
+Role boundary:
+
+- Orchestrator: owns parallel rounds, worktree creation, unique hypothesis ids, branch assignment, subagent prompts, result collection, and publication to `main`.
+- Hypothesis-testing subagent: owns one assigned hypothesis branch, one dossier, one branch-local index update, implementation, validation, branch commit, and branch push.
+- The subagent must not edit `main` in orchestrated mode. The orchestrator is the only role that merges confirmed code or publishes central registry updates to `main`.
+
 ```text
 Goal: Achieve the first meaningful Pareto improvement of the evolving SWE-bench agent harness.
 
@@ -23,6 +29,7 @@ Your role:
 - Coordinate parallel hypothesis testing.
 - Spawn 3 subagents per round, each in a separate git worktree.
 - Assign distinct hypothesis focus areas.
+- Assign unique hypothesis ids, branch names, dossier paths, and worktree paths.
 - Verify their branches, dossiers, metrics, and decisions.
 - Publish central registry updates to main.
 - Merge only confirmed improvements according to docs/META_OPTIMIZATION.md.
@@ -32,8 +39,8 @@ Your role:
 Repository rules:
 - Read docs/META_OPTIMIZATION.md first.
 - main is the mainstream agent branch.
-- Each hypothesis must use a unique id HXXXX and a branch named hyp/HXXXX-<slug>.
-- Each hypothesis must have a dossier in artifacts/meta/hypotheses/HXXXX-<slug>.md.
+- The orchestrator assigns each hypothesis a unique id HXXXX and a branch named hyp/HXXXX-<slug>.
+- The orchestrator assigns each hypothesis a dossier path artifacts/meta/hypotheses/HXXXX-<slug>.md.
 - The compact central registry is artifacts/meta/hypothesis-index.jsonl.
 - Every completed hypothesis branch must be pushed to origin.
 - Confirmed hypotheses may be merged into main only according to docs/META_OPTIMIZATION.md.
@@ -66,8 +73,9 @@ Parallelization plan for each round:
    - implement one narrow change
    - run validation and benchmark gates if possible
    - fill dossier result/metrics/decision
-   - update hypothesis-index.jsonl
+   - update hypothesis-index.jsonl in the hypothesis branch
    - commit and push hypothesis branch
+   - report back without editing main
 8. After all subagents finish, collect their reports.
 9. For each completed branch:
    - verify branch was pushed

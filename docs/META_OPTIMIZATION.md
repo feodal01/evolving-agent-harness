@@ -1,13 +1,16 @@
 # Meta-Optimization Manual
 
-This is the operating manual for the meta-LLM. The meta-LLM does not solve SWE-bench tasks directly. It improves the evolving agent and harness, tests hypotheses on branches, and records every result so the project does not repeat failed experiments.
+This is the operating manual for a single hypothesis-testing meta-agent. The meta-agent does not solve SWE-bench tasks directly. It improves the evolving agent and harness, tests one hypothesis on a branch, and records the result so the project does not repeat failed experiments.
+
+For multi-worker orchestration, use `docs/ORCHESTRATOR_PROMPT.md` as the `/goal` prompt. The orchestrator owns parallel worktree setup, assignment of distinct hypothesis ids, cross-branch result collection, and final publication of central registry updates to `main`. This file owns the workflow inside one hypothesis branch.
 
 ## System Model
 
 There are two layers:
 
 - Evolving agent: code under `src/evolve2_agent_bench/agent/`. This is the agent evaluated on SWE-bench Verified and evolved over time.
-- Meta layer: this manual, `artifacts/meta/hypothesis-index.jsonl`, per-hypothesis dossiers, git branches, and run traces. This layer decides which hypothesis to test next.
+- Hypothesis worker layer: this manual, one hypothesis branch, one hypothesis dossier, local branch updates to `artifacts/meta/hypothesis-index.jsonl`, and run traces. This layer tests one hypothesis.
+- Orchestrator layer: `docs/ORCHESTRATOR_PROMPT.md`, multiple worktrees, assignment of workers, collection of branch results, and publication of central registry updates to `main`.
 
 The benchmark runner under `src/evolve2_agent_bench/bench/` prepares a task repository, runs the evolving agent, writes a patch, sends the patch to the SWE-bench harness, and records traces.
 
@@ -17,14 +20,14 @@ Do not treat chat memory as the source of truth. Use repository files, `trace.js
 
 During a meta-optimization session, the meta-agent works autonomously. The user has already granted permission to:
 
-- choose the next hypothesis id and branch name;
-- create and switch branches;
+- choose the next hypothesis id and branch name when running standalone;
+- create and switch branches when running standalone;
 - edit code, docs, and meta artifacts within the repository rules;
 - run validation and benchmark commands;
 - commit hypothesis branches;
 - push hypothesis branches;
-- publish registry-only updates on `main`;
-- merge confirmed hypotheses into `main` when the dossier evidence supports the merge.
+- publish registry-only updates on `main` when running standalone;
+- merge confirmed hypotheses into `main` when running standalone and when the dossier evidence supports the merge.
 
 Do not stop to ask the user for routine approval. Ask the user only for hard blockers that cannot be resolved from repository context, such as:
 
@@ -36,7 +39,9 @@ Do not stop to ask the user for routine approval. Ask the user only for hard blo
 
 A full SWE-bench Verified run is not routine benchmark work. It requires explicit user approval every time. The meta-agent may run the one-task and three-task gates in this manual autonomously, but must stop and ask before launching the full benchmark.
 
-If a blocker occurs after code changes were made, finish the hypothesis lifecycle as `inconclusive`: push the hypothesis branch if possible, publish a registry-only result to `main`, and document the blocker in the dossier.
+If a blocker occurs after code changes were made, finish the hypothesis lifecycle as `inconclusive`: document the blocker in the dossier, commit the branch if possible, and push the hypothesis branch. If running standalone, also publish a registry-only result to `main`; if running under the orchestrator, report the blocker and branch state to the orchestrator.
+
+When running under the orchestrator, do not edit `main` directly. Finish the branch lifecycle, push the hypothesis branch, and report the branch, dossier, index entry, run ids, metrics, and decision back to the orchestrator. The orchestrator publishes central registry updates to `main`.
 
 ## Git Workflow For Hypotheses
 
@@ -45,6 +50,8 @@ Git is part of the experimental method.
 - `main` contains the mainstream version of the evolving agent.
 - Every hypothesis gets its own branch from current `main`.
 - Branch names should be stable and descriptive: `hyp/HXXXX-<short-hypothesis>`.
+- In orchestrated runs, the orchestrator creates the worktree, branch, hypothesis id, and focus area. The hypothesis worker must stay inside that assigned worktree and branch.
+- In standalone runs, the hypothesis worker creates its own branch from current `main`.
 - Commit all code, doc, and hypothesis artifact changes for the hypothesis branch.
 - Push every hypothesis branch to `origin`, whether it is confirmed, rejected, or inconclusive.
 - Merge into `main` only if the hypothesis is confirmed by the agreed benchmark comparison.
@@ -54,17 +61,18 @@ Git is part of the experimental method.
 
 Branch lifecycle:
 
-1. Start clean on `main`.
-2. Create `hyp/HXXXX-<slug>`.
+1. Start from the assigned hypothesis branch, or start clean on `main` and create `hyp/HXXXX-<slug>` when running standalone.
+2. Confirm the branch name, hypothesis id, and dossier path are unique.
 3. Create a hypothesis dossier before implementation.
 4. Implement one narrow change.
 5. Run validation and benchmark comparison.
 6. Update the dossier and compact hypothesis index with final metrics and decision.
 7. Commit the complete hypothesis artifact.
 8. Push the hypothesis branch to `origin`.
-9. If confirmed, merge the branch into `main` with a merge commit whose message summarizes the evidence, then push `main`.
-10. If rejected or inconclusive, do not merge the code. Copy or cherry-pick only the final dossier and index status into `main` as a registry-only commit, then push `main`.
-11. Leave rejected and inconclusive branches available on `origin`.
+9. If running under the orchestrator, stop after the branch push and report the evidence. The orchestrator owns `main` publication.
+10. If running standalone and confirmed, merge the branch into `main` with a merge commit whose message summarizes the evidence, then push `main`.
+11. If running standalone and rejected or inconclusive, do not merge the code. Copy or cherry-pick only the final dossier and index status into `main` as a registry-only commit, then push `main`.
+12. Leave rejected and inconclusive branches available on `origin`.
 
 Merge commit descriptions must be exhaustive enough for a future meta-agent to understand the decision without reading chat. Include:
 
@@ -86,14 +94,19 @@ Every completed hypothesis has two durable locations:
 1. The hypothesis branch on `origin`, containing the exact tested code and the full dossier.
 2. The `main` branch meta registry, containing the central index entry and final dossier text.
 
-The publishing rule depends on the decision:
+Ownership differs by mode:
+
+- Orchestrated mode: the hypothesis worker owns item 1 and reports evidence to the orchestrator. The orchestrator owns item 2.
+- Standalone mode: the same meta-agent owns both item 1 and item 2.
+
+The central publication rule depends on the decision. In orchestrated mode, the orchestrator applies this rule after collecting worker results. In standalone mode, the hypothesis worker applies it directly.
 
 - Confirmed: merge the hypothesis branch into `main`; push the branch and `main`.
 - Rejected: push the hypothesis branch; do not merge its code; update only `artifacts/meta/hypothesis-index.jsonl` and the hypothesis dossier on `main`; push `main`.
 - Inconclusive: push the hypothesis branch; do not merge its code; update only the index and dossier on `main`; push `main`.
 - Superseded: push the branch if it contains unique work; update the index/dossier on `main` with the superseding hypothesis id; push `main`.
 
-Do not leave a completed hypothesis only in a local branch. If the branch is not pushed, future meta-agents cannot inspect the tested code. If `main` is not updated, future meta-agents cannot discover the result from the central registry.
+Do not leave a completed hypothesis only in a local branch. If the branch is not pushed, future meta-agents cannot inspect the tested code. If the central registry on `main` is not eventually updated by the responsible role, future meta-agents cannot discover the result from the central registry.
 
 ## Hypothesis Artifacts
 
@@ -393,7 +406,7 @@ evaluation_timeout: 1800
 
 Use small experiments:
 
-1. Start on `main` and create a hypothesis branch.
+1. Start on the assigned hypothesis branch in orchestrated mode, or create a hypothesis branch from `main` in standalone mode.
 2. Select one failure mode from the latest trace.
 3. Generate three candidate hypotheses before editing code.
 4. Score the candidates by effort and expected result.
@@ -406,9 +419,10 @@ Use small experiments:
 11. Update `artifacts/meta/hypothesis-index.jsonl`.
 12. Commit the branch with the complete hypothesis evidence.
 13. Push the hypothesis branch.
-14. Publish the result back to `main`:
-    - confirmed: merge code and dossier;
-    - rejected or inconclusive: registry-only update with dossier and index, no code merge.
+14. Publish the result:
+    - orchestrated mode: report branch evidence to the orchestrator and do not edit `main`;
+    - standalone confirmed: merge code and dossier to `main`;
+    - standalone rejected or inconclusive: registry-only update with dossier and index, no code merge.
 
 Good experiment examples:
 
@@ -520,13 +534,13 @@ Do not create a branch from a paper idea until there is trace evidence that the 
 For every work cycle:
 
 1. `git status --short --branch`
-2. Ensure the starting point is `main` unless continuing a documented hypothesis branch.
+2. Ensure the starting point is the assigned hypothesis branch in orchestrated mode, or `main` before creating a branch in standalone mode.
 3. Read this manual, latest hypothesis dossiers, and latest comparable `result.json`.
 4. Summarize the latest trace with `scripts/summarize_trace.py`.
 5. If generating a new hypothesis family, read `docs/references/research/agent-evolution-literature.md`.
 6. If the hypothesis touches LangChain or LangGraph behavior, read the relevant local files under `docs/references/langchain/curated/`.
 7. Generate three candidate hypotheses with effort/result/confidence scores.
-8. Choose the best effort/result tradeoff and create `hyp/HXXXX-<slug>`.
+8. Choose the best effort/result tradeoff. Use the assigned `hyp/HXXXX-<slug>` branch in orchestrated mode, or create it in standalone mode.
 9. Edit code or docs.
 10. Run `uv run python -m compileall -q src scripts`.
 11. Load `.env` and run the one-task gate with the stable benchmark profile.
@@ -535,10 +549,11 @@ For every work cycle:
 14. Fill the result section in the dossier and update the hypothesis index status.
 15. Commit the branch with exhaustive evidence in the commit message.
 16. Push the hypothesis branch to `origin`.
-17. Return to `main` and publish the central registry result:
-    - for confirmed hypotheses, merge the branch and push `main`;
-    - for rejected or inconclusive hypotheses, bring over only `artifacts/meta/hypothesis-index.jsonl` and the relevant dossier, commit, and push `main`.
-18. Report the delta: branch, branch push status, main registry commit, baseline run, candidate run, metric changes, Pareto assessment, and merge decision.
+17. Publish or report the central registry result:
+    - orchestrated mode: do not edit `main`; report the branch, pushed commit, dossier path, index entry, run ids, metrics, and decision to the orchestrator;
+    - standalone confirmed: merge the branch and push `main`;
+    - standalone rejected or inconclusive: bring over only `artifacts/meta/hypothesis-index.jsonl` and the relevant dossier, commit, and push `main`.
+18. Report the delta: branch, branch push status, main registry status, baseline run, candidate run, metric changes, Pareto assessment, and merge decision.
 
 If a run fails before writing `trace.jsonl`, fix observability before optimizing agent behavior.
 
@@ -557,13 +572,14 @@ That means the subagent must discover and execute the full workflow from this fi
 - read the manual and current hypothesis artifacts;
 - inspect baseline traces;
 - generate and score three candidate hypotheses;
-- create the next `HXXXX` id;
-- create and push a hypothesis branch;
+- use the assigned `HXXXX` id and branch in orchestrated mode, or create the next `HXXXX` id and branch in standalone mode;
 - create and maintain the dossier;
 - run validation and benchmark comparison when credentials are available;
 - record result metrics and decision;
 - publish the branch to `origin`;
-- update `main` central registry and push `main`;
+- update the branch-local hypothesis index and dossier;
+- in standalone mode, update `main` central registry and push `main`;
+- in orchestrated mode, report the branch evidence to the orchestrator and do not edit `main`;
 - avoid merging rejected or inconclusive code into `main`.
 
-Credentials should be loaded from `.env`. If credentials or runtime dependencies are missing, the subagent must still push the hypothesis branch if code was changed, mark the hypothesis `inconclusive`, publish the registry-only result to `main`, and document the blocker in the dossier.
+Credentials should be loaded from `.env`. If credentials or runtime dependencies are missing, the subagent must still push the hypothesis branch if code was changed, mark the hypothesis `inconclusive`, document the blocker in the dossier, and either publish the registry-only result to `main` in standalone mode or report the blocker to the orchestrator in orchestrated mode.
