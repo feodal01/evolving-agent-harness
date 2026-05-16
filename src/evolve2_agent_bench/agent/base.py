@@ -35,7 +35,7 @@ Return exactly one JSON object per turn, with no markdown:
 
 Actions:
 - run_shell args: {"command": "rg ..."} or tests/edit commands.
-- read_file args: {"path": "relative/path.py", "start_line": 1, "max_lines": 200}
+- read_file args: {"path": "relative/path.py", "start_line": 1, "max_lines": 200} (max_lines must be 1-400 inclusive)
 - write_file args: {"path": "relative/path.py", "content": "full new file content"}
 - finish args: {"summary": "what changed and what was tested"}
 
@@ -157,10 +157,39 @@ class BaselineLangChainAgent:
         return AgentResult(summary=summary, iterations=max_iterations)
 
     def _invoke(self, iteration: int, user_content: str) -> str:
-        started = time.monotonic()
-        response = self.llm.invoke(
-            [SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=user_content)]
+        messages: list[SystemMessage | HumanMessage] = [
+            SystemMessage(content=SYSTEM_PROMPT),
+            HumanMessage(content=user_content),
+        ]
+        raw = self._invoke_once(iteration, messages, recovery_attempt=0)
+        if raw.strip():
+            return raw.strip()
+
+        recovery_instruction = (
+            "The previous model response was empty. Return exactly one valid JSON object "
+            "matching the action schema now, with no markdown. For read_file, max_lines must "
+            "be between 1 and 400 inclusive (not greater than 400). Choose a valid next action "
+            "(run_shell, read_file, write_file, or finish)."
         )
+        self.traces.append_agent(
+            "empty_model_response_recovery",
+            {"iteration": iteration, "recovery_attempt": 1},
+        )
+        raw = self._invoke_once(
+            iteration,
+            [*messages, HumanMessage(content=recovery_instruction)],
+            recovery_attempt=1,
+        )
+        return raw.strip()
+
+    def _invoke_once(
+        self,
+        iteration: int,
+        messages: list[SystemMessage | HumanMessage],
+        recovery_attempt: int,
+    ) -> str:
+        started = time.monotonic()
+        response = self.llm.invoke(messages)
         elapsed = time.monotonic() - started
         content = str(response.content)
         usage = response.response_metadata.get("token_usage") or response.response_metadata.get("usage")
@@ -169,25 +198,27 @@ class BaselineLangChainAgent:
             {
                 "iteration": iteration,
                 "model": self.config.model,
+                "recovery_attempt": recovery_attempt,
                 "elapsed_seconds": round(elapsed, 3),
                 "usage": usage,
-                "messages": [
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": user_content},
-                ],
+                "messages": [_message_trace(message) for message in messages],
                 "response": content,
             },
         )
-        return content.strip()
+        return content
 
     def _parse_action(self, raw: str) -> AgentAction:
         for start, end in _json_object_spans(raw):
             candidate = raw[start:end]
             try:
-                return AgentAction.model_validate(json.loads(candidate))
+                data = json.loads(candidate)
+                _clamp_read_file_max_lines(data)
+                return AgentAction.model_validate(data)
             except (json.JSONDecodeError, ValidationError):
                 continue
-        return AgentAction.model_validate(json.loads(raw))
+        data = json.loads(raw)
+        _clamp_read_file_max_lines(data)
+        return AgentAction.model_validate(data)
 
     def _execute(self, tools: WorkspaceTools, action: AgentAction) -> dict[str, Any]:
         if action.action == "run_shell":
@@ -213,6 +244,30 @@ class BaselineLangChainAgent:
         else:
             raise ValueError(f"Unknown action: {action.action}")
         return {"ok": result.ok, "output": result.output}
+
+
+def _message_trace(message: SystemMessage | HumanMessage) -> dict[str, str]:
+    if isinstance(message, SystemMessage):
+        role = "system"
+    else:
+        role = "user"
+    return {"role": role, "content": str(message.content)}
+
+
+def _clamp_read_file_max_lines(data: dict[str, Any]) -> None:
+    """Cap read_file max_lines to match ReadFileArgs (le=400) before validation (narrow repair)."""
+    if data.get("action") != "read_file":
+        return
+    args = data.get("args")
+    if not isinstance(args, dict):
+        return
+    if "max_lines" not in args:
+        return
+    ml = args["max_lines"]
+    if isinstance(ml, bool) or not isinstance(ml, (int, float)):
+        return
+    if float(ml) > 400:
+        args["max_lines"] = 400
 
 
 def _json_object_spans(raw: str) -> list[tuple[int, int]]:
