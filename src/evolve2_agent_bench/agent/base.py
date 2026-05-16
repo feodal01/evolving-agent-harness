@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -40,7 +41,50 @@ Actions:
 - finish args: {"summary": "what changed and what was tested"}
 
 Prefer rg, sed, python scripts, and focused tests. Inspect before editing. Keep the patch minimal.
+
+The benchmark patch is `git diff` on tracked files; untracked files alone do not count. Use write_file on existing repo paths for real edits.
 """
+
+# Consecutive validParsed turns with empty `git diff` before injecting a control hint (H0005-style progress nudge).
+_NO_PATCH_EMPTY_DIFF_ROUNDS = 3
+# Consecutive invalid JSON parses before emitting an expanded argument template (bounded retry cue).
+_INVALID_PARSE_STREAK_CAP = 3
+
+_INVALID_JSON_TEMPLATE_REMINDER = """\
+Repeated parse failures: reply with exactly one JSON object, no markdown fence. Minimal valid shapes:
+
+{"thought":"why","action":"run_shell","args":{"command":"rg -n pattern src"}}
+
+{"thought":"why","action":"read_file","args":{"path":"pkg/module.py","start_line":1,"max_lines":200}}
+
+{"thought":"why","action":"write_file","args":{"path":"pkg/module.py","content":"full file text"}}
+
+{"thought":"why","action":"finish","args":{"summary":"what changed and tests run"}}
+"""
+
+_NO_PATCH_CONTROL_HINT = """\
+Control hint: `git diff` has stayed empty across several turns. Next action must apply a tracked source or test edit via write_file on an existing file path (not scratch/untracked-only work), then run a minimal targeted check.
+"""
+
+
+def _tracked_git_diff_snapshot(workspace: Path) -> tuple[bool, str]:
+    """Return (diff_empty, shortstat_or_placeholder_for_model).
+
+    Empty stdout from `git diff --shortstat` means no tracked unstaged diff (matches patch extraction).
+    """
+    proc = subprocess.run(
+        ["git", "diff", "--no-ext-diff", "--shortstat"],
+        cwd=str(workspace.resolve()),
+        capture_output=True,
+        text=True,
+        timeout=120,
+        check=False,
+    )
+    if proc.returncode != 0:
+        err = (proc.stderr or proc.stdout or "").strip()
+        return False, f"(git diff unavailable: {err[:400]})"
+    stat = proc.stdout.strip()
+    return stat == "", stat or "(no staged/unstaged diff)"
 
 
 @dataclass(frozen=True)
@@ -96,21 +140,35 @@ class BaselineLangChainAgent:
             },
         )
 
+        invalid_parse_streak = 0
+        empty_diff_rounds = 0
+
         for iteration in range(1, max_iterations + 1):
             user_content = "\n\n".join(conversation)
             raw = self._invoke(iteration, user_content)
             try:
                 action = self._parse_action(raw)
             except (json.JSONDecodeError, ValidationError) as exc:
+                invalid_parse_streak += 1
                 self.traces.append_agent(
                     "invalid_action",
-                    {"iteration": iteration, "error": str(exc), "raw": raw},
+                    {
+                        "iteration": iteration,
+                        "error": str(exc),
+                        "raw": raw,
+                        "invalid_parse_streak": invalid_parse_streak,
+                    },
                 )
                 conversation.append(
                     "Your previous response was invalid. Return exactly one valid JSON object "
                     "matching the action schema."
                 )
+                if invalid_parse_streak >= _INVALID_PARSE_STREAK_CAP:
+                    conversation.append(_INVALID_JSON_TEMPLATE_REMINDER)
+                    invalid_parse_streak = 0
                 continue
+
+            invalid_parse_streak = 0
 
             self.traces.append_agent(
                 "agent_action",
@@ -121,27 +179,67 @@ class BaselineLangChainAgent:
                     "action_args": action.args.model_dump(),
                 },
             )
+
+            if action.action == "finish":
+                diff_empty, shortstat = _tracked_git_diff_snapshot(workspace)
+                if diff_empty:
+                    empty_diff_rounds += 1
+                    self.traces.append_agent(
+                        "finish_rejected_empty_diff",
+                        {
+                            "iteration": iteration,
+                            "git_diff_shortstat": shortstat,
+                            "tracked_git_diff_empty": True,
+                            "empty_diff_rounds": empty_diff_rounds,
+                        },
+                    )
+                    conversation.append(
+                        json.dumps(
+                            {
+                                "iteration": iteration,
+                                "event": "finish_rejected_empty_diff",
+                                "detail": "finish not allowed while git diff is empty; edit tracked files first.",
+                                "tracked_git_diff_empty": True,
+                                "git_diff_shortstat": shortstat,
+                            },
+                            ensure_ascii=False,
+                        )
+                    )
+                    if empty_diff_rounds >= _NO_PATCH_EMPTY_DIFF_ROUNDS:
+                        self.traces.append_agent(
+                            "no_patch_control_hint",
+                            {"iteration": iteration, "empty_diff_rounds": empty_diff_rounds},
+                        )
+                        conversation.append(_NO_PATCH_CONTROL_HINT)
+                        empty_diff_rounds = 0
+                    continue
+
             result = self._execute(tools, action)
-            self.traces.append_agent(
-                "agent_observation",
-                {
-                    "iteration": iteration,
-                    "action": action.action,
-                    "ok": result["ok"],
-                    "observation": result["output"],
-                },
-            )
-            conversation.append(
-                json.dumps(
-                    {
-                        "iteration": iteration,
-                        "action": action.action,
-                        "ok": result["ok"],
-                        "observation": result["output"],
-                    },
-                    ensure_ascii=False,
+            diff_empty, shortstat = _tracked_git_diff_snapshot(workspace)
+            obs_payload = {
+                "iteration": iteration,
+                "action": action.action,
+                "ok": result["ok"],
+                "observation": result["output"],
+                "tracked_git_diff_empty": diff_empty,
+                "git_diff_shortstat": shortstat,
+            }
+            self.traces.append_agent("agent_observation", obs_payload)
+            conversation.append(json.dumps(obs_payload, ensure_ascii=False))
+
+            if diff_empty:
+                empty_diff_rounds += 1
+            else:
+                empty_diff_rounds = 0
+
+            if empty_diff_rounds >= _NO_PATCH_EMPTY_DIFF_ROUNDS:
+                self.traces.append_agent(
+                    "no_patch_control_hint",
+                    {"iteration": iteration, "empty_diff_rounds": empty_diff_rounds},
                 )
-            )
+                conversation.append(_NO_PATCH_CONTROL_HINT)
+                empty_diff_rounds = 0
+
             if action.action == "finish":
                 args = action.args
                 if not isinstance(args, FinishArgs):
