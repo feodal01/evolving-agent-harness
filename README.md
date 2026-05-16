@@ -35,7 +35,8 @@ This project is a small laboratory for pushing harness engineering as far as pos
 - `src/evolve2_agent_bench/agent/`: evolving LangChain coding agent.
 - `src/evolve2_agent_bench/bench/`: SWE-bench runner and evaluation orchestration.
 - `src/evolve2_agent_bench/meta/`: helpers for meta artifacts.
-- `docs/META_OPTIMIZATION.md`: self-contained operating manual for the meta-agent.
+- `docs/meta/README.md`: entry point for meta-optimization role prompts and artifact schemas.
+- `artifacts/meta/hypotheses-board.json`: operational hypothesis board (orchestrator-owned; see `docs/meta/artifacts-schema.md`).
 - `artifacts/meta/hypothesis-index.jsonl`: compact index of hypothesis dossiers and statuses.
 - `artifacts/meta/hypotheses/`: full hypothesis dossiers, from proposal through result.
 - `docs/references/langchain/`: offline LangChain and LangGraph documentation, including curated Python references.
@@ -82,9 +83,9 @@ Large traces stay in per-run JSONL files; hypothesis dossiers store references a
 
 ## Meta-Agent Workflow
 
-Read [docs/META_OPTIMIZATION.md](docs/META_OPTIMIZATION.md) before changing the agent in a single hypothesis branch.
+Start at [docs/meta/README.md](docs/meta/README.md). For a single hypothesis branch, follow [docs/meta/prompt-executor.md](docs/meta/prompt-executor.md) and [docs/meta/artifacts-schema.md](docs/meta/artifacts-schema.md).
 
-For a top-level `/goal` that coordinates multiple hypothesis workers, use [docs/ORCHESTRATOR_PROMPT.md](docs/ORCHESTRATOR_PROMPT.md). That prompt is only for the orchestrator, not for a single hypothesis-testing subagent.
+For a top-level `/goal` that coordinates multiple hypothesis workers, use [docs/meta/prompt-orchestrator.md](docs/meta/prompt-orchestrator.md). That prompt is only for the orchestrator, not for a single hypothesis-testing subagent.
 
 The single-hypothesis worker loop:
 
@@ -105,7 +106,7 @@ The single-hypothesis worker loop:
 
 Pareto efficiency means the change improves at least one important metric without an unacceptable regression elsewhere. Patch publication is a gating metric, the primary metric is SWE-bench solve rate, and secondary metrics include wall time, token usage, invalid actions, tool calls, patch size, and failure class.
 
-Wall time and token usage are required but noisy. They are merge evidence only for comparable terminal runs, especially when both baseline and candidate publish a patch. If a run does not publish a patch or stops on the iteration cap, time and tokens are diagnostic rather than proof of better efficiency. Use the stable benchmark profile from `docs/META_OPTIMIZATION.md`; low iteration caps such as 4, 8, 16, or 32 are smoke checks, not decision runs. Do not set an agent completion-token cap unless the hypothesis is specifically about response budget.
+Wall time and token usage are required but noisy. They are merge evidence only for comparable terminal runs, especially when both baseline and candidate publish a patch. If a run does not publish a patch or stops on the iteration cap, time and tokens are diagnostic rather than proof of better efficiency. Use the stable benchmark profile from `docs/meta/prompt-executor.md`; low iteration caps such as 4, 8, 16, or 32 are smoke checks, not decision runs. Do not set an agent completion-token cap unless the hypothesis is specifically about response budget.
 
 Validation scales in stages: first `astropy__astropy-12907`, then the fixed three-task set `astropy__astropy-12907`, `django__django-11099`, and `sympy__sympy-20590` if the first gate passes. A full benchmark run is only a next-step recommendation after the three-task gate and requires explicit user approval.
 

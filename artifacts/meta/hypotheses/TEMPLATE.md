@@ -11,14 +11,6 @@ Updated: YYYY-MM-DD
 
 If ..., then ..., measured by ...
 
-## Candidate Hypotheses Considered
-
-| Candidate | Mechanism | Evidence source | Effort | Expected result | Confidence | Why not / why chosen |
-| --- | --- | --- | --- | --- | --- | --- |
-| A | ... | trace + literature/GitHub refs | S | M | medium | chosen because ... |
-| B | ... | ... | M | L | low | rejected because ... |
-| C | ... | ... | L | L | medium | rejected because ... |
-
 ## Motivation
 
 What trace failure or literature mechanism motivates this?
@@ -31,9 +23,17 @@ What trace failure or literature mechanism motivates this?
 - Failure class:
 - Key observed events:
 
+## Candidate Hypotheses Considered
+
+| Candidate | Role (exploit / explore / bridge) | Mechanism | Trace anchor (strong / medium / weak) | Evidence source | Effort | Expected result | Confidence | Why not / why chosen |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| A | exploit | ... | strong | trace + … | S | M | medium | chosen because ... |
+| B | explore | ... | medium | curated LC + trace … | M | L | low | rejected because ... |
+| C | bridge | ... | strong | trace + literature | L | L | medium | rejected because ... |
+
 ## Proposed Change
 
-Smallest code/doc surface to change. Include non-goals.
+Smallest code/doc surface to change. Include non-goals. If the hypothesis is **trace-targeted**, name the trace metrics or events you expect to move (see **Trace-targeted hypotheses and rejection** under **Pareto Optimization** in `docs/meta/prompt-analyzer.md`).
 
 ## Test Plan
 
@@ -75,7 +75,18 @@ Fill after running.
 
 ## Decision
 
-One of: merge to main, keep unmerged, rerun, expand task set, superseded by Hxxxx.
+One of: merge to main, keep unmerged, rerun, expand task set, superseded by Hxxxx. For **trace-targeted** hypotheses, prefer `merge to main` when named trace metrics improved and `patch_published` did not regress vs baseline at the completed gate; do not choose `rejected` solely for flat or worse `resolved` without such a regression (see `docs/meta/prompt-analyzer.md`).
+
+## Search node (MCTS)
+
+Fill after running (see **Search tree (MCTS-style meta-optimization)** in `docs/meta/prompt-orchestrator.md`).
+
+- **Parent state**: `main` @ `<sha>` and/or `parent_hypothesis_id: Hxxxx` (or `null` if root-from-main only).
+- **State fingerprint**: one line (failure class + which traces or summaries define this node).
+- **Children considered**: for each row in **Candidate Hypotheses Considered**, mark `expanded`, `deferred`, or `abandoned` (explain).
+- **Rollout depth**: `one-task` | `three-task` | `full-benchmark-pending`; list baseline and candidate run ids used as samples.
+- **Value summary**: one paragraph pointing to **Metrics** and **Pareto Assessment**.
+- **Revisit queue**: deferred child actions or follow-ups for a future hypothesis id.
 
 ## Evidence Links
 
