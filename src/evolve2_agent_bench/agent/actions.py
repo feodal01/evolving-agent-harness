@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class ShellArgs(BaseModel):
@@ -17,6 +17,13 @@ class ReadFileArgs(BaseModel):
     path: str = Field(min_length=1)
     start_line: int = Field(default=1, ge=1)
     max_lines: int = Field(default=200, ge=1, le=400)
+
+    @field_validator("start_line", "max_lines", mode="before")
+    @classmethod
+    def _coerce_uint_fields(cls, value: Any) -> Any:
+        if isinstance(value, str) and value.strip().isdigit():
+            return int(value.strip())
+        return value
 
 
 class WriteFileArgs(BaseModel):

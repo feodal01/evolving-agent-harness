@@ -4,11 +4,11 @@ import json
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
-from pydantic import ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from evolve2_agent_bench.agent.actions import (
     AgentAction,
@@ -41,6 +41,31 @@ Actions:
 
 Prefer rg, sed, python scripts, and focused tests. Inspect before editing. Keep the patch minimal.
 """
+
+
+class _LooseAgentTurn(BaseModel):
+    """Parse JSON payload shape only; validate tool args against the action-specific schema."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    thought: str = Field(min_length=1)
+    action: Literal["run_shell", "read_file", "write_file", "finish"]
+    args: dict[str, Any]
+
+
+_ARGS_SCHEMAS = {
+    "run_shell": ShellArgs,
+    "read_file": ReadFileArgs,
+    "write_file": WriteFileArgs,
+    "finish": FinishArgs,
+}
+
+
+def _agent_action_from_payload(payload: Any) -> AgentAction:
+    loose = _LooseAgentTurn.model_validate(payload)
+    schema = _ARGS_SCHEMAS[loose.action]
+    typed_args = schema.model_validate(loose.args)
+    return AgentAction(thought=loose.thought, action=loose.action, args=typed_args)
 
 
 @dataclass(frozen=True)
@@ -181,13 +206,24 @@ class BaselineLangChainAgent:
         return content.strip()
 
     def _parse_action(self, raw: str) -> AgentAction:
+        last_validation: ValidationError | None = None
         for start, end in _json_object_spans(raw):
             candidate = raw[start:end]
             try:
-                return AgentAction.model_validate(json.loads(candidate))
-            except (json.JSONDecodeError, ValidationError):
+                payload = json.loads(candidate)
+            except json.JSONDecodeError:
                 continue
-        return AgentAction.model_validate(json.loads(raw))
+            try:
+                return _agent_action_from_payload(payload)
+            except ValidationError as exc:
+                last_validation = exc
+                continue
+        try:
+            return _agent_action_from_payload(json.loads(raw))
+        except ValidationError:
+            if last_validation is not None:
+                raise last_validation
+            raise
 
     def _execute(self, tools: WorkspaceTools, action: AgentAction) -> dict[str, Any]:
         if action.action == "run_shell":
