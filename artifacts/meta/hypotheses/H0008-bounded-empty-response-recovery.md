@@ -1,11 +1,11 @@
 # H0008 Bounded Empty Response Recovery
 
-Status: running
+Status: inconclusive (one-task gate infra failure)
 
 Branch: `hyp/H0008-bounded-empty-response-recovery`
 
 Created: 2026-05-16
-Updated: 2026-05-16
+Updated: 2026-05-17
 
 ## Hypothesis
 
@@ -59,41 +59,50 @@ Non-goals: tool changes, benchmark harness changes, `SYSTEM_PROMPT` rewrites bey
 
 ## Result
 
-Fill after running.
+**Gate:** `one-task` (`astropy__astropy-12907`), stable profile (`max_iterations=100`, `evaluation_timeout=1800`, no `agent_max_tokens`).
+
+**Outcome:** Harness did **not** finish SWE-bench evaluation for the candidate (`result.json` never written). Latest attempt (`20260517-130952-astropy__astropy-12907`) ran through **41** agent iterations (~104 logged `llm_call` timeline events including recovery/retry cycles), then exited with **`JSONDecodeError: Expecting value`** while parsing the OpenRouter HTTP response body inside `ChatOpenAI` (`langchain_openai` → `response.json()`), i.e. the same infra failure class documented for sibling hypotheses in round `20260516-54863b3a3530`.
+
+**Partial trace-targeted observations (candidate only — not decisive without eval):**
+
+- `empty_model_response_recovery`: **6** events (recovery path exercised).
+- `invalid_action`: **57** total; **3** with `max_lines` / oversize framing in raw or error text (narrow bound still sometimes violated upstream of repair; hypothesis not falsified/conclusive here).
+
+Earlier background attempt `20260517-085017-astropy__astropy-12907` progressed into the mid-iteration range then stopped without artifacts from the evaluation phase; superseded by the explicit failure above.
 
 ## Metrics
 
-| Metric | Baseline | Candidate | Delta |
+| Metric | Baseline | Candidate (`20260517-130952-*`) | Delta |
 | --- | --- | --- | --- |
-| Resolved instances | | | |
-| Patch published / patch bytes | | | |
-| Empty patch instances | | | |
-| Wall seconds | | | |
-| Prompt tokens | | | |
-| Completion tokens | | | |
-| Total tokens | | | |
-| Invalid actions | | | |
-| Tool calls | | | |
+| Resolved instances | (see dossier cites; not re-run locally) | *n/a — no evaluation* | *n/a* |
+| Patch published / patch bytes | | *n/a* | |
+| Empty patch instances | | *n/a* | |
+| Wall seconds | | *null (no result.json)* | |
+| Prompt tokens | | 1,476,764 | |
+| Completion tokens | | 1,150,073 | |
+| Total tokens | | 2,626,837 | |
+| Invalid actions | | 57 | |
+| Tool calls (`read_file` / `shell` / `write_file`) | | 7 / 10 / 24 | |
 
 ## Pareto Assessment
 
-Fill after running.
+Cannot assess Pareto vs baseline: **no** `resolved`/patch/`patch_published` evidence from harness. Candidate trace shows bounded recovery signaling and partial max-line adherence but **heavy `invalid_action` load**, dominated by truncation before infra failure.
 
 ## Decision
 
-Fill after running.
+**`inconclusive`.** Retry one-task gate when OpenRouter/streaming gateway returns stable JSON, or rerun with deterministic logging of raw HTTP payloads for attribution. Deferred merge / promotion.
 
 ## Search node (MCTS)
 
 - **Parent state**: branched from `main`; parent hypothesis context H0007 (inconclusive empty recovery + invalid `max_lines`).
 - **State fingerprint**: empty LLM content → single retry → schema-invalid `read_file` over 400 lines.
 - **Children considered**: A expanded (this run); B/C deferred/abandoned per table.
-- **Rollout depth**: `one-task`; baseline run ids cited above; candidate: fill after run.
-- **Value summary**: fill after metrics.
+- **Rollout depth**: `one-task` attempted; baseline run ids cited above; principal candidate run `20260517-130952-astropy__astropy-12907` (stopped before evaluation).
+- **Value summary**: **unknown utility** — partial trace confirms recovery churn and capped `invalid_action`/max-lines pattern at low prevalence vs total invalid actions, but infra crash denies terminal reward (`resolved`, patch submission, eval).
 - **Revisit queue**: none yet.
 
 ## Evidence Links
 
-- Candidate run: fill
-- Candidate trace: fill
-- Commit: fill
+- Candidate run dirs (worktree): `artifacts/runs/20260517-130952-astropy__astropy-12907` (principal), `artifacts/runs/20260517-085017-astropy__astropy-12907` (earlier truncated attempt)
+- Candidate trace: `artifacts/runs/20260517-130952-astropy__astropy-12907/trace.jsonl`
+- Harness / candidate code unchanged in this rescue executor pass: **`87660269e557b2f33fc4513c0188d97be0c373ab`** (current branch agent implementation)
