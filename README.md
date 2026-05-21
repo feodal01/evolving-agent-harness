@@ -18,11 +18,11 @@ This project is a small laboratory for pushing harness engineering as far as pos
 2. The central memory is explicit.
    `artifacts/meta/hypothesis-index.jsonl` gives a compact status index, while `artifacts/meta/hypotheses/` stores full hypothesis dossiers from proposal through result. The project should not rely on chat history.
 
-3. Use LangChain instead of inventing an agent framework.
-   The evolving agent is written on LangChain. The meta-agent improves it by editing ordinary Python code: prompts, tool schemas, parsing, memory, context handling, middleware, LangGraph control flow, and evaluation hooks.
+3. Use LangChain/LangGraph as the agent framework.
+   The evolving agent is a LangGraph ReAct agent with native tool calling. The meta-agent improves it by editing ordinary Python code: prompts, tool definitions, callbacks, memory, context handling, and LangGraph control flow.
 
 4. Use SWE-bench as the pressure test.
-   SWE-bench Verified gives real repository tasks, established evaluation tooling, and a large body of public literature. The meta-agent is expected to use relevant research, including arXiv papers, when generating hypothesis families.
+   SWE-bench Verified gives real repository tasks, established evaluation tooling, and a large body of public literature. The meta-agent is expected to use relevant research, reference agents, and LangChain/LangGraph patterns when generating hypothesis families.
 
 5. Keep rollouts cheap.
    The default evaluated model is a small OpenRouter model: `google/gemma-4-26b-a4b-it`. This keeps iteration cost low and helps measure how far harness improvements can push a smaller model.
@@ -32,17 +32,17 @@ This project is a small laboratory for pushing harness engineering as far as pos
 
 ## Repository Map
 
-- `src/evolve2_agent_bench/agent/`: evolving LangChain coding agent.
-- `src/evolve2_agent_bench/bench/`: SWE-bench runner and evaluation orchestration.
-- `src/evolve2_agent_bench/meta/`: helpers for meta artifacts.
-- `docs/meta/README.md`: entry point for meta-optimization role prompts and artifact schemas.
-- `artifacts/meta/hypotheses-board.json`: operational hypothesis board (orchestrator-owned; see `docs/meta/artifacts-schema.md`).
+- `src/evolve2_agent_bench/agent/`: evolving LangGraph ReAct coding agent.
+- `src/evolve2_agent_bench/bench/`: SWE-bench runner and evaluation (offline only).
+- `docs/meta/README.md`: entry point for meta-optimization prompts and artifact schemas.
+- `docs/meta/prompt-unified.md`: single-agent meta-optimization operating manual.
+- `artifacts/meta/hypotheses-board.json`: operational hypothesis board.
 - `artifacts/meta/hypothesis-index.jsonl`: compact index of hypothesis dossiers and statuses.
 - `artifacts/meta/hypotheses/`: full hypothesis dossiers, from proposal through result.
-- `docs/references/langchain/`: offline LangChain and LangGraph documentation, including curated Python references.
+- `docs/references/langchain/`: offline LangChain and LangGraph documentation.
 - `docs/references/research/agent-evolution-literature.md`: research frame for generating hypothesis families.
-- `artifacts/runs/<run_id>/`: ignored local run traces and benchmark outputs.
-- `artifacts/worktrees/<run_id>/`: ignored local task repositories.
+- `artifacts/runs/<run_id>/`: local run traces and benchmark outputs (git-ignored).
+- `artifacts/mlruns/`: MLflow trace store (git-ignored).
 
 ## Setup
 
@@ -55,18 +55,16 @@ set +a
 
 The OpenRouter key is expected in local `.env` as `OPENROUTER_API_KEY=...`. `.env` is ignored by git. The default model is `google/gemma-4-26b-a4b-it` through OpenRouter.
 
-### Local SWE-bench Verified snapshot (no Hub at run time)
+### SWE-bench Verified Dataset (offline, required)
 
-By default, task rows are loaded with Hugging Face `datasets` from `princeton-nlp/SWE-bench_Verified`, which can hit rate limits. To keep instances **on disk** after a one-time download:
+The dataset must be materialized locally before running tasks. No HuggingFace Hub fallback.
 
 ```bash
-uv run python scripts/materialize_swebench_verified.py --out ./datasets/SWE-bench_Verified
-export EVOLVE2_SWEBENCH_DATASET_ROOT="$(pwd)/datasets/SWE-bench_Verified"
+uv run evolve2 materialize-dataset
+uv run evolve2 dataset-status
 ```
 
-This writes `./datasets/SWE-bench_Verified/test/` in the layout `swebench` expects for `--dataset_name`. Both `evolve2 run-task` and the bundled `run_evaluation` subprocess then read only from that path (no Hub fetch for the dataset). Git ignores `./datasets/` by default.
-
-Optional strict offline mode for other HF clients (may break unrelated tools): `export HF_DATASETS_OFFLINE=1`.
+Default location: `datasets/SWE-bench_Verified`. Override with `EVOLVE2_SWEBENCH_DATASET_ROOT`.
 
 ## Smoke Check
 
@@ -80,10 +78,12 @@ uv run evolve2 model-check
 uv run evolve2 run-task --instance-id astropy__astropy-12907 --max-iterations 100 --evaluation-timeout 1800
 ```
 
+MLflow tracing is **auto-enabled** for every run. Disable with `--no-mlflow` or `EVOLVE2_MLFLOW_TRACING=0`.
+
 Each run writes a directory under `artifacts/runs/<run_id>/` containing:
 
-- `trace.jsonl`: canonical unified timeline with task input, LLM messages, model responses, parsed actions, tool calls, tool outputs, errors, patch, prediction, and evaluation summary.
-- `task.json`: public SWE-bench instance fields given to the agent. Gold patches and hidden evaluator fields are not written to run artifacts.
+- `trace.jsonl`: canonical unified timeline.
+- `task.json`: public SWE-bench instance fields given to the agent.
 - `agent_events.jsonl`: high-level agent decisions.
 - `llm_calls.jsonl`: model-specific slice of the unified trace.
 - `shell_events.jsonl`: shell-specific slice of the unified trace.
@@ -92,65 +92,43 @@ Each run writes a directory under `artifacts/runs/<run_id>/` containing:
 - `evaluation_stdout.log` and `evaluation_stderr.log`: SWE-bench harness output.
 - `result.json`: compact outcome summary.
 
-Large traces stay in per-run JSONL files; hypothesis dossiers store references and metrics, not copied traces.
-
-Inspect a run without re-reading the full LLM tail each turn (shows **only new user text** per step by default):
+Inspect a trace:
 
 ```bash
 uv run evolve2 trace-view artifacts/runs/<run_id> --stream llm --stream agent
 ```
 
-Quick numeric summary:
+### MLflow UI
+
+View full span hierarchies for every LLM call, tool invocation, and evaluation:
 
 ```bash
-uv run python scripts/summarize_trace.py <run_id>
+uv run evolve2 mlflow-ui
+# prints the command to launch MLflow UI
+# then open http://localhost:5000
 ```
 
-### MLflow UI (LangChain traces)
-
-Optional integration with [MLflow](https://mlflow.org/) GenAI tracing — nested spans per `ChatOpenAI.invoke` (same logical turns as in `trace.jsonl`, without manual delta viewers).
-
-```bash
-uv sync --extra mlflow
-export EVOLVE2_MLFLOW_TRACING=1   # or pass --mlflow on run-task
-# optional: export MLFLOW_TRACKING_URI=file:$(pwd)/mlruns
-# optional: export MLFLOW_EXPERIMENT_NAME=my-swe-bench
-uv run evolve2 run-task --instance-id astropy__astropy-12907 --mlflow
-uv run mlflow ui --backend-store-uri ./mlruns
-```
-
-Open the UI → experiment → run named like the `run_id` → **Traces** tab. Shell/tool steps remain only in `trace.jsonl` unless extended later.
-
-This uses MLflow’s LangChain autolog (callbacks on `ChatOpenAI.invoke`). Custom harness steps (`run_shell`, `read_file`, …) are still recorded only in `trace.jsonl` / `agent_events.jsonl`.
+MLflow traces are stored locally in `artifacts/mlruns/`. Each benchmark run creates an MLflow run with nested spans showing the agent session, individual iterations, tool calls, and evaluation.
 
 ## Meta-Agent Workflow
 
-Start at [docs/meta/README.md](docs/meta/README.md). For a single hypothesis branch, follow [docs/meta/prompt-executor.md](docs/meta/prompt-executor.md) and [docs/meta/artifacts-schema.md](docs/meta/artifacts-schema.md).
+A **single unified agent** handles all meta-optimization phases. Start at [docs/meta/README.md](docs/meta/README.md), use [docs/meta/prompt-unified.md](docs/meta/prompt-unified.md) as the `/goal` prompt.
 
-For a top-level `/goal` that coordinates multiple hypothesis workers, use [docs/meta/prompt-orchestrator.md](docs/meta/prompt-orchestrator.md). That prompt is only for the orchestrator, not for a single hypothesis-testing subagent.
+The meta-optimization loop:
 
-The single-hypothesis worker loop:
+1. **Round setup**: Checkout main, verify env, read hypothesis board.
+2. **Research scan**: Review reference agents (SWE-agent, Aider, OpenHands, Moatless), LangChain/LangGraph docs, research literature.
+3. **Hypothesis generation**: Generate three candidates (exploit/explore/bridge), classify as `mechanical` or `hypothesis`, select one.
+4. **Execution**: Branch, implement, validate according to fix type.
+5. **Analysis**: Pareto comparison using JSONL traces + MLflow span analysis.
+6. **Decision**: Merge / reject / keep, publish to registry.
 
-1. Start from `main`.
-2. Inspect the latest `result.json` and `trace.jsonl`.
-3. Classify the failure mode.
-4. Read relevant local references, papers, and useful GitHub examples if the hypothesis needs them.
-5. Generate three candidate hypotheses with effort/result/confidence scores.
-6. Choose the best effort/result tradeoff.
-7. Create `hyp/HXXXX-<slug>`.
-8. Make one narrow code or prompt change.
-9. Run the one-task gate first.
-10. If it passes, run the fixed three-task promotion gate.
-11. If the three-task gate passes, ask the user before any full SWE-bench Verified run.
-12. Fill the result section in the hypothesis dossier and update `artifacts/meta/hypothesis-index.jsonl`.
-13. Push the hypothesis branch.
-14. Merge into `main` only if the hypothesis improves Pareto efficiency. For rejected or inconclusive hypotheses, keep the branch and publish only the central hypothesis artifacts back to `main`.
+### Fix Types
 
-Pareto efficiency means the change improves at least one important metric without an unacceptable regression elsewhere. Patch publication is a gating metric, the primary metric is SWE-bench solve rate, and secondary metrics include wall time, token usage, invalid actions, tool calls, patch size, and failure class.
+- **Mechanical** (`fix_type: mechanical`): Parser bugs, retry logic, infrastructure. One-task gate only, no baseline comparison. Cost: ~1 run.
+- **Hypothesis** (`fix_type: hypothesis`): Quality improvements. Full validation ladder with baseline comparison. Cost: 2-8 runs.
 
-Wall time and token usage are required but noisy. They are merge evidence only for comparable terminal runs, especially when both baseline and candidate publish a patch. If a run does not publish a patch or stops on the iteration cap, time and tokens are diagnostic rather than proof of better efficiency. Use the stable benchmark profile from `docs/meta/prompt-executor.md`; low iteration caps such as 4, 8, 16, or 32 are smoke checks, not decision runs. Do not set an agent completion-token cap unless the hypothesis is specifically about response budget.
-
-Validation scales in stages: first `astropy__astropy-12907`, then the fixed three-task set `astropy__astropy-12907`, `django__django-11099`, and `sympy__sympy-20590` if the first gate passes. A full benchmark run is only a next-step recommendation after the three-task gate and requires explicit user approval.
+This distinction prevents burning budget on expensive baseline comparisons for trivial fixes.
 
 ## Offline References
 

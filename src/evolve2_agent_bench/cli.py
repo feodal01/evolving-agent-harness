@@ -9,8 +9,14 @@ from langchain_core.messages import HumanMessage
 from langchain_openai import ChatOpenAI
 from rich import print as rprint
 
-from evolve2_agent_bench.bench.swebench_runner import run_one_task
+from evolve2_agent_bench.bench.swebench_runner import (
+    DEFAULT_DATASET_DIR,
+    materialize_dataset,
+    resolve_dataset_root,
+    run_one_task,
+)
 from evolve2_agent_bench.config import DEFAULT_MODEL, OpenRouterConfig
+from evolve2_agent_bench.mlflow_tracing import launch_mlflow_ui
 from evolve2_agent_bench.trace_view import format_compact_trace
 
 
@@ -25,6 +31,7 @@ def project_root() -> Path:
 def model_check(
     model: Annotated[str, typer.Option(help="OpenRouter model id.")] = DEFAULT_MODEL,
 ) -> None:
+    """Verify OpenRouter connectivity and model availability."""
     config = OpenRouterConfig.from_env(model=model)
     llm = ChatOpenAI(
         model=config.model,
@@ -40,6 +47,38 @@ def model_check(
     )
     response = llm.invoke([HumanMessage(content="Reply with exactly: model-ok")])
     rprint(str(response.content).strip())
+
+
+@app.command("materialize-dataset")
+def materialize_dataset_cmd(
+    out: Annotated[
+        Path,
+        typer.Option(help="Output directory for the dataset."),
+    ] = Path(DEFAULT_DATASET_DIR),
+    force: Annotated[
+        bool,
+        typer.Option("--force", help="Redownload and overwrite."),
+    ] = False,
+) -> None:
+    """Download SWE-bench Verified dataset for offline use."""
+    root = project_root()
+    out_path = out if out.is_absolute() else root / out
+    rprint(f"Materializing SWE-bench Verified to {out_path} …")
+    result = materialize_dataset(out_path, force=force)
+    rprint(f"[green]Done.[/green] Dataset at: {result}")
+    rprint(f"export EVOLVE2_SWEBENCH_DATASET_ROOT={result}")
+
+
+@app.command("dataset-status")
+def dataset_status_cmd() -> None:
+    """Check if SWE-bench Verified dataset is available offline."""
+    root = project_root()
+    try:
+        ds_root = resolve_dataset_root(root)
+        rprint(f"[green]Dataset available:[/green] {ds_root}")
+    except FileNotFoundError as exc:
+        rprint(f"[red]Dataset not found.[/red] {exc}")
+        raise typer.Exit(code=1)
 
 
 @app.command("trace-view")
@@ -86,6 +125,17 @@ def trace_view_cmd(
     )
 
 
+@app.command("mlflow-ui")
+def mlflow_ui_cmd(
+    port: Annotated[int, typer.Option(help="Port for the MLflow UI.")] = 5000,
+) -> None:
+    """Print the command to launch the MLflow UI for inspecting traces."""
+    root = project_root()
+    cmd = launch_mlflow_ui(root, port)
+    rprint(f"[bold]Run this command to start the MLflow UI:[/bold]\n\n  {cmd}\n")
+    rprint(f"Then open http://localhost:{port} in your browser.")
+
+
 @app.command()
 def run_task(
     instance_id: Annotated[
@@ -105,16 +155,18 @@ def run_task(
         ),
     ] = None,
     evaluation_timeout: Annotated[int, typer.Option(min=60)] = 1800,
-    mlflow_tracing: Annotated[
+    no_mlflow: Annotated[
         bool,
         typer.Option(
-            "--mlflow",
-            help="Send LangChain traces to MLflow (requires: uv sync --extra mlflow). Or set EVOLVE2_MLFLOW_TRACING=1.",
+            "--no-mlflow",
+            help="Disable MLflow tracing for this run (enabled by default).",
         ),
     ] = False,
 ) -> None:
+    """Run the ReAct coding agent on a single SWE-bench task with evaluation."""
     root = project_root()
     config = OpenRouterConfig.from_env(model=model)
+    mlflow_flag: bool | None = False if no_mlflow else None
     result = run_one_task(
         project_root=root,
         instance_id=instance_id,
@@ -122,6 +174,6 @@ def run_task(
         max_iterations=max_iterations,
         agent_max_tokens=agent_max_tokens,
         evaluation_timeout=evaluation_timeout,
-        enable_mlflow_tracing=mlflow_tracing,
+        enable_mlflow_tracing=mlflow_flag,
     )
     rprint(json.dumps(result, indent=2, ensure_ascii=False))
