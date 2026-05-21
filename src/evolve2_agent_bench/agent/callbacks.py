@@ -14,6 +14,15 @@ from evolve2_agent_bench.trace import RunTraces
 MAX_TRACE_CHARS = 12_000
 
 
+def _tool_output_text(output: Any) -> str:
+    if isinstance(output, str):
+        return output
+    content = getattr(output, "content", None)
+    if content is not None:
+        return str(content)
+    return str(output)
+
+
 def _trunc(text: str, limit: int = MAX_TRACE_CHARS) -> str:
     if len(text) <= limit:
         return text
@@ -104,13 +113,13 @@ class AgentTraceCallback(BaseCallbackHandler):
             },
         )
 
-    def on_tool_end(self, output: str, *, run_id: UUID, **kwargs: Any) -> None:
+    def on_tool_end(self, output: Any, *, run_id: UUID, **kwargs: Any) -> None:
         self.traces.append_agent(
             "agent_observation",
             {
                 "iteration": self._iteration,
                 "ok": True,
-                "observation": _trunc(output),
+                "observation": _trunc(_tool_output_text(output)),
             },
         )
 
