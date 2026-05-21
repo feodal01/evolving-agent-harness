@@ -151,7 +151,7 @@ def mlflow_parent_run(
                 _obs_enabled.reset(token)
 
 
-def launch_mlflow_ui(project_root: Path | None = None, port: int = 5000) -> str:
+def launch_mlflow_ui(project_root: Path | None = None, port: int = 5050) -> str:
     """Return the shell command to launch the MLflow UI for the local store."""
     if project_root is None:
         project_root = Path(__file__).resolve().parents[2]

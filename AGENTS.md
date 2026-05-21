@@ -29,7 +29,7 @@ SWE-bench Verified must be materialized locally before running tasks. The harnes
 uv run evolve2 run-task --instance-id <id> --max-iterations 100 --evaluation-timeout 1800
 ```
 
-MLflow tracing is auto-enabled. Disable with `--no-mlflow` or `EVOLVE2_MLFLOW_TRACING=0`. View traces: `uv run evolve2 mlflow-ui` → http://localhost:5000.
+MLflow tracing is auto-enabled. Disable with `--no-mlflow` or `EVOLVE2_MLFLOW_TRACING=0`. View traces: `uv run evolve2 mlflow-ui` → http://localhost:5050 (avoid 5000 on macOS — AirPlay).
 
 Do not set `--agent-max-tokens` unless the hypothesis is specifically about response budget.
 

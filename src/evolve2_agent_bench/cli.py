@@ -127,7 +127,10 @@ def trace_view_cmd(
 
 @app.command("mlflow-ui")
 def mlflow_ui_cmd(
-    port: Annotated[int, typer.Option(help="Port for the MLflow UI.")] = 5000,
+    port: Annotated[
+        int,
+        typer.Option(help="Port for the MLflow UI (default 5050; macOS uses 5000 for AirPlay)."),
+    ] = 5050,
 ) -> None:
     """Print the command to launch the MLflow UI for inspecting traces."""
     root = project_root()
