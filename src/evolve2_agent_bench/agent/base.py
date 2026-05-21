@@ -27,6 +27,13 @@ from evolve2_agent_bench.trace import RunTraces
 # action parser runs. Retry here so long benchmark runs are not aborted by one bad chunk.
 LLM_TRANSPORT_MAX_ATTEMPTS = 8
 LLM_TRANSPORT_BACKOFF_CAP_S = 8.0
+FINALIZATION_CHECKPOINT_ITERATION = 3
+FINALIZATION_CHECKPOINT_NOTE = (
+    "Checkpoint reached after iteration 3. If this run resumes, continue from the current "
+    "tracked-diff state and do not treat a clean diff as completion; a tracked source edit is "
+    "still required before finishing."
+)
+CHECKPOINT_FILENAME = ".evolve2_checkpoint.json"
 
 
 def _exception_chain_contains(exc: BaseException, target: type | tuple[type, ...]) -> bool:
@@ -98,6 +105,69 @@ class AgentResult:
     iterations: int
 
 
+def _checkpoint_path(workspace: Path) -> Path:
+    return workspace.parent / CHECKPOINT_FILENAME
+
+
+def _load_run_checkpoint(workspace: Path, task: dict[str, Any]) -> dict[str, Any] | None:
+    path = _checkpoint_path(workspace)
+    if not path.is_file():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(payload, dict):
+        return None
+    if payload.get("task_instance_id") != task["instance_id"]:
+        return None
+    conversation = payload.get("conversation")
+    if not isinstance(conversation, list) or not all(isinstance(item, str) for item in conversation):
+        return None
+    final_iterations = payload.get("final_iterations")
+    if not isinstance(final_iterations, int) or final_iterations < 1:
+        return None
+    final_summary = payload.get("final_summary")
+    if not isinstance(final_summary, str):
+        return None
+    terminal = payload.get("terminal")
+    if not isinstance(terminal, bool):
+        return None
+    return {
+        "conversation": conversation,
+        "final_iterations": final_iterations,
+        "final_summary": final_summary,
+        "terminal": terminal,
+    }
+
+
+def _write_run_checkpoint(
+    workspace: Path,
+    task: dict[str, Any],
+    conversation: list[str],
+    final_iterations: int,
+    final_summary: str,
+    terminal: bool,
+) -> None:
+    payload = {
+        "version": 1,
+        "task_instance_id": task["instance_id"],
+        "finalization_checkpoint_iteration": FINALIZATION_CHECKPOINT_ITERATION,
+        "conversation": conversation,
+        "final_iterations": final_iterations,
+        "final_summary": final_summary,
+        "terminal": terminal,
+    }
+    _checkpoint_path(workspace).write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+
+
+def _clear_run_checkpoint(workspace: Path) -> None:
+    _checkpoint_path(workspace).unlink(missing_ok=True)
+
+
 class BaselineLangChainAgent:
     def __init__(
         self,
@@ -125,13 +195,27 @@ class BaselineLangChainAgent:
 
     def run(self, workspace: Path, task: dict[str, Any], max_iterations: int) -> AgentResult:
         tools = WorkspaceTools(root=workspace, traces=self.traces)
-        conversation: list[str] = [
-            "SWE-bench task:",
-            f"instance_id: {task['instance_id']}",
-            f"repo: {task['repo']}",
-            "problem_statement:",
-            task["problem_statement"],
-        ]
+        checkpoint = _load_run_checkpoint(workspace, task)
+        if checkpoint is None:
+            conversation: list[str] = [
+                "SWE-bench task:",
+                f"instance_id: {task['instance_id']}",
+                f"repo: {task['repo']}",
+                "problem_statement:",
+                task["problem_statement"],
+            ]
+            final_iterations = max_iterations
+            final_summary = ""
+            terminal = False
+            start_iteration = 1
+        else:
+            conversation = checkpoint["conversation"]
+            final_iterations = checkpoint["final_iterations"]
+            final_summary = checkpoint["final_summary"]
+            terminal = checkpoint["terminal"]
+            if terminal:
+                return AgentResult(summary=final_summary, iterations=final_iterations)
+            start_iteration = final_iterations + 1
         with mlflow_span(
             "coding_agent_session",
             "WORKFLOW",
@@ -158,6 +242,7 @@ class BaselineLangChainAgent:
                     "workspace": str(workspace),
                     "instance_id": task["instance_id"],
                     "max_iterations": max_iterations,
+                    "resumed_from_checkpoint": checkpoint is not None,
                     "input": {
                         "repo": task["repo"],
                         "base_commit": task["base_commit"],
@@ -166,11 +251,7 @@ class BaselineLangChainAgent:
                 },
             )
 
-            final_iterations = max_iterations
-            final_summary = ""
-            terminal = False
-
-            for iteration in range(1, max_iterations + 1):
+            for iteration in range(start_iteration, max_iterations + 1):
                 with mlflow_span(
                     f"agent_iteration_{iteration}",
                     "AGENT",
@@ -247,6 +328,20 @@ class BaselineLangChainAgent:
                             ensure_ascii=False,
                         )
                     )
+                    if (
+                        iteration >= FINALIZATION_CHECKPOINT_ITERATION
+                        and FINALIZATION_CHECKPOINT_NOTE not in conversation
+                    ):
+                        conversation.append(FINALIZATION_CHECKPOINT_NOTE)
+                    final_iterations = iteration
+                    _write_run_checkpoint(
+                        workspace,
+                        task,
+                        conversation,
+                        iteration,
+                        final_summary,
+                        False,
+                    )
                     if action.action == "finish":
                         args = action.args
                         if not isinstance(args, FinishArgs):
@@ -258,11 +353,29 @@ class BaselineLangChainAgent:
                         final_summary = args.summary
                         final_iterations = iteration
                         terminal = True
+                        _write_run_checkpoint(
+                            workspace,
+                            task,
+                            conversation,
+                            final_iterations,
+                            final_summary,
+                            True,
+                        )
                         break
 
             if not terminal:
                 final_summary = f"Stopped after {max_iterations} iterations without finish action."
                 self.traces.append_agent("agent_stop", {"summary": final_summary})
+                _write_run_checkpoint(
+                    workspace,
+                    task,
+                    conversation,
+                    final_iterations,
+                    final_summary,
+                    False,
+                )
+            else:
+                _clear_run_checkpoint(workspace)
 
             if root_span is not None:
                 root_span.set_outputs(
