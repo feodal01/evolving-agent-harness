@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -169,6 +170,7 @@ class BaselineLangChainAgent:
             final_iterations = max_iterations
             final_summary = ""
             terminal = False
+            source_edit_checkpoint_announced = False
 
             for iteration in range(1, max_iterations + 1):
                 with mlflow_span(
@@ -247,6 +249,22 @@ class BaselineLangChainAgent:
                             ensure_ascii=False,
                         )
                     )
+                    if (
+                        not source_edit_checkpoint_announced
+                        and iteration == 3
+                        and not self._has_tracked_source_diff(workspace)
+                    ):
+                        checkpoint_message = (
+                            "Checkpoint: after 3 iterations there is still no tracked source diff "
+                            "under src/. Prioritize editing tracked source files now instead of "
+                            "more reproduction or environment recovery."
+                        )
+                        self.traces.append_agent(
+                            "agent_checkpoint",
+                            {"iteration": iteration, "summary": checkpoint_message},
+                        )
+                        conversation.append(checkpoint_message)
+                        source_edit_checkpoint_announced = True
                     if action.action == "finish":
                         args = action.args
                         if not isinstance(args, FinishArgs):
@@ -424,6 +442,21 @@ class BaselineLangChainAgent:
             if tsp is not None:
                 tsp.set_outputs(truncate_for_span(out))
             return out
+
+    def _has_tracked_source_diff(self, workspace: Path) -> bool:
+        proc = subprocess.run(
+            ["git", "-C", str(workspace), "diff", "--name-only", "--", "src"],
+            check=False,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        if proc.returncode != 0:
+            raise RuntimeError(
+                "Failed to inspect tracked source diff: "
+                f"returncode={proc.returncode}, stderr={proc.stderr.strip()}"
+            )
+        return any(line.strip() for line in proc.stdout.splitlines())
 
 
 def _json_object_spans(raw: str) -> list[tuple[int, int]]:
