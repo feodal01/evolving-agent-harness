@@ -10,6 +10,7 @@ artifacts/worktrees/
 artifacts/runs/
 datasets/
 mlruns/
+artifacts/mlflow.db
 logs/
 *.egg-info/
 *.json.tmp

@@ -8,7 +8,7 @@ CLI ``--no-mlflow``.
 
 Environment:
 - ``MLFLOW_TRACKING_URI`` — override the default local store
-  (default: ``file://<project_root>/artifacts/mlruns``).
+  (default: ``sqlite://<project_root>/artifacts/mlflow.db``).
 - ``MLFLOW_EXPERIMENT_NAME`` — default ``evolve2-agent-bench``.
 """
 
@@ -35,9 +35,9 @@ MAX_SPAN_CHARS = 24_000
 def _default_tracking_uri(project_root: Path | None = None) -> str:
     if project_root is None:
         project_root = Path(__file__).resolve().parents[2]
-    mlruns_dir = project_root / "artifacts" / "mlruns"
-    mlruns_dir.mkdir(parents=True, exist_ok=True)
-    return f"file://{mlruns_dir}"
+    db_path = project_root / "artifacts" / "mlflow.db"
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    return f"sqlite:///{db_path}"
 
 
 def tracing_requested(cli_flag: bool | None = None) -> bool:

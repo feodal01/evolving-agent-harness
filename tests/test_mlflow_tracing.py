@@ -12,8 +12,8 @@ class TestTracingRequested(unittest.TestCase):
     def test_cli_forces_true(self) -> None:
         prior = os.environ.pop("EVOLVE2_MLFLOW_TRACING", None)
         try:
-            self.assertTrue(tracing_requested(cli_enable=True))
-            self.assertFalse(tracing_requested(cli_enable=False))
+            self.assertTrue(tracing_requested(cli_flag=True))
+            self.assertFalse(tracing_requested(cli_flag=False))
         finally:
             if prior is not None:
                 os.environ["EVOLVE2_MLFLOW_TRACING"] = prior
@@ -22,7 +22,7 @@ class TestTracingRequested(unittest.TestCase):
         prior = os.environ.pop("EVOLVE2_MLFLOW_TRACING", None)
         try:
             os.environ["EVOLVE2_MLFLOW_TRACING"] = "1"
-            self.assertTrue(tracing_requested(cli_enable=False))
+            self.assertTrue(tracing_requested())
         finally:
             os.environ.pop("EVOLVE2_MLFLOW_TRACING", None)
             if prior is not None:
