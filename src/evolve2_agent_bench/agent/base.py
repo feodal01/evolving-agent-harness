@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -74,6 +75,8 @@ def _is_retryable_llm_transport(exc: BaseException) -> bool:
 SYSTEM_PROMPT = """You are a baseline SWE-bench coding agent.
 
 You work inside a checked-out git repository. Fix the issue with the smallest correct patch.
+Maintain an explicit `ready_to_finish` control state: it stays false until a tracked source diff
+exists under `src/` and the patch is confirmed, and only then may you call `finish`.
 
 Return exactly one JSON object per turn, with no markdown:
 {
@@ -165,6 +168,12 @@ class BaselineLangChainAgent:
                     },
                 },
             )
+            conversation.append(
+                json.dumps(
+                    {"control_state": self._finish_control_state(workspace)},
+                    ensure_ascii=False,
+                )
+            )
 
             final_iterations = max_iterations
             final_summary = ""
@@ -217,6 +226,18 @@ class BaselineLangChainAgent:
                         },
                     )
                     result = self._execute(tools, action)
+                    control_state = self._finish_control_state(workspace)
+                    if action.action == "finish" and not control_state["ready_to_finish"]:
+                        blocked_summary = (
+                            "Finish blocked: ready_to_finish is false because no tracked source "
+                            "diff under src/ exists yet. Edit source files before trying finish "
+                            "again."
+                        )
+                        self.traces.append_agent(
+                            "agent_finish_blocked",
+                            {"iteration": iteration, "summary": blocked_summary},
+                        )
+                        result = {"ok": False, "output": blocked_summary}
                     self.traces.append_agent(
                         "agent_observation",
                         {
@@ -224,6 +245,7 @@ class BaselineLangChainAgent:
                             "action": action.action,
                             "ok": result["ok"],
                             "observation": result["output"],
+                            "control_state": control_state,
                         },
                     )
                     if iter_span is not None:
@@ -233,6 +255,7 @@ class BaselineLangChainAgent:
                                     "action": action.action,
                                     "ok": result["ok"],
                                     "observation_preview": result["output"],
+                                    "control_state": control_state,
                                 }
                             )
                         )
@@ -243,6 +266,7 @@ class BaselineLangChainAgent:
                                 "action": action.action,
                                 "ok": result["ok"],
                                 "observation": result["output"],
+                                "control_state": control_state,
                             },
                             ensure_ascii=False,
                         )
@@ -251,6 +275,8 @@ class BaselineLangChainAgent:
                         args = action.args
                         if not isinstance(args, FinishArgs):
                             raise TypeError("finish action received non-finish args")
+                        if not control_state["ready_to_finish"]:
+                            continue
                         self.traces.append_agent(
                             "agent_finish",
                             {"iteration": iteration, "summary": args.summary},
@@ -424,6 +450,44 @@ class BaselineLangChainAgent:
             if tsp is not None:
                 tsp.set_outputs(truncate_for_span(out))
             return out
+
+    def _finish_control_state(self, workspace: Path) -> dict[str, bool]:
+        tracked_source_diff = self._has_tracked_source_diff(workspace)
+        patch_confirmed = False
+        if tracked_source_diff:
+            proc = subprocess.run(
+                ["git", "-C", str(workspace), "diff", "--", "src"],
+                check=False,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            if proc.returncode != 0:
+                raise RuntimeError(
+                    "Failed to inspect patch confirmation: "
+                    f"returncode={proc.returncode}, stderr={proc.stderr.strip()}"
+                )
+            patch_confirmed = bool(proc.stdout.strip())
+        return {
+            "tracked_source_diff": tracked_source_diff,
+            "patch_confirmed": patch_confirmed,
+            "ready_to_finish": tracked_source_diff and patch_confirmed,
+        }
+
+    def _has_tracked_source_diff(self, workspace: Path) -> bool:
+        proc = subprocess.run(
+            ["git", "-C", str(workspace), "diff", "--name-only", "--", "src"],
+            check=False,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        if proc.returncode != 0:
+            raise RuntimeError(
+                "Failed to inspect tracked source diff: "
+                f"returncode={proc.returncode}, stderr={proc.stderr.strip()}"
+            )
+        return any(line.strip() for line in proc.stdout.splitlines())
 
 
 def _json_object_spans(raw: str) -> list[tuple[int, int]]:
