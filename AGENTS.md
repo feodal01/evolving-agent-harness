@@ -37,7 +37,7 @@ Do not set `--agent-max-tokens` unless the hypothesis is specifically about resp
 
 Use [`docs/meta/prompt-unified.md`](docs/meta/prompt-unified.md) as the `/goal` prompt for the single meta-optimization agent. The unified agent performs all phases (orchestration, proposal, execution, analysis, decision) sequentially. Start at [`docs/meta/README.md`](docs/meta/README.md) for orientation.
 
-Meta-optimization is **MCTS-style**: dossiers record search nodes with sampled rollouts, values, and deferred child actions. See [`docs/meta/prompt-orchestrator.md`](docs/meta/prompt-orchestrator.md) for the search tree model.
+Meta-optimization is **MCTS-style**: dossiers record search nodes with sampled rollouts, values, and deferred child actions. See [`docs/meta/artifacts-schema.md`](docs/meta/artifacts-schema.md) Appendix B for the dossier template including Search node (MCTS).
 
 ### Key rules
 

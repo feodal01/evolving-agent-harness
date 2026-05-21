@@ -33,7 +33,7 @@ def model_check(
 ) -> None:
     """Verify OpenRouter connectivity and model availability."""
     config = OpenRouterConfig.from_env(model=model)
-    llm = ChatOpenAI(
+    llm = ChatOpenAI(  # type: ignore[call-arg]
         model=config.model,
         api_key=config.api_key,
         base_url=config.base_url,

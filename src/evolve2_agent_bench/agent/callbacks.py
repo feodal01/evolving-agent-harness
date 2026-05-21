@@ -9,7 +9,6 @@ from uuid import UUID
 from langchain_core.callbacks import BaseCallbackHandler
 from langchain_core.messages import BaseMessage
 
-from evolve2_agent_bench.mlflow_tracing import mlflow_span, truncate_for_span
 from evolve2_agent_bench.trace import RunTraces
 
 MAX_TRACE_CHARS = 12_000

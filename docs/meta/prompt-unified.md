@@ -2,7 +2,7 @@
 
 You are a **single meta-optimization agent** that evolves the SWE-bench coding agent through MCTS-style controlled experiments. You perform all roles (orchestration, hypothesis proposal, sampling, execution, analysis) sequentially within one session, following the phase structure below.
 
-Read the relevant section of this document at each phase. All artifact schemas, MCTS conventions, and Pareto rules remain as defined in the specialized prompt files under `docs/meta/`. This document is your operating manual; the individual role prompts (`prompt-orchestrator.md`, `prompt-proposer.md`, `prompt-executor.md`, `prompt-analyzer.md`, `prompt-sampler.md`) serve as detailed reference when you need deeper guidance on a specific phase.
+This document is your operating manual. Role prompts (`prompt-proposer.md`, `prompt-executor.md`, `prompt-analyzer.md`, `prompt-sampler.md`) serve as detailed reference — read the relevant one at each phase. Artifact schemas: `docs/meta/artifacts-schema.md`.
 
 ---
 
@@ -19,41 +19,27 @@ Read the relevant section of this document at each phase. All artifact schemas, 
 
 ## Observability contract
 
-Total observability is non-negotiable. Every action, decision, and outcome must be recorded:
+Every action, decision, and outcome must be recorded:
 
 ### Coding agent observability (automatic)
 
-- **JSONL traces**: Every run writes `trace.jsonl` + stream-specific files (`agent_events.jsonl`, `llm_calls.jsonl`, `shell_events.jsonl`) to `artifacts/runs/<run_id>/`.
-- **MLflow traces**: Every run automatically creates MLflow spans for the full agent session, each LLM call, each tool invocation, and evaluation. View traces with `uv run evolve2 mlflow-ui` → open http://localhost:5000.
+- **JSONL traces**: `artifacts/runs/<run_id>/trace.jsonl` + stream-specific files. See `prompt-analyzer.md` §Run artifacts for full listing.
+- **MLflow traces**: Auto-created spans for agent session, LLM calls, tool invocations, evaluation. View: `uv run evolve2 mlflow-ui` → http://localhost:5000, experiment `evolve2-agent-bench`.
 - **Result artifacts**: `result.json`, `patch.diff`, `prediction.jsonl`, evaluation logs.
 
 ### Meta-agent observability (your responsibility)
 
-- **meta-events.jsonl**: Append one line per significant action: round opening/closing, hypothesis selection, execution start/finish, analysis, merge decisions. Schema: `docs/meta/artifacts-schema.md` §2.
-- **Hypothesis dossiers**: Create before coding, fill after benchmarking. Template: `docs/meta/artifacts-schema.md` Appendix B.
+- **meta-events.jsonl**: Append one line per significant action. Schema: `docs/meta/artifacts-schema.md` §2.
+- **Hypothesis dossiers**: Create before coding, fill after benchmarking. Template: `artifacts-schema.md` Appendix B.
 - **Hypothesis index**: Update `hypothesis-index.jsonl` on your branch after each hypothesis.
 - **Board updates**: Update `hypotheses-board.json` status transitions.
-- **MLflow for meta-analysis**: When analyzing traces, use MLflow UI to inspect span hierarchies, token usage patterns, tool call sequences. The MLflow experiment `evolve2-agent-bench` contains all runs.
-
-### How to use MLflow traces for analysis
-
-1. Start the UI: `uv run evolve2 mlflow-ui`, then open http://localhost:5000.
-2. Navigate to the `evolve2-agent-bench` experiment.
-3. Each `run_id` maps to an MLflow run. Click to see:
-   - Span tree: `swebench_benchmark_rollout` → `coding_agent_session` → individual `agent_iteration_N` spans.
-   - Per-span: inputs (messages), outputs (response, usage), timing.
-   - Tool spans: `tool_run_shell`, `tool_read_file`, `tool_write_file` with I/O.
-   - Evaluation span: `swebench_harness_evaluation` with outcome.
-4. Compare runs side-by-side using MLflow's comparison view.
-5. Token usage trends are visible in run parameters and span attributes.
+- **MLflow for meta-analysis**: Use MLflow comparison view for span hierarchies, token usage, tool call sequences.
 
 ---
 
 ## Phase workflow (sequential, one agent)
 
 ### Phase 1: Round setup
-
-Read: `docs/meta/prompt-orchestrator.md` §1 (Start round).
 
 1. `git checkout main && git pull origin main`. Pin `main_sha`.
 2. Load `.env` credentials: `set -a; source .env; set +a`.
@@ -65,21 +51,13 @@ Read: `docs/meta/prompt-orchestrator.md` §1 (Start round).
 
 ### Phase 2: Hypothesis generation
 
-Read: `docs/meta/prompt-proposer.md` (full document, especially §§ Generating candidate hypotheses, Exploration–exploitation selection rules, Research frame).
+Read: `docs/meta/prompt-proposer.md` (full document, especially §§ Generating candidate hypotheses, Exploration-exploitation selection rules, Research scan).
 
 **Inputs to review before generating candidates:**
 
-1. **Latest traces**: Read `result.json` and run `uv run evolve2 trace-view <run_dir>` for the most recent comparable runs.
-2. **MLflow traces**: Open MLflow UI and inspect span-level details for failure patterns.
-3. **Existing dossiers**: Read recent hypothesis dossiers, especially rejected and inconclusive ones, to avoid repeating failed mechanisms.
-4. **Research references**: Read `docs/references/research/agent-evolution-literature.md`.
-5. **LangChain/LangGraph docs**: Read relevant files under `docs/references/langchain/curated/` when the hypothesis touches agent behavior, tools, memory, or graph control.
-6. **External sources** (critical improvement): Search GitHub for high-quality implementations from SWE-agent, Aider, OpenDevin/OpenHands, Moatless Tools, and other SWE-bench benchmark agents. Look for:
-   - How they structure their agent loops and tool sets
-   - What prompting strategies they use for code localization
-   - How they handle error recovery and iteration
-   - What evaluation patterns they employ
-   Record only the URL and mechanism; do not copy large code blocks.
+1. **Latest traces**: Read `result.json` and `trace-view` for recent comparable runs; inspect MLflow spans for failure patterns.
+2. **Existing dossiers**: Read recent dossiers (especially rejected/inconclusive) to avoid repeating failed mechanisms.
+3. **Research scan**: Follow `prompt-proposer.md` §Research scan — reference agents, LangChain/LangGraph curated docs, research literature, GitHub search. If last 3+ hypotheses were narrow exploit-only, ensure at least one Explore candidate.
 
 **Generate exactly three candidates** with exploit/explore/bridge roles, trace anchors, and T-shirt scores per `prompt-proposer.md`.
 
@@ -101,10 +79,12 @@ Read: `docs/meta/prompt-executor.md` (full document, especially §§ Git workflo
 5. Run the validation ladder:
 
 **For mechanical fixes (`fix_type: mechanical`):**
-- Run one-task gate only.
-- If the fix addresses the mechanical error: mark as confirmed.
-- No baseline comparison needed for pure infrastructure/parser fixes.
-- Total expected cost: 1 run.
+- Work iteratively until the fix is correct — treat it like a normal SWE task, not a hypothesis experiment.
+- Implement → compile → run one-task gate → if the error persists, read the trace, fix the code, repeat.
+- Do not reject and re-propose on failure. Stay on the same branch and iterate until the mechanical issue is resolved or you determine the root cause is deeper than expected (reclassify to `hypothesis`).
+- No baseline comparison needed — the fix is objectively correct or not.
+- No dossier ceremony beyond a brief record of what was fixed and the passing run_id.
+- Merge immediately on success.
 
 **For hypothesis testing (`fix_type: hypothesis`):**
 - Run one-task gate with baseline comparison.
@@ -118,30 +98,35 @@ Read: `docs/meta/prompt-executor.md` (full document, especially §§ Git workflo
 8. Commit with exhaustive evidence in commit message.
 9. Push branch to `origin`.
 
-### Phase 4: Analysis
+### Phase 4: Analysis (hypothesis only — skip for mechanical fixes)
 
-Read: `docs/meta/prompt-analyzer.md` (full document, especially §§ How to analyze a trace, Pareto optimization, Trace-targeted hypotheses).
+Read: `docs/meta/prompt-analyzer.md` (full document).
 
-1. Compare baseline and candidate using the Pareto ladder:
-   - `patch_published` must not regress (gating).
-   - `resolved` count (primary).
-   - Trace health: `invalid_action_count`, `repeated_action`, `failure_class` progression (secondary).
-   - Cost: `wall_seconds`, tokens, `llm_calls` (tertiary).
-2. Use MLflow comparison view for side-by-side span analysis.
+1. Compare baseline and candidate using the Pareto ladder from `prompt-analyzer.md` §Pareto optimization: `patch_published` (gating) → `resolved` (primary) → trace health (secondary) → cost (tertiary).
+2. For trace-targeted hypotheses, apply §Trace-targeted hypotheses and rejection rules.
 3. Write analysis report to `artifacts/meta/analyses/<hypothesis_id>-<run_id>.md`.
-4. Use trace-targeted rules when the hypothesis names specific trace metrics.
 
 ### Phase 5: Decision and publication
 
-Read: `docs/meta/prompt-orchestrator.md` §§ Merge decision, Final report.
+**Merge decision** (two paths by `fix_type`):
 
-1. Apply merge decision:
-   - **Merge to `main`**: Evidence supports improvement. Merge branch, publish dossier + index on `main`.
-   - **Registry only**: Rejected or inconclusive. Push dossier + index to `main` without merging code.
-   - **Keep unmerged**: Promising but needs more evidence. Leave on branch.
-2. Update `hypotheses-board.json` with final status.
-3. Append `merge.decided` to `meta-events.jsonl`.
-4. Append `round.closed` with summary.
+**Mechanical fixes** — skip Phase 4 entirely. Merge to `main` immediately when the fix is verified correct on the one-task gate. No baseline, no Pareto. If the fix resists multiple iterations, reclassify to `hypothesis`.
+
+**Hypothesis testing** — apply after Phase 4 analysis:
+- **Merge to `main`** only if evidence supports it: equal or better `patch_published`, Pareto improvement or trace-targeted wins per `prompt-analyzer.md`, no unacceptable regression on the completed gate.
+- **Registry only** for rejected/inconclusive: push dossier + index entry on `main`, do not merge code.
+- **Trace-targeted:** do not reject solely because `resolved` is flat if named trace metrics improved and `patch_published` did not regress (see `prompt-analyzer.md` §Trace-targeted).
+- **Full SWE-bench Verified:** never start without user approval, even after a three-task pass.
+
+Hypothesis merge commit must include: hypothesis id, branch, `main_sha`, baseline/candidate run ids, tasks, metrics delta, value headline, deferred child actions from dossier **Search node (MCTS)**.
+
+**Publication steps:**
+
+1. Update `hypotheses-board.json` with final status.
+2. Append `merge.decided` to `meta-events.jsonl`.
+3. Append `round.closed` with summary.
+
+**Final report** (emit every round): stop reason or "continuing", round number, `correlation_id`, `main_sha`, hypothesis id/branch/commit/run ids/validation stage/board status/merged, registry updated, blockers, MCTS tree update (value headline + deferred actions).
 
 ### Phase 6: Next round or stop
 
@@ -152,91 +137,6 @@ Read: `docs/meta/prompt-orchestrator.md` §§ Merge decision, Final report.
 4. Budget exhausted.
 
 Otherwise: return to Phase 1 for the next round.
-
----
-
-## Distinguishing mechanical fixes from hypothesis testing
-
-This is critical for budget efficiency. The previous workflow burned budget by running full baseline comparisons for trivial fixes.
-
-### Mechanical fixes (cheap, fast)
-
-**What qualifies:**
-- JSON parsing bug that causes `invalid_action` on well-formed model output
-- Timeout or retry logic that fails on transient network errors
-- File path resolution bug
-- Trace recording error that loses observability data
-- Import or dependency issue
-
-**Validation:**
-- One-task gate only
-- No baseline comparison needed (the fix is objectively correct)
-- Total cost: 1 run (~$0.10–$0.50)
-
-**Decision:**
-- If the mechanical error is fixed: merge immediately
-- If not fixed: reject, investigate further
-
-### Hypothesis testing (proper experiments)
-
-**What qualifies:**
-- Prompt engineering changes
-- Tool behavior modifications
-- Agent loop structure changes
-- Memory/context management
-- New tools or tool combinations
-
-**Validation:**
-- Full validation ladder with baseline comparison
-- One-task → three-task → (user approval) → full benchmark
-- Total cost: 2–8 runs for up to three-task gate
-
-**Decision:**
-- Apply Pareto rules from `prompt-analyzer.md`
-- Trace-targeted rules when applicable
-
----
-
-## Broadening hypothesis quality
-
-Previous hypothesis generation was too narrow — mostly parser tweaks and prompt adjustments based solely on trace error analysis. This led to expensive re-run cycles with marginal improvements.
-
-### Required research scan (before generating candidates)
-
-For every round, spend time on external research before proposing hypotheses:
-
-1. **Reference agents**: Look at how top SWE-bench agents work:
-   - SWE-agent (Princeton): repo structure, tool design, agent–computer interface
-   - Aider: edit format, repository mapping, code context
-   - OpenDevin/OpenHands: agent loop, planning, action space
-   - Moatless Tools: code search, file context management
-   - AutoCodeRover: program repair, fault localization
-
-2. **LangChain/LangGraph patterns**: Check curated docs for applicable patterns:
-   - `docs/references/langchain/curated/langchain-tools.md` — tool design
-   - `docs/references/langchain/curated/langchain-structured-output.md` — output parsing
-   - `docs/references/langchain/curated/langchain-context-engineering.md` — context management
-   - `docs/references/langchain/curated/langgraph-overview.md` — graph-based control
-   - `docs/references/langchain/curated/langgraph-fault-tolerance.md` — error recovery
-
-3. **Research literature**: `docs/references/research/agent-evolution-literature.md` — map mechanisms to local failure classes.
-
-4. **GitHub search**: Search for recent SWE-bench solutions, agent patterns, tool implementations. Record URLs and mechanisms.
-
-### Quality criteria for hypotheses
-
-A good hypothesis must:
-- Target a specific, measured failure mode (not "make agent smarter")
-- Have a clear mechanism with prior evidence (trace, literature, or reference implementation)
-- Be falsifiable on the one-task gate
-- Have bounded scope (one narrow change)
-- Offer improvement potential beyond the specific trace that inspired it (generalization)
-
-A bad hypothesis:
-- Only addresses one specific error instance without generalizing
-- Has no trace anchor (pure speculation)
-- Requires changing the entire agent architecture
-- Cannot be validated without full benchmark
 
 ---
 
@@ -252,20 +152,4 @@ A bad hypothesis:
 
 ## Quick reference: CLI commands
 
-```bash
-# Setup
-set -a; source .env; set +a
-uv run evolve2 model-check
-uv run evolve2 dataset-status
-uv run evolve2 materialize-dataset
-
-# Run a task
-uv run evolve2 run-task --instance-id astropy__astropy-12907 --max-iterations 100 --evaluation-timeout 1800
-
-# View traces
-uv run evolve2 trace-view <run_dir>
-uv run evolve2 mlflow-ui  # then open http://localhost:5000
-
-# Validate code
-uv run python -m compileall -q src scripts
-```
+See `docs/meta/prompt-executor.md` §First commands for full CLI reference (setup, run-task, trace-view, mlflow-ui, compileall).

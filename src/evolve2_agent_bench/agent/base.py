@@ -1,21 +1,20 @@
-"""LangGraph ReAct coding agent for SWE-bench tasks.
+"""LangChain ReAct coding agent for SWE-bench tasks.
 
-Uses ``langgraph.prebuilt.create_react_agent`` with workspace-scoped tools
+Uses ``langchain.agents.create_agent`` with workspace-scoped tools
 (shell, read_file, write_file). All LLM calls, tool invocations, and agent
 lifecycle events are recorded to both JSONL traces and MLflow spans.
 """
 
 from __future__ import annotations
 
-import json
 import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage
+from langchain.agents import create_agent
 from langchain_openai import ChatOpenAI
-from langgraph.prebuilt import create_react_agent
 
 from evolve2_agent_bench.agent.callbacks import AgentTraceCallback
 from evolve2_agent_bench.agent.tools import make_workspace_tools
@@ -84,10 +83,10 @@ class ReActCodingAgent:
         callback = AgentTraceCallback(traces=self.traces)
         tools = make_workspace_tools(root=workspace, traces=self.traces)
 
-        agent = create_react_agent(
+        agent = create_agent(
             model=self.llm,
             tools=tools,
-            prompt=SystemMessage(content=SYSTEM_PROMPT),
+            system_prompt=SYSTEM_PROMPT,
         )
 
         user_message = (

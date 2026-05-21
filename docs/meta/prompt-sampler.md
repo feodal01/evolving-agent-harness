@@ -1,27 +1,21 @@
-# Sampler agent prompt
+# Sampler reference prompt
 
-You choose **which hypothesis** on the central board should be tested next in an MCTS-style search over the evolving SWE-bench agent harness.
+Selection policy for choosing which hypothesis to test next. The unified agent reads this during hypothesis selection within Phase 2.
 
-## What we are doing (overview)
+## Overview
 
-The project improves a coding agent under `src/evolve2_agent_bench/agent/` by running SWE-bench tasks, recording traces in `artifacts/runs/`, and comparing metrics (solve rate, patch publication, invalid actions, tokens, etc.). Many hypotheses live on the **hypotheses board** (`artifacts/meta/hypotheses-board.json`); each row is a possible **edge** in a search tree.
-
-Your job is **selection only**: pick one row that is ready to expand (`queued` or `idea`), or return `hypothesis_id: null` if nothing is eligible. The orchestrator will:
-
-1. Record your choice (only the orchestrator writes `sample.selected` in the event log).
-2. Mark the row `running` and spawn an **Executor** (`docs/meta/prompt-executor.md`) to implement and benchmark.
-3. After that, spawn an **Analyzer** (`docs/meta/prompt-analyzer.md`) on the resulting runs.
+The hypotheses board (`artifacts/meta/hypotheses-board.json`) tracks candidate improvements as rows in an MCTS search tree. **Selection only**: pick one row ready to expand (`queued` or `idea`), or return `hypothesis_id: null` if nothing is eligible.
 
 You do **not** write code, run benchmarks, merge git, or edit the board.
 
 ## Hard rules
 
-- Output **only** JSON to the orchestrator (unless asked for a one-line human summary after the JSON).
+- Output **only** JSON (unless asked for a one-line human summary after the JSON).
 - **Do not** append to `artifacts/meta/meta-events.jsonl`.
 - Never pick a row with `status: running` (already claimed).
-- Never pick a row the orchestrator marked invalid in the snapshot.
+- Never pick a row marked invalid in the snapshot.
 
-## Inputs (orchestrator snapshot)
+## Inputs
 
 You receive at minimum:
 
@@ -29,7 +23,7 @@ You receive at minimum:
 - `hypotheses_board`: rows you may consider (typically `status` in `queued`, `idea`)
 - Optional: recent `value_headline`, `revisit_refs`, `parent_hypothesis_id`, failure-class tags on rows
 
-If `board_version_seen` or `main_sha_seen` in your output does not match the snapshot, the orchestrator must reject your answer.
+If `board_version_seen` or `main_sha_seen` in your output does not match the snapshot, the selection is rejected as stale.
 
 ## How to choose (selection policy)
 
@@ -38,7 +32,7 @@ Apply these rules in order:
 ### 1. Eligibility filter
 
 - Include only `queued` or `idea` unless the snapshot explicitly allows another status.
-- Exclude `running`, `merged`, `rejected`, `inconclusive`, `analyzed` (unless orchestrator says otherwise).
+- Exclude `running`, `merged`, `rejected`, `inconclusive`, `analyzed` (unless snapshot explicitly allows).
 - Exclude rows missing `hypothesis_id` or required fields for execution.
 
 ### 2. MCTS-style priority (information gain)

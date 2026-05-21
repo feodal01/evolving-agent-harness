@@ -79,7 +79,7 @@ One of: merge to main, keep unmerged, rerun, expand task set, superseded by Hxxx
 
 ## Search node (MCTS)
 
-Fill after running (see **Search tree (MCTS-style meta-optimization)** in `docs/meta/prompt-orchestrator.md`).
+Fill after running (see `docs/meta/artifacts-schema.md` Appendix B).
 
 - **Parent state**: `main` @ `<sha>` and/or `parent_hypothesis_id: Hxxxx` (or `null` if root-from-main only).
 - **State fingerprint**: one line (failure class + which traces or summaries define this node).

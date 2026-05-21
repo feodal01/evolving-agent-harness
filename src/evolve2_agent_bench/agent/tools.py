@@ -5,7 +5,7 @@ import time
 from pathlib import Path
 from typing import Annotated
 
-from langchain_core.tools import tool
+from langchain.tools import tool
 from pydantic import Field
 
 from evolve2_agent_bench.trace import RunTraces

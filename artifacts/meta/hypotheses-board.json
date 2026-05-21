@@ -3,65 +3,220 @@
     {
       "hypothesis_id": "H0008",
       "title": "Bounded empty-response recovery repair",
-      "status": "running",
+      "status": "inconclusive",
       "branch": "hyp/H0008-bounded-empty-response-recovery",
       "dossier_path": "artifacts/meta/hypotheses/H0008-bounded-empty-response-recovery.md",
       "parent_hypothesis_id": "H0007",
       "parent_commit": "1df90f1f759c8bf6b7fcb682da422271fd4c6fcc",
       "correlation_id": "round-20260516-54863b3a3530",
       "baseline_run_id": null,
-      "candidate_run_id": null,
+      "candidate_run_id": "20260517-130952-astropy__astropy-12907",
       "analysis_report_path": null,
-      "value_headline": "Fix empty-response retry to emit schema-valid bounded actions before invalid-action accounting.",
+      "value_headline": "Harness failure prevented evaluation; trace still shows bounded recovery churn without a valid patch/eval reward.",
       "revisit_refs": [
         "artifacts/meta/hypotheses/H0007-langgraph-recovery.md",
         "artifacts/runs/20260509-082534-astropy__astropy-12907/trace.jsonl",
         "H0009",
         "H0010"
       ],
-      "updated_at": "2026-05-16"
+      "updated_at": "2026-05-17"
     },
     {
       "hypothesis_id": "H0009",
       "title": "Structured action contract for tool args",
-      "status": "running",
+      "status": "inconclusive",
       "branch": "hyp/H0009-structured-action-contract",
       "dossier_path": "artifacts/meta/hypotheses/H0009-structured-action-contract.md",
       "parent_hypothesis_id": "H0007",
       "parent_commit": "1df90f1f759c8bf6b7fcb682da422271fd4c6fcc",
       "correlation_id": "round-20260516-54863b3a3530",
       "baseline_run_id": null,
-      "candidate_run_id": null,
+      "candidate_run_id": "20260517-085014-astropy__astropy-12907",
       "analysis_report_path": null,
-      "value_headline": "Test schema-constrained action emission to reduce invalid arguments and parser drift.",
+      "value_headline": "One-task rollout aborted by provider JSON parsing failure before patch publication or evaluation.",
       "revisit_refs": [
         "artifacts/meta/hypotheses/H0003-tool-call-action-parser.md",
         "artifacts/meta/hypotheses/H0004-robust-action-extraction.md",
         "docs/references/langchain/curated/langchain-structured-output.md",
         "H0008"
       ],
-      "updated_at": "2026-05-16"
+      "updated_at": "2026-05-17"
     },
     {
       "hypothesis_id": "H0010",
       "title": "No-patch control with bounded retries",
-      "status": "running",
+      "status": "inconclusive",
       "branch": "hyp/H0010-no-patch-bounded-retries",
       "dossier_path": "artifacts/meta/hypotheses/H0010-no-patch-bounded-retries.md",
       "parent_hypothesis_id": "H0007",
       "parent_commit": "1df90f1f759c8bf6b7fcb682da422271fd4c6fcc",
       "correlation_id": "round-20260516-54863b3a3530",
       "baseline_run_id": null,
-      "candidate_run_id": null,
+      "candidate_run_id": "20260517-130951-astropy__astropy-12907",
       "analysis_report_path": null,
-      "value_headline": "Couple tracked-diff progress control with schema-bounded recovery prompts to break no-patch loops.",
+      "value_headline": "Two one-task attempts hit provider JSON decode failures; no result.json or patch reward to rank.",
       "revisit_refs": [
         "artifacts/meta/hypotheses/H0005-observation-discipline.md",
         "artifacts/meta/hypotheses/H0006-source-edit-finalization.md",
         "artifacts/meta/hypotheses/H0007-langgraph-recovery.md",
         "H0008"
       ],
-      "updated_at": "2026-05-16"
+      "updated_at": "2026-05-17"
+    },
+    {
+      "hypothesis_id": "H0011",
+      "title": "Hard finalization diff gate",
+      "status": "inconclusive",
+      "branch": "hyp/H0011-hard-finalization-diff-gate",
+      "dossier_path": "artifacts/meta/hypotheses/H0011-hard-finalization-diff-gate.md",
+      "parent_hypothesis_id": "H0010",
+      "parent_commit": "0cf10077bb2d447f8216e3c6f7c671e6d6f627c3",
+      "correlation_id": "round-20260521-061743",
+      "value_headline": "Block finish unless a tracked source diff exists and patch_bytes > 0.",
+      "candidate_run_id": "20260521-092445-astropy__astropy-12907",
+      "revisit_refs": [
+        "artifacts/runs/20260517-124357-astropy__astropy-12907/trace.jsonl",
+        "artifacts/meta/hypotheses/H0006-source-edit-finalization.md",
+        "artifacts/meta/hypotheses/H0010-no-patch-bounded-retries.md"
+      ],
+      "updated_at": "2026-05-21"
+    },
+    {
+      "hypothesis_id": "H0012",
+      "title": "Explicit ready-to-finish graph state",
+      "status": "idea",
+      "parent_hypothesis_id": "H0010",
+      "parent_commit": "0cf10077bb2d447f8216e3c6f7c671e6d6f627c3",
+      "correlation_id": "round-20260521-111015",
+      "value_headline": "Use an explicit graph state to gate termination on patch confirmation.",
+      "revisit_refs": [
+        "artifacts/runs/20260517-124357-astropy__astropy-12907/trace.jsonl",
+        "docs/references/langchain/curated/langgraph-overview.md",
+        "docs/references/langchain/curated/langgraph-fault-tolerance.md"
+      ],
+      "updated_at": "2026-05-21"
+    },
+    {
+      "hypothesis_id": "H0013",
+      "title": "Forced source-edit checkpoint",
+      "status": "inconclusive",
+      "branch": "hyp/H0013-forced-source-edit-checkpoint",
+      "dossier_path": "artifacts/meta/hypotheses/H0013-forced-source-edit-checkpoint.md",
+      "parent_hypothesis_id": "H0010",
+      "parent_commit": "0cf10077bb2d447f8216e3c6f7c671e6d6f627c3",
+      "correlation_id": "round-20260521-111015",
+      "value_headline": "Checkpoint immediately after scratch-file writes to redirect the agent to tracked `src/` edits.",
+      "candidate_run_id": "20260521-111015-astropy__astropy-12907",
+      "revisit_refs": [
+        "artifacts/runs/20260517-124357-astropy__astropy-12907/trace.jsonl",
+        "artifacts/meta/hypotheses/H0006-source-edit-finalization.md",
+        "artifacts/meta/hypotheses/H0010-no-patch-bounded-retries.md"
+      ],
+      "updated_at": "2026-05-21"
+    },
+    {
+      "hypothesis_id": "H0017",
+      "title": "Patch-confirmed finalization latch",
+      "status": "running",
+      "branch": "hyp/H0017-patch-confirmed-finalization-latch",
+      "dossier_path": "artifacts/meta/hypotheses/H0017-patch-confirmed-finalization-latch.md",
+      "parent_hypothesis_id": "H0013",
+      "parent_commit": "0cf10077bb2d447f8216e3c6f7c671e6d627c3",
+      "correlation_id": "round-20260521-083110",
+      "candidate_run_id": "20260521-124130-astropy__astropy-12907",
+      "value_headline": "Block finish until a tracked src diff and compact changed-files summary are confirmed.",
+      "revisit_refs": [
+        "artifacts/meta/hypotheses/H0013-forced-source-edit-checkpoint.md",
+        "artifacts/meta/hypotheses/H0016-third-iteration-source-edit-checkpoint.md",
+        "artifacts/meta/hypotheses/H0011-hard-finalization-diff-gate.md"
+      ],
+      "updated_at": "2026-05-21"
+    },
+    {
+      "hypothesis_id": "H0018",
+      "title": "Structured finalization schema",
+      "status": "idea",
+      "parent_hypothesis_id": "H0013",
+      "parent_commit": "0cf10077bb2d447f8216e3c6f7c671e6d627c3",
+      "correlation_id": "round-20260521-083110",
+      "value_headline": "Require structured finalization fields so the agent cannot hand-wave a finish without tracked-diff evidence.",
+      "revisit_refs": [
+        "artifacts/meta/hypotheses/H0013-forced-source-edit-checkpoint.md",
+        "docs/references/langchain/curated/langchain-structured-output.md",
+        "artifacts/meta/hypotheses/H0009-structured-action-contract.md"
+      ],
+      "updated_at": "2026-05-21"
+    },
+    {
+      "hypothesis_id": "H0019",
+      "title": "Persistent tracked-src-edit state",
+      "status": "idea",
+      "parent_hypothesis_id": "H0013",
+      "parent_commit": "0cf10077bb2d447f8216e3c6f7c671e6d627c3",
+      "correlation_id": "round-20260521-083110",
+      "value_headline": "Keep a durable has_tracked_src_edit state that routes away from scratch writes until source edits exist.",
+      "revisit_refs": [
+        "artifacts/meta/hypotheses/H0013-forced-source-edit-checkpoint.md",
+        "docs/references/langchain/curated/langgraph-fault-tolerance.md",
+        "artifacts/meta/hypotheses/H0014-ready-to-finish-graph-state.md"
+      ],
+      "updated_at": "2026-05-21"
+    },
+    {
+      "hypothesis_id": "H0014",
+      "title": "Ready-to-finish graph state",
+      "status": "inconclusive",
+      "branch": "hyp/H0014-ready-to-finish-graph-state",
+      "dossier_path": "artifacts/meta/hypotheses/H0014-ready-to-finish-graph-state.md",
+      "parent_hypothesis_id": "H0011",
+      "parent_commit": "0cf10077bb2d447f8216e3c6f7c671e6d6f627c3",
+      "correlation_id": "round-20260521-110000",
+      "value_headline": "Add an explicit ready_to_finish state gated by patch confirmation and tracked diff.",
+      "candidate_run_id": "20260521-095441-astropy__astropy-12907",
+      "revisit_refs": [
+        "artifacts/runs/20260517-124357-astropy__astropy-12907/trace.jsonl",
+        "artifacts/meta/hypotheses/H0011-hard-finalization-diff-gate.md",
+        "docs/references/langchain/curated/langgraph-overview.md",
+        "docs/references/langchain/curated/langgraph-thinking.md"
+      ],
+      "updated_at": "2026-05-21"
+    },
+    {
+      "hypothesis_id": "H0015",
+      "title": "Checkpointed finalization resume",
+      "status": "inconclusive",
+      "branch": "hyp/H0015-checkpointed-finalization-resume",
+      "dossier_path": "artifacts/meta/hypotheses/H0015-checkpointed-finalization-resume.md",
+      "parent_hypothesis_id": "H0011",
+      "parent_commit": "0cf10077bb2d447f8216e3c6f7c671e6d6f627c3",
+      "correlation_id": "round-20260521-110000",
+      "value_headline": "Use persistence and interrupts so clean-diff runs resume from an edit-confirmation checkpoint.",
+      "candidate_run_id": "20260521-095642-astropy__astropy-12907",
+      "revisit_refs": [
+        "artifacts/runs/20260517-124357-astropy__astropy-12907/trace.jsonl",
+        "docs/references/langchain/curated/langgraph-fault-tolerance.md",
+        "docs/references/langchain/curated/langgraph-add-memory.md"
+      ],
+      "updated_at": "2026-05-21"
+    },
+    {
+      "hypothesis_id": "H0016",
+      "title": "Third-iteration source-edit checkpoint",
+      "status": "inconclusive",
+      "branch": "hyp/H0016-third-iteration-source-edit-checkpoint",
+      "dossier_path": "artifacts/meta/hypotheses/H0016-third-iteration-source-edit-checkpoint.md",
+      "parent_hypothesis_id": "H0011",
+      "parent_commit": "0cf10077bb2d447f8216e3c6f7c671e6d6f627c3",
+      "correlation_id": "round-20260521-110000",
+      "value_headline": "Force a diff summary and changed-file count after iteration 3 before any final answer path.",
+      "candidate_run_id": "20260521-100931-astropy__astropy-12907",
+      "revisit_refs": [
+        "artifacts/runs/20260517-124357-astropy__astropy-12907/trace.jsonl",
+        "artifacts/meta/hypotheses/H0006-source-edit-finalization.md",
+        "artifacts/meta/hypotheses/H0011-hard-finalization-diff-gate.md",
+        "docs/references/langchain/curated/langgraph-thinking.md"
+      ],
+      "updated_at": "2026-05-21"
     }
   ]
 }

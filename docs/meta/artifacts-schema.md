@@ -35,7 +35,7 @@ Canonical data and file layout for meta-optimization. All role prompts in `docs/
 - `running` → `analyzed` (orchestrator after analyzer report accepted)
 - `analyzed` → `merged` \| `rejected` \| `inconclusive` \| `superseded` (orchestrator merge/registry decision)
 
-Invalid transitions must not be written; the orchestrator reconciles mistakes via new `meta-events` rows and board corrections.
+Invalid transitions are reconciled via `meta-events` rows and board corrections.
 
 ## 2. Append-only event log: `meta-events.jsonl`
 
@@ -61,45 +61,35 @@ Invalid transitions must not be written; the orchestrator reconciles mistakes vi
 | `round.opened` | orchestrator | Start of orchestration round |
 | `proposal.accepted` | orchestrator | After validating Proposer JSON; precedes board row writes for new ideas |
 | `sample.selected` | **orchestrator only** | Single source of truth for which hypothesis was chosen; payload includes `hypothesis_id`, `sampler_rationale` (echo from sampler output), `board_row_hash` or `updated_at` snapshot |
-| `executor.spawned` | orchestrator | |
-| `executor.started` | executor | |
+| `executor.started` | executor | Entering execution phase |
 | `executor.finished` | executor | Include `run_id`, `commit_sha`, `ok` |
-| `analyzer.spawned` | orchestrator | |
-| `analyzer.started` | analyzer | |
+| `analyzer.started` | analyzer | Entering analysis phase |
 | `analyzer.finished` | analyzer | Include `report_path` |
 | `merge.decided` | orchestrator | `merged` \| `rejected` \| `keep_unmerged` + rationale |
 | `round.closed` | orchestrator | |
 | `reconcile` | orchestrator | Correcting prior ambiguity |
 
-**Sampler:** returns JSON **only** to the orchestrator; the orchestrator performs the single append of `sample.selected`.
+Sampler selection policy produces JSON only; `sample.selected` is appended during the orchestration phase. Optional helper: `scripts/meta_append_event.py`.
 
-Optional helper: `scripts/meta_append_event.py` validates required keys and appends one line (defaults to `artifacts/meta/meta-events.jsonl`).
+Use one `correlation_id` per round (e.g. ULID or `round-YYYYMMDD-HHMM`). All related events share it.
 
-### `correlation_id`
+## 3. Phase context (what to load at each phase)
 
-Use one `correlation_id` per orchestrator round (e.g. ULID or `round-YYYYMMDD-HHMM`). All related events share it for debugging and replay.
-
-## 3. Snapshot contract (orchestrator → subagents)
-
-When invoking Proposer, Sampler, Executor, or Analyzer, the orchestrator passes a **snapshot** object (message body or attached JSON) containing at minimum:
+At each phase, the unified agent loads a **context snapshot** containing at minimum:
 
 - `correlation_id`
 - `main_sha` — current `origin/main` (or local `main`) HEAD the round is pinned to
-- `hypotheses_board` — either full `hypotheses-board.json` content or the subset of rows relevant to the call
-- `board_version` — copy of max `updated_at` or content hash so the subagent can detect staleness
-- For Executor: `hypothesis_id`, `branch`, `dossier_path`, `focus` (optional string), gates to run
-- For Analyzer: `candidate_run_id`, optional `baseline_run_id`, paths to `trace.jsonl` / `result.json`
-- For Sampler: only rows with `status` in `queued`, `idea` as policy allows
-- Optional: `latest_analysis_path` — last analyzer report if relevant to Proposer
-
-Subagents **must not** edit `hypotheses-board.json`. They return structured output to the orchestrator.
+- `hypotheses_board` — full or relevant subset of `hypotheses-board.json`
+- `board_version` — max `updated_at` or content hash for staleness detection
+- For execution phase: `hypothesis_id`, `branch`, `dossier_path`, gates to run
+- For analysis phase: `candidate_run_id`, optional `baseline_run_id`, paths to `trace.jsonl` / `result.json`
 
 ## 4. Paths and linkage
 
 - **Bench runs:** `artifacts/runs/<run_id>/` — `trace.jsonl`, `result.json`, `patch.diff`, etc. (see `prompt-executor.md` / `prompt-analyzer.md`).
 - **Analyzer reports:** `artifacts/meta/analyses/<hypothesis_id>-<run_id>.md` (recommended pattern).
 - **Dossiers:** `artifacts/meta/hypotheses/<hypothesis-id>-<slug>.md` — long-form lifecycle; board rows reference `dossier_path`.
-- **Compact index:** `artifacts/meta/hypothesis-index.jsonl` on `main` for fast status lookup; `hypotheses-board.json` is the operational layer for multi-role flow. Keep both in sync per `prompt-orchestrator.md`.
+- **Compact index:** `artifacts/meta/hypothesis-index.jsonl` on `main` for fast status lookup; `hypotheses-board.json` is the operational layer. Keep both in sync.
 
 ## 5. What not to commit
 
@@ -222,7 +212,7 @@ One of: merge to main, keep unmerged, rerun, expand task set, superseded by Hxxx
 
 ## Search node (MCTS)
 
-Fill with the search-tree view of this experiment (see **Search tree (MCTS-style meta-optimization)** in `prompt-orchestrator.md`).
+Fill with the search-tree view of this experiment.
 
 - **Parent state**: `main` @ `<sha>` and/or `parent_hypothesis_id: Hxxxx` (or `null` if root-from-main only).
 - **State fingerprint**: one line (failure class + which traces or summaries define this node).
@@ -238,6 +228,4 @@ Fill with the search-tree view of this experiment (see **Search tree (MCTS-style
 - Commit:
 ```
 
-The proposal sections can be long. The result sections are filled after the run. This separation is intentional: first make a falsifiable plan, then execute, then write the outcome.
-
-Evidence paths should point to files such as `artifacts/runs/<run_id>/trace.jsonl`. Do not copy full traces into the dossier.
+Proposal sections are filled before coding; result sections after the run. Evidence paths should point to files (e.g. `artifacts/runs/<run_id>/trace.jsonl`), not inline full traces.
