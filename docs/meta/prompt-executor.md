@@ -75,14 +75,23 @@ set -a
 source .env
 set +a
 uv run evolve2 model-check
+uv run evolve2 dataset-status
 ```
 
 The OpenRouter key must come from local `.env`. Do not print the key, commit it, or copy it into hypothesis dossiers. `.env` is git-ignored.
 
-Run one benchmark task:
+The SWE-bench dataset must be materialized offline before running tasks. If `dataset-status` fails, run `uv run evolve2 materialize-dataset` first.
+
+Run one benchmark task (MLflow tracing is auto-enabled):
 
 ```bash
 uv run evolve2 run-task --instance-id astropy__astropy-12907 --max-iterations 100 --evaluation-timeout 1800
+```
+
+View MLflow traces:
+
+```bash
+uv run evolve2 mlflow-ui  # then open http://localhost:5000
 ```
 
 Summarize a run:
@@ -148,9 +157,21 @@ evaluation_timeout: 1800
 
 ## Validation scale (you run these gates)
 
-Use this staged ladder for every behavior-changing hypothesis:
+The validation path depends on the hypothesis `fix_type`:
 
-1. **One-task gate** — run first (cheap falsification).
+### Mechanical fixes (`fix_type: mechanical`)
+
+For parser bugs, retry logic, error handling, infrastructure issues:
+
+1. **One-task gate** — run once. No baseline comparison needed.
+2. If the mechanical error is fixed: merge immediately.
+3. Total cost: 1 run.
+
+### Hypothesis testing (`fix_type: hypothesis`)
+
+For quality improvements, prompt changes, tool behavior, agent loop structure:
+
+1. **One-task gate** — run first (cheap falsification) with baseline comparison.
 2. **Three-task promotion gate** — run only if one-task results justify promotion (rerun baseline and candidate on all three tasks).
 3. **Full SWE-bench Verified** — stop and ask the user; do not start without explicit approval.
 

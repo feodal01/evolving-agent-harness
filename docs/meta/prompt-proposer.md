@@ -21,21 +21,26 @@ Do not treat chat as source of truth. Use repository files, traces, and dossiers
 Use small experiments:
 
 1. Select one failure mode from the latest trace.
-2. Generate exactly three candidate hypotheses before implementation (see below).
-3. Score candidates; choose one direction for the dossier (executor implements).
-4. Prefer the smallest relevant surface.
+2. **Scan external references** before narrowing to implementation (see §§ Research scan below).
+3. Generate exactly three candidate hypotheses before implementation (see below).
+4. **Classify** each candidate's `fix_type` as `mechanical` or `hypothesis` (see below).
+5. Score candidates; choose one direction for the dossier (executor implements).
+6. Prefer the smallest relevant surface.
 
 Good experiment examples:
 
-- Hypothesis: "If tool-call shaped outputs are accepted, invalid action count drops and the agent reaches shell execution earlier."
-- Hypothesis: "If the finalization prompt requires a tracked source diff before finish, empty patch rate drops."
-- Hypothesis: "If read_file results are summarized after 400 lines, token usage drops without worsening localization."
+- Hypothesis: "If tool-call shaped outputs are accepted, invalid action count drops and the agent reaches shell execution earlier." (hypothesis, trace-anchored)
+- Hypothesis: "If the finalization prompt requires a tracked source diff before finish, empty patch rate drops." (hypothesis, trace-anchored)
+- Hypothesis: "If read_file results are summarized after 400 lines, token usage drops without worsening localization." (hypothesis, trace-anchored)
+- Hypothesis: "If we adopt SWE-agent's repository map tool to give the agent structural context, bad_localization failures decrease." (hypothesis, reference-inspired)
+- Hypothesis: "If we add a search_code tool using AST-aware search like Moatless Tools, the agent finds relevant code faster and uses fewer iterations." (hypothesis, reference-inspired)
 
 Bad experiment examples:
 
-- "Make the agent smarter."
-- "Rewrite the whole harness."
-- "Add many tools and see what happens."
+- "Make the agent smarter." (vague, no mechanism)
+- "Rewrite the whole harness." (unbounded scope)
+- "Add many tools and see what happens." (no hypothesis, no trace anchor)
+- "Fix the JSON parser to handle trailing commas." (this is a mechanical fix, not a hypothesis — classify as `fix_type: mechanical` and skip baseline comparison)
 
 ---
 
@@ -75,14 +80,19 @@ Score each candidate with T-shirt sizes:
 - Expected result: `S`, `M`, `L`, or `XL`.
 - Confidence: `low`, `medium`, or `high`.
 
-Use this table in the payload for the orchestrator (mirrors dossier section):
+**Classify each candidate's fix type:**
+
+- `mechanical`: Parser fix, retry logic, error handling, infrastructure issue. Cheap validation (one-task gate, no baseline needed). Cost: ~1 run.
+- `hypothesis`: Quality improvement theory. Full validation ladder with baseline comparison. Cost: 2–8 runs.
+
+Use this table in the payload (mirrors dossier section):
 
 ```markdown
-| Candidate | Role (exploit / explore / bridge) | Mechanism | Trace anchor (strong / medium / weak) | Evidence source | Effort | Expected result | Confidence | Why not / why chosen |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| A | exploit | ... | strong | trace + … | S | M | medium | chosen because ... |
-| B | explore | ... | medium | curated LC + trace … | M | L | low | rejected because ... |
-| C | bridge | ... | strong | trace + literature | L | L | medium | rejected because ... |
+| Candidate | Role | Fix type | Mechanism | Trace anchor | Evidence source | Effort | Expected result | Confidence | Why not / why chosen |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| A | exploit | hypothesis | ... | strong | trace + … | S | M | medium | chosen because ... |
+| B | explore | hypothesis | ... | medium | curated LC + GitHub ref + trace … | M | L | low | rejected because ... |
+| C | bridge | mechanical | ... | strong | trace + error inspection | S | S | high | deferred: quick fix, do after main hypothesis |
 ```
 
 ### Exploration–exploitation selection rules
@@ -101,9 +111,9 @@ Treat the two non-selected candidates as **deferred child actions** on the same 
 
 Allowed change surfaces (for ideas—executor implements within these):
 
-- `src/evolve2_agent_bench/agent/base.py`: loop, prompt, parsing, action protocol.
-- `src/evolve2_agent_bench/agent/actions.py`: action schema.
-- `src/evolve2_agent_bench/agent/tools.py`: tool behavior and observations.
+- `src/evolve2_agent_bench/agent/base.py`: LangGraph ReAct agent, system prompt, agent configuration.
+- `src/evolve2_agent_bench/agent/tools.py`: LangChain tool definitions (shell, read_file, write_file, or new tools).
+- `src/evolve2_agent_bench/agent/callbacks.py`: observability callback handler.
 - `src/evolve2_agent_bench/bench/swebench_runner.py`: benchmark orchestration and artifact writing.
 - Meta artifacts under `artifacts/meta/` per orchestrator workflow.
 
@@ -140,15 +150,37 @@ Do not add a LangChain or LangGraph feature because it exists. Each feature must
 
 ---
 
-## Research frame for generating hypotheses
+## Research scan (mandatory before proposing)
 
-Use literature to generate mechanisms, not direct to-do lists. The standing research frame is:
+**Every hypothesis round must include a research scan phase.** The previous workflow generated hypotheses that were too narrow and engineering-focused — mostly parser tweaks and prompt adjustments based solely on trace error analysis. This led to expensive debug cycles with marginal improvements.
+
+### Reference agents to study
+
+Before generating candidates, check how top SWE-bench agents handle the same failure class:
+
+| Agent | Repository | Key strengths |
+|-------|-----------|---------------|
+| SWE-agent | princeton-nlp/SWE-agent | Agent–computer interface design, file navigation, edit tools |
+| Aider | Aider-AI/aider | Edit format design, repository mapping, code context management |
+| OpenHands | All-Hands-AI/OpenHands | Modular agent loop, planning-before-acting, sandboxed execution |
+| Moatless Tools | aorwall/moatless-tools | AST-aware code search, file context management, structured editing |
+| AutoCodeRover | nus-apr/auto-code-rover | Spectrum-based fault localization, program repair strategies |
+| SWE-bench baselines | princeton-nlp/SWE-bench | Official baseline approaches and evaluation patterns |
+
+**How to use references:**
+1. Identify the failure class from traces (e.g. `bad_localization`, `no_patch`, `repeated_action`).
+2. Search GitHub: how does SWE-agent / Aider / OpenHands handle this failure class?
+3. Extract the mechanism (not the code): what technique, tool, or prompt pattern do they use?
+4. Map the mechanism to a local hypothesis with a trace anchor.
+5. Record the URL and mechanism in the candidate table's "Evidence source" column.
+
+### Research literature
 
 ```text
 docs/references/research/agent-evolution-literature.md
 ```
 
-Before creating a new kind of hypothesis, read the relevant section of that note and map it to a local trace failure class.
+Before creating a new kind of hypothesis, read the relevant section and map it to a local trace failure class.
 
 The required conversion is:
 
@@ -156,4 +188,13 @@ The required conversion is:
 paper mechanism -> local failure class -> one branch hypothesis -> benchmark comparison -> ledger decision
 ```
 
-Do not create a branch from a paper idea until there is trace evidence that the idea targets an observed failure. If internet is available, you may also search GitHub for implementation examples after the trace/literature mapping is clear.
+### Quality check for hypothesis breadth
+
+If the last 3+ completed hypotheses were all:
+- Only parser/prompt tweaks
+- Only targeting `invalid_action` events
+- Only based on direct trace error analysis without external reference
+
+Then the current round **must** include at least one **Explore** candidate that draws from a reference agent or research paper. Narrow exploitation without external grounding is a sign of insufficient research scanning.
+
+Do not create a branch from a paper idea until there is trace evidence that the idea targets an observed failure. If internet is available, search GitHub for implementation examples after the trace/literature mapping is clear.

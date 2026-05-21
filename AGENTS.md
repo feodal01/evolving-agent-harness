@@ -1,20 +1,58 @@
 # Agent Map
 
-This repo is split between the evolving SWE-bench agent and the meta-optimization artifacts that guide future harness changes.
+This repo contains the evolving SWE-bench coding agent and the meta-optimization system that drives its improvement.
 
-- Evolving agent code lives in `src/evolve2_agent_bench/agent/`.
-- Benchmark orchestration lives in `src/evolve2_agent_bench/bench/`.
-- Meta-agent experiment records live in `artifacts/meta/`.
-- Run traces are written under `artifacts/runs/` and are ignored by git.
+## Architecture
 
-When writing complex features or significant refactors, use an ExecPlan as described in `docs/PLANS.md` from design to implementation.
+- **Evolving agent**: `src/evolve2_agent_bench/agent/` — LangGraph ReAct agent with shell, read_file, write_file tools.
+- **Benchmark harness**: `src/evolve2_agent_bench/bench/` — offline SWE-bench Verified runner with auto-enabled MLflow tracing.
+- **Meta-optimization docs**: `docs/meta/` — MCTS-style hypothesis generation, execution, and analysis.
+- **Run artifacts**: `artifacts/runs/<run_id>/` — JSONL traces, result.json, patches (git-ignored).
+- **MLflow traces**: `artifacts/mlruns/` — auto-captured span hierarchies for every run (git-ignored).
+- **Meta artifacts**: `artifacts/meta/` — hypotheses-board.json, hypothesis-index.jsonl, dossiers.
 
-Load OpenRouter credentials from local `.env` before benchmark work: `set -a; source .env; set +a`. Use `uv run evolve2 model-check` before benchmark work that depends on OpenRouter. Use `uv run evolve2 run-task --instance-id <id> --max-iterations 100 --evaluation-timeout 1800` for decision-grade one-task SWE-bench Verified runs. Do not set `--agent-max-tokens` unless the hypothesis is specifically about response budget.
+## Setup
 
-To avoid Hugging Face Hub rate limits on dataset fetch, materialize SWE-bench Verified once (`scripts/materialize_swebench_verified.py`) and set `EVOLVE2_SWEBENCH_DATASET_ROOT` to that parent directory so tasks and evaluation load from disk (see README).
+```bash
+uv sync
+set -a; source .env; set +a
+uv run evolve2 model-check
+uv run evolve2 materialize-dataset
+uv run evolve2 dataset-status
+```
 
-For MLflow-backed LangChain trace UI during benchmark runs: `uv sync --extra mlflow`, then `EVOLVE2_MLFLOW_TRACING=1` or `evolve2 run-task --mlflow` (see README).
+SWE-bench Verified must be materialized locally before running tasks. The harness does not fall back to HuggingFace Hub. Default location: `datasets/SWE-bench_Verified`. Override with `EVOLVE2_SWEBENCH_DATASET_ROOT`.
 
-For single-hypothesis meta-agent optimization work, start at [`docs/meta/README.md`](docs/meta/README.md) and follow [`docs/meta/prompt-executor.md`](docs/meta/prompt-executor.md) (and [`docs/meta/artifacts-schema.md`](docs/meta/artifacts-schema.md) for dossier/index shapes). Meta-optimization is **MCTS-style**: dossiers record nodes, sampled rollouts, values, and deferred child actions; see **Search tree (MCTS-style meta-optimization)** in [`docs/meta/prompt-orchestrator.md`](docs/meta/prompt-orchestrator.md). For multi-worker orchestration, use [`docs/meta/prompt-orchestrator.md`](docs/meta/prompt-orchestrator.md) as the `/goal` prompt. Work autonomously according to the role you are running: a hypothesis worker owns one branch and pushes that branch; an orchestrator owns worktree assignment, `hypotheses-board.json`, `meta-events.jsonl` (`sample.selected` only via orchestrator), and central publication to `main`. Ask only for hard blockers such as unavailable models, missing credentials, broken infrastructure, or conflicting user changes. Treat `artifacts/runs/<run_id>/trace.jsonl` as the canonical trace, `artifacts/meta/hypothesis-index.jsonl` as the central index, and `artifacts/meta/hypotheses/` as the full hypothesis record. Generate three candidate hypotheses with roles (exploit / explore / bridge), `trace_anchor`, and effort/result/confidence scores before choosing one (see [`docs/meta/prompt-proposer.md`](docs/meta/prompt-proposer.md)). Use `main` for the mainstream agent and `hyp/HXXXX-<slug>` branches for individual hypotheses. Push every completed hypothesis branch. Merge only confirmed hypotheses into `main` per Pareto rules in [`docs/meta/prompt-analyzer.md`](docs/meta/prompt-analyzer.md) and merge policy in [`docs/meta/prompt-orchestrator.md`](docs/meta/prompt-orchestrator.md) (including trace-targeted confirmations when named trace metrics improve and `patch_published` does not regress). Undeclared diagnostic tweaks without patch, solve-rate, or trace-targeted evidence are not enough to merge. Rejected or inconclusive code stays only on its hypothesis branch; central artifacts are published to `main` by the standalone worker or by the orchestrator, depending on mode.
+## Running tasks
 
-Validate hypotheses in stages. Start with the one-task gate, promote only passing hypotheses to the fixed three-task gate, and ask the user for explicit approval before any full SWE-bench Verified run.
+```bash
+uv run evolve2 run-task --instance-id <id> --max-iterations 100 --evaluation-timeout 1800
+```
+
+MLflow tracing is auto-enabled. Disable with `--no-mlflow` or `EVOLVE2_MLFLOW_TRACING=0`. View traces: `uv run evolve2 mlflow-ui` → http://localhost:5000.
+
+Do not set `--agent-max-tokens` unless the hypothesis is specifically about response budget.
+
+## Meta-optimization
+
+Use [`docs/meta/prompt-unified.md`](docs/meta/prompt-unified.md) as the `/goal` prompt for the single meta-optimization agent. The unified agent performs all phases (orchestration, proposal, execution, analysis, decision) sequentially. Start at [`docs/meta/README.md`](docs/meta/README.md) for orientation.
+
+Meta-optimization is **MCTS-style**: dossiers record search nodes with sampled rollouts, values, and deferred child actions. See [`docs/meta/prompt-orchestrator.md`](docs/meta/prompt-orchestrator.md) for the search tree model.
+
+### Key rules
+
+- Generate three candidate hypotheses with roles (exploit / explore / bridge), `trace_anchor`, `fix_type`, and effort/result/confidence scores before choosing one (see [`docs/meta/prompt-proposer.md`](docs/meta/prompt-proposer.md)).
+- **Classify hypotheses**: `mechanical` (cheap fix, one-task gate only) vs `hypothesis` (full validation ladder with baseline comparison). This prevents burning budget on trivial fixes.
+- **Research scan**: Before proposing hypotheses, review reference agents (SWE-agent, Aider, OpenHands, Moatless), LangChain/LangGraph docs, and research literature. Narrow trace-only hypotheses without external grounding are a sign of insufficient research.
+- Use `main` for the mainstream agent and `hyp/HXXXX-<slug>` branches for individual hypotheses.
+- Push every completed hypothesis branch. Merge only confirmed hypotheses into `main` per Pareto rules in [`docs/meta/prompt-analyzer.md`](docs/meta/prompt-analyzer.md).
+- Validate in stages: one-task gate → three-task gate → (user approval) → full SWE-bench Verified.
+- Ask only for hard blockers (unavailable models, missing credentials, broken infrastructure) and full-benchmark approval.
+
+### Observability
+
+- **JSONL traces**: `artifacts/runs/<run_id>/trace.jsonl` is the canonical trace.
+- **MLflow spans**: Every LLM call, tool invocation, and evaluation is captured as MLflow spans.
+- **Meta-events**: `artifacts/meta/meta-events.jsonl` records all meta-optimization actions.
+- **Hypothesis dossiers**: `artifacts/meta/hypotheses/` contains full hypothesis lifecycle records.
+- **Hypothesis index**: `artifacts/meta/hypothesis-index.jsonl` is the compact status lookup.

@@ -15,6 +15,7 @@ Canonical data and file layout for meta-optimization. All role prompts in `docs/
 | `hypothesis_id` | string | yes | Stable id, e.g. `H0001` |
 | `title` | string | yes | Short title |
 | `status` | string | yes | One of: `idea`, `queued`, `running`, `analyzed`, `merged`, `rejected`, `inconclusive`, `superseded` |
+| `fix_type` | string | yes | One of: `mechanical`, `hypothesis`. Determines validation path and budget. |
 | `branch` | string | no | e.g. `hyp/H0001-slug` (set when execution starts) |
 | `dossier_path` | string | no | e.g. `artifacts/meta/hypotheses/H0001-slug.md` |
 | `parent_hypothesis_id` | string \| null | no | Parent state in search tree |
@@ -116,6 +117,7 @@ Compact JSONL; long text lives in dossiers.
   "hypothesis_id": "H0002",
   "title": "Structured edit tool reduces no_patch failures",
   "status": "proposed | running | confirmed | rejected | inconclusive | superseded | baseline",
+  "fix_type": "hypothesis | mechanical",
   "branch": "hyp/H0002-structured-edit-tool",
   "dossier": "artifacts/meta/hypotheses/H0002-structured-edit-tool.md",
   "created_at": "YYYY-MM-DD",
@@ -140,6 +142,8 @@ Create the dossier before changing code. After sampling the benchmark gates, alw
 # H0002 Structured Edit Tool Reduces No-Patch Failures
 
 Status: proposed
+
+Fix type: hypothesis | mechanical
 
 Branch: `hyp/H0002-structured-edit-tool`
 
@@ -172,6 +176,10 @@ Smallest code/doc surface to change. Include non-goals. If the hypothesis is **t
 
 ## Test Plan
 
+- Fix type: mechanical | hypothesis
+- Validation path:
+  - mechanical: one-task gate only, no baseline comparison (fix is objectively correct)
+  - hypothesis: full validation ladder with baseline comparison
 - Validation commands:
 - Benchmark task ids:
 - Validation stage: one-task gate | three-task promotion gate | full benchmark approval request

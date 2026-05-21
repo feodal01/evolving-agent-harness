@@ -1,13 +1,14 @@
 """MLflow observability for evolve2 benchmark runs.
 
-Uses manual :py:class:`mlflow.start_span` traces (full agent + tools + harness).
-LangChain autolog for ChatOpenAI stays **disabled** to avoid duplicate spans.
+MLflow is a **required** dependency as of v0.2. All coding agent runs and meta-
+optimization actions are traced to a local file-backed MLflow store by default.
 
-Enable with ``EVOLVE2_MLFLOW_TRACING=1`` or CLI ``--mlflow``.
-Requires: ``uv sync --extra mlflow``
+Tracing is enabled automatically. Disable with ``EVOLVE2_MLFLOW_TRACING=0`` or
+CLI ``--no-mlflow``.
 
 Environment:
-- ``MLFLOW_TRACKING_URI`` — optional file/SQL store URI.
+- ``MLFLOW_TRACKING_URI`` — override the default local store
+  (default: ``file://<project_root>/artifacts/mlruns``).
 - ``MLFLOW_EXPERIMENT_NAME`` — default ``evolve2-agent-bench``.
 """
 
@@ -18,6 +19,7 @@ import os
 import threading
 from contextlib import contextmanager
 from contextvars import ContextVar, Token
+from pathlib import Path
 from typing import Any
 
 _logger = logging.getLogger(__name__)
@@ -25,17 +27,27 @@ _logger = logging.getLogger(__name__)
 _lock = threading.Lock()
 _initialized = False
 
-# True only inside an active ``mlflow.start_run`` when tracing was requested.
 _obs_enabled: ContextVar[bool] = ContextVar("evolve2_mlflow_obs_enabled", default=False)
 
 MAX_SPAN_CHARS = 24_000
 
 
-def tracing_requested(cli_enable: bool = False) -> bool:
-    if cli_enable:
-        return True
+def _default_tracking_uri(project_root: Path | None = None) -> str:
+    if project_root is None:
+        project_root = Path(__file__).resolve().parents[2]
+    mlruns_dir = project_root / "artifacts" / "mlruns"
+    mlruns_dir.mkdir(parents=True, exist_ok=True)
+    return f"file://{mlruns_dir}"
+
+
+def tracing_requested(cli_flag: bool | None = None) -> bool:
+    """Return True unless explicitly disabled. MLflow tracing is ON by default."""
+    if cli_flag is not None:
+        return cli_flag
     v = os.environ.get("EVOLVE2_MLFLOW_TRACING", "").strip().lower()
-    return v in {"1", "true", "yes", "on"}
+    if v in {"0", "false", "no", "off"}:
+        return False
+    return True
 
 
 def observability_enabled() -> bool:
@@ -43,7 +55,6 @@ def observability_enabled() -> bool:
 
 
 def truncate_for_span(value: Any, max_chars: int = MAX_SPAN_CHARS) -> Any:
-    """Shrink large strings / structures for MLflow span payloads."""
     if value is None:
         return None
     if isinstance(value, str):
@@ -63,29 +74,24 @@ def truncate_for_span(value: Any, max_chars: int = MAX_SPAN_CHARS) -> Any:
     return value
 
 
-def ensure_initialized() -> None:
+def ensure_initialized(project_root: Path | None = None) -> None:
     """Configure tracking URI + experiment once."""
     global _initialized
     with _lock:
         if _initialized:
             return
-        try:
-            import mlflow
-        except ImportError as exc:
-            raise RuntimeError(
-                "MLflow tracing is enabled but mlflow is not installed. "
-                "Install with: uv sync --extra mlflow"
-            ) from exc
+        import mlflow
 
         uri = os.environ.get("MLFLOW_TRACKING_URI", "").strip()
-        if uri:
-            mlflow.set_tracking_uri(uri)
+        if not uri:
+            uri = _default_tracking_uri(project_root)
+        mlflow.set_tracking_uri(uri)
 
         experiment = os.environ.get("MLFLOW_EXPERIMENT_NAME", "evolve2-agent-bench").strip()
         mlflow.set_experiment(experiment_name=experiment)
 
         _initialized = True
-        _logger.info("MLflow tracking initialized (experiment=%s)", experiment)
+        _logger.info("MLflow tracking initialized (uri=%s, experiment=%s)", uri, experiment)
 
 
 @contextmanager
@@ -113,13 +119,14 @@ def mlflow_parent_run(
     requested: bool,
     tags: dict[str, str] | None = None,
     params: dict[str, Any] | None = None,
+    project_root: Path | None = None,
 ):
     """One MLflow Run per benchmark + enable nested manual spans."""
     if not requested:
         yield
         return
 
-    ensure_initialized()
+    ensure_initialized(project_root)
     import mlflow
 
     safe_name = run_name[:250]
@@ -142,3 +149,13 @@ def mlflow_parent_run(
         finally:
             if token is not None:
                 _obs_enabled.reset(token)
+
+
+def launch_mlflow_ui(project_root: Path | None = None, port: int = 5000) -> str:
+    """Return the shell command to launch the MLflow UI for the local store."""
+    if project_root is None:
+        project_root = Path(__file__).resolve().parents[2]
+    uri = os.environ.get("MLFLOW_TRACKING_URI", "").strip()
+    if not uri:
+        uri = _default_tracking_uri(project_root)
+    return f"mlflow ui --backend-store-uri {uri} --port {port}"

@@ -9,9 +9,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from datasets import load_dataset, load_from_disk
+from datasets import load_from_disk
 
-from evolve2_agent_bench.agent.base import BaselineLangChainAgent
+from evolve2_agent_bench.agent.base import ReActCodingAgent
 from evolve2_agent_bench.config import OpenRouterConfig
 from evolve2_agent_bench.mlflow_tracing import mlflow_parent_run, mlflow_span, tracing_requested, truncate_for_span
 from evolve2_agent_bench.trace import RunTraces
@@ -19,32 +19,48 @@ from evolve2_agent_bench.trace import RunTraces
 
 DATASET_NAME = "princeton-nlp/SWE-bench_Verified"
 SPLIT = "test"
+DEFAULT_DATASET_DIR = "datasets/SWE-bench_Verified"
 
-# Parent directory that contains a Hugging Face `datasets` split folder, e.g.
-#   $EVOLVE2_SWEBENCH_DATASET_ROOT/test/dataset_info.json
-# Materialize once with `scripts/materialize_swebench_verified.py`.
 LOCAL_DATASET_ROOT_ENV = "EVOLVE2_SWEBENCH_DATASET_ROOT"
 
 
-def local_swebench_dataset_root() -> Path | None:
-    """Return verified on-disk dataset root, or None to load from the Hub."""
+def resolve_dataset_root(project_root: Path | None = None) -> Path:
+    """Return the on-disk dataset root. Raises if not materialized."""
     raw = os.environ.get(LOCAL_DATASET_ROOT_ENV, "").strip()
-    if not raw:
-        return None
-    root = Path(raw).expanduser().resolve()
+    if raw:
+        root = Path(raw).expanduser().resolve()
+    elif project_root is not None:
+        root = (project_root / DEFAULT_DATASET_DIR).resolve()
+    else:
+        root = (Path(__file__).resolve().parents[3] / DEFAULT_DATASET_DIR).resolve()
+
     marker = root / SPLIT / "dataset_info.json"
     if not marker.is_file():
         raise FileNotFoundError(
-            f"{LOCAL_DATASET_ROOT_ENV}={root} but expected split cache missing: {marker}. "
-            "Run once with network: uv run python scripts/materialize_swebench_verified.py "
-            f"--out {root}"
+            f"SWE-bench Verified dataset not found at {root}.\n"
+            f"Materialize it first:\n"
+            f"  uv run evolve2 materialize-dataset --out {root}\n\n"
+            f"Or set {LOCAL_DATASET_ROOT_ENV} to point to an existing copy."
         )
     return root
 
 
-def harness_dataset_arg(local_root: Path | None) -> str:
-    """`--dataset_name` for `swebench.harness.run_evaluation` (Hub id or on-disk root)."""
-    return str(local_root) if local_root is not None else DATASET_NAME
+def materialize_dataset(out_dir: Path, force: bool = False) -> Path:
+    """Download SWE-bench Verified and save to disk for offline use."""
+    from datasets import load_dataset
+
+    split_dir = out_dir / SPLIT
+    marker = split_dir / "dataset_info.json"
+    if marker.is_file() and not force:
+        return out_dir
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+    if split_dir.exists() and force:
+        shutil.rmtree(split_dir)
+
+    ds = load_dataset(DATASET_NAME, split=SPLIT)
+    ds.save_to_disk(str(split_dir))
+    return out_dir
 
 
 @dataclass(frozen=True)
@@ -60,17 +76,12 @@ def make_run_id(instance_id: str) -> str:
     return f"{time.strftime('%Y%m%d-%H%M%S')}-{safe_id}"
 
 
-def load_task(instance_id: str, *, local_root: Path | None = None) -> dict[str, Any]:
-    lr = local_root if local_root is not None else local_swebench_dataset_root()
-    if lr is not None:
-        dataset = load_from_disk(str(lr / SPLIT))
-    else:
-        dataset = load_dataset(DATASET_NAME, split=SPLIT)
+def load_task(instance_id: str, dataset_root: Path) -> dict[str, Any]:
+    dataset = load_from_disk(str(dataset_root / SPLIT))
     for row in dataset:
         if row["instance_id"] == instance_id:
             return dict(row)
-    scope = str(lr / SPLIT) if lr is not None else f"{DATASET_NAME}/{SPLIT}"
-    raise ValueError(f"Instance not found in {scope}: {instance_id}")
+    raise ValueError(f"Instance not found in {dataset_root / SPLIT}: {instance_id}")
 
 
 def public_task_view(task: dict[str, Any]) -> dict[str, Any]:
@@ -248,7 +259,7 @@ def run_one_task(
     agent_max_tokens: int | None,
     evaluation_timeout: int,
     *,
-    enable_mlflow_tracing: bool = False,
+    enable_mlflow_tracing: bool | None = None,
 ) -> dict[str, Any]:
     run_id = make_run_id(instance_id)
     paths = RunPaths(
@@ -268,6 +279,7 @@ def run_one_task(
             "max_iterations": max_iterations,
             "evaluation_timeout": evaluation_timeout,
         },
+        project_root=project_root,
     ):
         return _run_one_task_impl(
             paths,
@@ -295,10 +307,12 @@ def _run_one_task_impl(
         attributes={"run_id": run_id, "instance_id": instance_id},
     ) as bench_sp:
         traces = RunTraces.create(paths.run_dir)
-        local_root = local_swebench_dataset_root()
-        dataset_for_harness = harness_dataset_arg(local_root)
+        dataset_root = resolve_dataset_root(paths.project_root)
+        dataset_for_harness = str(dataset_root)
+
         with mlflow_span("load_swebench_instance_row", "TASK", attributes={"split": SPLIT}):
-            task = load_task(instance_id, local_root=local_root)
+            task = load_task(instance_id, dataset_root=dataset_root)
+
         public_task = public_task_view(task)
         traces.append(
             "run_start",
@@ -307,7 +321,7 @@ def _run_one_task_impl(
                 "run_id": run_id,
                 "instance_id": instance_id,
                 "dataset": DATASET_NAME,
-                "dataset_source": "local_disk" if local_root is not None else "hub",
+                "dataset_source": "local_disk",
                 "dataset_harness_arg": dataset_for_harness,
                 "split": SPLIT,
                 "model": config.model,
@@ -321,7 +335,7 @@ def _run_one_task_impl(
                 "model": config.model,
                 "dataset": DATASET_NAME,
                 "dataset_harness_arg": dataset_for_harness,
-                "dataset_local_root": str(local_root) if local_root is not None else None,
+                "dataset_local_root": str(dataset_root),
                 "split": SPLIT,
                 "max_iterations": max_iterations,
                 "agent_max_tokens": agent_max_tokens,
@@ -340,8 +354,10 @@ def _run_one_task_impl(
         ):
             workspace = prepare_workspace(task, paths)
         traces.append("workspace_prepare_finish", {"stream": "run", "workspace": str(workspace)})
-        agent = BaselineLangChainAgent(config=config, traces=traces, max_tokens=agent_max_tokens)
+
+        agent = ReActCodingAgent(config=config, traces=traces, max_tokens=agent_max_tokens)
         agent_result = agent.run(workspace=workspace, task=task, max_iterations=max_iterations)
+
         with mlflow_span("git_diff_patch_extract", "TASK"):
             patch = make_patch(workspace, paths.run_dir / "patch.diff")
         traces.append(
@@ -398,10 +414,11 @@ def _run_one_task_impl(
 
 __all__ = [
     "DATASET_NAME",
+    "DEFAULT_DATASET_DIR",
     "SPLIT",
     "evaluate_prediction",
-    "harness_dataset_arg",
-    "local_swebench_dataset_root",
     "load_task",
+    "materialize_dataset",
+    "resolve_dataset_root",
     "run_one_task",
 ]
