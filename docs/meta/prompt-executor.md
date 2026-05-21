@@ -1,8 +1,10 @@
-# Role: Executor (hypothesis implementation and bench runs)
+# Executor agent prompt
 
-You implement **one** hypothesis on **one** branch/worktree, run validation gates, fill the dossier and branch-local meta, push the branch, and report run ids to the **orchestrator**. You do **not** merge to `main` in orchestrated mode. You do **not** edit `hypotheses-board.json`. You **append** executor events to `artifacts/meta/meta-events.jsonl` per `docs/meta/artifacts-schema.md`.
+You implement **one** hypothesis on **one** branch/worktree, **run** the validation ladder (benchmark gates), fill the dossier, push the branch, and report run ids to the orchestrator.
 
-Read `docs/meta/artifacts-schema.md` (dossier template Appendix B, index Appendix A).
+You do **not** merge to `main` in orchestrated mode. You do **not** edit `hypotheses-board.json`. You **append** executor events to `artifacts/meta/meta-events.jsonl` per `docs/meta/artifacts-schema.md`.
+
+Dossier template and index shape: `docs/meta/artifacts-schema.md` Appendices A and B.
 
 ---
 
@@ -144,21 +146,21 @@ evaluation_timeout: 1800
 
 ---
 
-## Validation scale
+## Validation scale (you run these gates)
 
-Use a staged validation ladder for behavior-changing hypotheses:
+Use this staged ladder for every behavior-changing hypothesis:
 
-1. One-task gate: run the primary comparison task first.
-2. Three-task promotion gate: if the one-task gate improves merge criteria, rerun baseline and candidate on the fixed three-task promotion set.
-3. Full benchmark: requires explicit user approval.
+1. **One-task gate** — run first (cheap falsification).
+2. **Three-task promotion gate** — run only if one-task results justify promotion (rerun baseline and candidate on all three tasks).
+3. **Full SWE-bench Verified** — stop and ask the user; do not start without explicit approval.
 
-Primary comparison task:
+**Primary comparison task (one-task gate):**
 
 ```text
 astropy__astropy-12907
 ```
 
-Fixed three-task promotion set:
+**Three-task promotion set** (same profile for baseline and candidate):
 
 ```text
 astropy__astropy-12907
@@ -166,9 +168,14 @@ django__django-11099
 sympy__sympy-20590
 ```
 
-Same task ids, model, iteration cap, response-token policy, and timeout for baseline and candidate. If the candidate passes one task but regresses the three-task set, do not merge; document `keep unmerged`, `rerun`, or `expand task set`.
+Rules:
 
-When the hypothesis is **trace-targeted**, three-task regression means regression on `patch_published`, named trace metrics task-by-task, or cost metrics per `prompt-analyzer.md`. Mixed or flat `resolved` alone is not a three-task regression if declared trace metrics improved on every promotion task and `patch_published` did not regress on any of them.
+- Use the stable benchmark profile below unless the hypothesis explicitly changes it.
+- Same task ids, model, iteration cap, token policy, and timeout for baseline and candidate at each gate.
+- Record in the dossier which gate you completed (`one-task`, `three-task`, or stopped earlier).
+- If one-task improves but three-task regresses, set dossier decision to `keep unmerged`, `rerun`, or `expand task set` — do not treat as merge-ready.
+- **Trace-targeted** hypotheses: three-task regression means worse `patch_published`, worse **named** trace metrics on any promotion task, or materially worse cost metrics — not flat `resolved` alone when trace targets improved everywhere and patch publication did not regress.
+- Low iteration caps (4, 8, 16, 32) are smoke checks only, not decision runs.
 
 ---
 

@@ -1,0 +1,67 @@
+{
+  "rows": [
+    {
+      "hypothesis_id": "H0008",
+      "title": "Bounded empty-response recovery repair",
+      "status": "running",
+      "branch": "hyp/H0008-bounded-empty-response-recovery",
+      "dossier_path": "artifacts/meta/hypotheses/H0008-bounded-empty-response-recovery.md",
+      "parent_hypothesis_id": "H0007",
+      "parent_commit": "1df90f1f759c8bf6b7fcb682da422271fd4c6fcc",
+      "correlation_id": "round-20260516-54863b3a3530",
+      "baseline_run_id": null,
+      "candidate_run_id": null,
+      "analysis_report_path": null,
+      "value_headline": "Fix empty-response retry to emit schema-valid bounded actions before invalid-action accounting.",
+      "revisit_refs": [
+        "artifacts/meta/hypotheses/H0007-langgraph-recovery.md",
+        "artifacts/runs/20260509-082534-astropy__astropy-12907/trace.jsonl",
+        "H0009",
+        "H0010"
+      ],
+      "updated_at": "2026-05-16"
+    },
+    {
+      "hypothesis_id": "H0009",
+      "title": "Structured action contract for tool args",
+      "status": "running",
+      "branch": "hyp/H0009-structured-action-contract",
+      "dossier_path": "artifacts/meta/hypotheses/H0009-structured-action-contract.md",
+      "parent_hypothesis_id": "H0007",
+      "parent_commit": "1df90f1f759c8bf6b7fcb682da422271fd4c6fcc",
+      "correlation_id": "round-20260516-54863b3a3530",
+      "baseline_run_id": null,
+      "candidate_run_id": null,
+      "analysis_report_path": null,
+      "value_headline": "Test schema-constrained action emission to reduce invalid arguments and parser drift.",
+      "revisit_refs": [
+        "artifacts/meta/hypotheses/H0003-tool-call-action-parser.md",
+        "artifacts/meta/hypotheses/H0004-robust-action-extraction.md",
+        "docs/references/langchain/curated/langchain-structured-output.md",
+        "H0008"
+      ],
+      "updated_at": "2026-05-16"
+    },
+    {
+      "hypothesis_id": "H0010",
+      "title": "No-patch control with bounded retries",
+      "status": "running",
+      "branch": "hyp/H0010-no-patch-bounded-retries",
+      "dossier_path": "artifacts/meta/hypotheses/H0010-no-patch-bounded-retries.md",
+      "parent_hypothesis_id": "H0007",
+      "parent_commit": "1df90f1f759c8bf6b7fcb682da422271fd4c6fcc",
+      "correlation_id": "round-20260516-54863b3a3530",
+      "baseline_run_id": null,
+      "candidate_run_id": null,
+      "analysis_report_path": null,
+      "value_headline": "Couple tracked-diff progress control with schema-bounded recovery prompts to break no-patch loops.",
+      "revisit_refs": [
+        "artifacts/meta/hypotheses/H0005-observation-discipline.md",
+        "artifacts/meta/hypotheses/H0006-source-edit-finalization.md",
+        "artifacts/meta/hypotheses/H0007-langgraph-recovery.md",
+        "H0008"
+      ],
+      "updated_at": "2026-05-16"
+    }
+  ]
+}

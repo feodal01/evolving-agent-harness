@@ -1,0 +1,10 @@
+execution_duration_ms: 29469
+request_time: '2026-05-17T09:43:58.115Z'
+response_preview: '{"patch_bytes": 0, "agent_iterations": 4, "evaluation_returncode":
+  0, "wall_seconds": 26.002}'
+state: OK
+trace_id: tr-08b71f29d5c11c7b4f2807a9f661be13
+trace_location:
+  mlflow_experiment:
+    experiment_id: '629660148408137329'
+  type: MLFLOW_EXPERIMENT

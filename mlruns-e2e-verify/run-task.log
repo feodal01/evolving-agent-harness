@@ -1,0 +1,51 @@
+/Users/user/Documents/repos/evolve2/.venv/lib/python3.11/site-packages/mlflow/tracking/_tracking_service/utils.py:184: FutureWarning: The filesystem tracking backend (e.g., './mlruns') is deprecated as of February 2026. Consider transitioning to a database backend (e.g., 'sqlite:///mlflow.db') to take advantage of the latest MLflow features. See https://mlflow.org/docs/latest/self-hosting/migrate-from-file-store for migration guidance.
+  return FileStore(store_uri, store_uri)
+2026/05/17 12:43:57 INFO mlflow.tracking.fluent: Experiment with name 'evolve2-browser-verify' does not exist. Creating a new experiment.
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+{
+  "run_id": "20260517-124357-astropy__astropy-12907",
+  "instance_id": "astropy__astropy-12907",
+  "workspace": 
+"/Users/user/Documents/repos/evolve2/artifacts/worktrees/20260517-124357-astropy
+__astropy-12907/astropy__astropy-12907",
+  "agent_summary": "Stopped after 4 iterations without finish action.",
+  "agent_iterations": 4,
+  "patch_bytes": 0,
+  "wall_seconds": 26.002,
+  "evaluation": {
+    "returncode": 0,
+    "elapsed_seconds": 6.96,
+    "report_path": 
+"/Users/user/Documents/repos/evolve2/artifacts/runs/20260517-124357-astropy__ast
+ropy-12907/google__gemma-4-26b-a4b-it.20260517-124357-astropy__astropy-12907.jso
+n",
+    "stdout_path": 
+"/Users/user/Documents/repos/evolve2/artifacts/runs/20260517-124357-astropy__ast
+ropy-12907/evaluation_stdout.log",
+    "stderr_path": 
+"/Users/user/Documents/repos/evolve2/artifacts/runs/20260517-124357-astropy__ast
+ropy-12907/evaluation_stderr.log",
+    "report": {
+      "total_instances": 1,
+      "submitted_instances": 1,
+      "completed_instances": 0,
+      "resolved_instances": 0,
+      "unresolved_instances": 0,
+      "empty_patch_instances": 1,
+      "error_instances": 0,
+      "completed_ids": [],
+      "incomplete_ids": [],
+      "empty_patch_ids": [
+        "astropy__astropy-12907"
+      ],
+      "submitted_ids": [
+        "astropy__astropy-12907"
+      ],
+      "resolved_ids": [],
+      "unresolved_ids": [],
+      "error_ids": [],
+      "schema_version": 2
+    }
+  }
+}
+2026/05/17 12:44:27 INFO mlflow.tracing.export.async_export_queue: Flushing the async trace logging queue before program exit. This may take a while...

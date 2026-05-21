@@ -98,7 +98,7 @@ Subagents **must not** edit `hypotheses-board.json`. They return structured outp
 - **Bench runs:** `artifacts/runs/<run_id>/` — `trace.jsonl`, `result.json`, `patch.diff`, etc. (see `prompt-executor.md` / `prompt-analyzer.md`).
 - **Analyzer reports:** `artifacts/meta/analyses/<hypothesis_id>-<run_id>.md` (recommended pattern).
 - **Dossiers:** `artifacts/meta/hypotheses/<hypothesis-id>-<slug>.md` — long-form lifecycle; board rows reference `dossier_path`.
-- **Legacy index:** `artifacts/meta/hypothesis-index.jsonl` remains the compact registry on `main`; board is the operational layer for multi-role flow. Keep both in sync per orchestrator procedure in `prompt-orchestrator.md`.
+- **Compact index:** `artifacts/meta/hypothesis-index.jsonl` on `main` for fast status lookup; `hypotheses-board.json` is the operational layer for multi-role flow. Keep both in sync per `prompt-orchestrator.md`.
 
 ## 5. What not to commit
 

@@ -55,6 +55,19 @@ set +a
 
 The OpenRouter key is expected in local `.env` as `OPENROUTER_API_KEY=...`. `.env` is ignored by git. The default model is `google/gemma-4-26b-a4b-it` through OpenRouter.
 
+### Local SWE-bench Verified snapshot (no Hub at run time)
+
+By default, task rows are loaded with Hugging Face `datasets` from `princeton-nlp/SWE-bench_Verified`, which can hit rate limits. To keep instances **on disk** after a one-time download:
+
+```bash
+uv run python scripts/materialize_swebench_verified.py --out ./datasets/SWE-bench_Verified
+export EVOLVE2_SWEBENCH_DATASET_ROOT="$(pwd)/datasets/SWE-bench_Verified"
+```
+
+This writes `./datasets/SWE-bench_Verified/test/` in the layout `swebench` expects for `--dataset_name`. Both `evolve2 run-task` and the bundled `run_evaluation` subprocess then read only from that path (no Hub fetch for the dataset). Git ignores `./datasets/` by default.
+
+Optional strict offline mode for other HF clients (may break unrelated tools): `export HF_DATASETS_OFFLINE=1`.
+
 ## Smoke Check
 
 ```bash
@@ -80,6 +93,35 @@ Each run writes a directory under `artifacts/runs/<run_id>/` containing:
 - `result.json`: compact outcome summary.
 
 Large traces stay in per-run JSONL files; hypothesis dossiers store references and metrics, not copied traces.
+
+Inspect a run without re-reading the full LLM tail each turn (shows **only new user text** per step by default):
+
+```bash
+uv run evolve2 trace-view artifacts/runs/<run_id> --stream llm --stream agent
+```
+
+Quick numeric summary:
+
+```bash
+uv run python scripts/summarize_trace.py <run_id>
+```
+
+### MLflow UI (LangChain traces)
+
+Optional integration with [MLflow](https://mlflow.org/) GenAI tracing — nested spans per `ChatOpenAI.invoke` (same logical turns as in `trace.jsonl`, without manual delta viewers).
+
+```bash
+uv sync --extra mlflow
+export EVOLVE2_MLFLOW_TRACING=1   # or pass --mlflow on run-task
+# optional: export MLFLOW_TRACKING_URI=file:$(pwd)/mlruns
+# optional: export MLFLOW_EXPERIMENT_NAME=my-swe-bench
+uv run evolve2 run-task --instance-id astropy__astropy-12907 --mlflow
+uv run mlflow ui --backend-store-uri ./mlruns
+```
+
+Open the UI → experiment → run named like the `run_id` → **Traces** tab. Shell/tool steps remain only in `trace.jsonl` unless extended later.
+
+This uses MLflow’s LangChain autolog (callbacks on `ChatOpenAI.invoke`). Custom harness steps (`run_shell`, `read_file`, …) are still recorded only in `trace.jsonl` / `agent_events.jsonl`.
 
 ## Meta-Agent Workflow
 

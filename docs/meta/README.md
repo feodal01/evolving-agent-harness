@@ -1,31 +1,25 @@
 # Meta-optimization docs (`docs/meta/`)
 
-Entry point for **role-based** meta-optimization prompts and artifact schemas. Legacy `docs/META_OPTIMIZATION.md` and `docs/ORCHESTRATOR_PROMPT.md` were removed; all instructions live here.
+Role-based **agent prompts** and artifact schemas for MCTS-style harness evolution on the SWE-bench agent.
 
-## Files
+## Prompt files (one role = one file)
 
-| Path | Use as |
-|------|--------|
-| [artifacts-schema.md](artifacts-schema.md) | Canonical schemas: `hypotheses-board.json`, `meta-events.jsonl`, snapshot contract, dossier template appendix, `hypothesis-index.jsonl` appendix. |
-| [prompt-orchestrator.md](prompt-orchestrator.md) | **`/goal` for the orchestrator** — board + events authority, merge to `main`, parallel rounds, BPMN flow reference. |
-| [prompt-executor.md](prompt-executor.md) | Hypothesis worker implementing one branch and bench gates. |
-| [prompt-proposer.md](prompt-proposer.md) | Idea generation (exploit/explore/bridge, references). |
-| [prompt-sampler.md](prompt-sampler.md) | MCTS-style row selection; **JSON only** to orchestrator (no `sample.selected` append). |
-| [prompt-analyzer.md](prompt-analyzer.md) | Trace + Pareto analysis reports; **no merge authority**. |
+| Role | Prompt | Use when |
+|------|--------|----------|
+| Orchestrator | [prompt-orchestrator.md](prompt-orchestrator.md) | `/goal` — coordinates rounds, board, spawns subagents |
+| Executor | [prompt-executor.md](prompt-executor.md) | Implements one hypothesis; **runs** benchmark gates |
+| Analyzer | [prompt-analyzer.md](prompt-analyzer.md) | Reads finished runs; Pareto report only |
+| Proposer | [prompt-proposer.md](prompt-proposer.md) | New/refill rows on the hypotheses board |
+| Sampler | [prompt-sampler.md](prompt-sampler.md) | Picks next `hypothesis_id` (JSON to orchestrator) |
 
-## BPMN (orchestrator-first)
+Schemas and dossier template: [artifacts-schema.md](artifacts-schema.md).
 
-The orchestrator starts each round, owns `hypotheses-board.json`, and is the **only** writer of `sample.selected` in `meta-events.jsonl`. See the diagram in [prompt-orchestrator.md](prompt-orchestrator.md) § “BPMN process”.
+## Orchestrator spawn rule
 
-## Quick start
+When spawning a subagent, pass **only** that role’s prompt file plus the snapshot packet from [artifacts-schema.md](artifacts-schema.md) §3. Example: *“Operate using `docs/meta/prompt-executor.md`. Snapshot: …”*
 
-1. Orchestrator: open `prompt-orchestrator.md` as `/goal`.
-2. Load `artifacts-schema.md` before editing meta files.
-3. Point subagents at **their** prompt file only (not the orchestrator prompt).
-
-## Related code paths
+## Related paths
 
 - Agent: `src/evolve2_agent_bench/agent/`
-- Bench: `src/evolve2_agent_bench/bench/`
 - Runs: `artifacts/runs/<run_id>/`
-- Meta: `artifacts/meta/`
+- Meta: `artifacts/meta/` (`hypotheses-board.json`, `meta-events.jsonl`, dossiers)

@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/user/Documents/repos/evolve2/mlruns-e2e-verify/629660148408137329/cf1c0de419bc425ca733e4a3eac7c989/artifacts
+end_time: 1779011067585
+entry_point_name: ''
+experiment_id: '629660148408137329'
+lifecycle_stage: active
+run_id: cf1c0de419bc425ca733e4a3eac7c989
+run_name: 20260517-124357-astropy__astropy-12907
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1779011038035
+status: 3
+tags: []
+user_id: user

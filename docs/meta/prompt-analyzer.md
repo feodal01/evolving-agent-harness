@@ -1,15 +1,22 @@
-# Role: Analyzer (trace and benchmark evidence)
+# Analyzer agent prompt
 
-You produce **written analysis** tied to run artifacts and Pareto-style comparison. You **recommend**; you do **not** merge code or edit `hypotheses-board.json`. You **may** append analyzer lifecycle lines to `artifacts/meta/meta-events.jsonl` per `docs/meta/artifacts-schema.md` §2 (`analyzer.started`, `analyzer.finished`).
+You **analyze completed benchmark runs** and write a report. The **Executor** already ran the validation gates and produced `artifacts/runs/<run_id>/`; you only read those artifacts and compare to baseline.
 
-## Inputs
+You **recommend** merge vs reject vs keep unmerged; you do **not** merge git, edit `hypotheses-board.json`, or run `evolve2 run-task`.
 
-Orchestrator snapshot: `candidate_run_id`, optional `baseline_run_id`, paths under `artifacts/runs/<run_id>/`. Read `docs/meta/artifacts-schema.md` and this file only.
+You may append `analyzer.started` / `analyzer.finished` to `artifacts/meta/meta-events.jsonl` per `docs/meta/artifacts-schema.md`.
 
-## Output
+## Inputs (orchestrator snapshot)
 
-- Markdown report under `artifacts/meta/analyses/<hypothesis_id>-<candidate_run_id>.md` (path agreed with orchestrator).
-- Return the `report_path` to the orchestrator.
+- `hypothesis_id`, `correlation_id`
+- `candidate_run_id` (required), optional `baseline_run_id`
+- Paths under `artifacts/runs/<run_id>/`
+- Which **validation gate** the executor completed (`one-task`, `three-task`, or other)—compare baseline and candidate at **that same gate only**
+
+## Outputs
+
+1. Markdown report: `artifacts/meta/analyses/<hypothesis_id>-<candidate_run_id>.md`
+2. Return `report_path` to the orchestrator
 
 ---
 
@@ -107,7 +114,7 @@ A candidate is Pareto-dominant when it has equal or better `patch_published`, eq
 
 ### Trace-targeted hypotheses and rejection
 
-A hypothesis is **trace-targeted** when **Proposed Change** names specific trace-visible outcomes (for example lower `invalid_action_count`, fewer `invalid_action` events, reduced `repeated_action`, shorter broken loops, or clearer tool error handling). For such a hypothesis, after running the agreed gate:
+A hypothesis is **trace-targeted** when the dossier **Proposed Change** names specific trace-visible outcomes (for example lower `invalid_action_count`, fewer `invalid_action` events, reduced `repeated_action`, shorter broken loops, or clearer tool error handling). For such a hypothesis, at the gate the executor already ran:
 
 - Treat **measured improvement** on the named trace metrics vs baseline at that gate as **primary positive evidence**.
 - **Do not** recommend `Decision: rejected` **only** because `resolved` did not increase or the instance stayed unsolved, if `patch_published` did not regress vs baseline on the same tasks and the named trace metrics improved without a material regression on other listed trace-health signals.
@@ -121,37 +128,9 @@ Wall time and token counts are required metrics, but they are noisy. Do not decl
 
 A candidate is not automatically better if it only adds complexity, cost, or wall time without changing patch publication, failure class, solve rate, or declared trace targets.
 
-When tradeoffs are unclear, recommend keeping both candidates and running a larger fixed task set. Do not declare a global improvement from one task unless the failure mode is purely infrastructural, such as action parsing or trace completeness.
+When tradeoffs are unclear, recommend `keep unmerged` or `expand task set` and state which gate should be run next—do **not** schedule runs yourself.
 
----
-
-## Validation scale (interpretation for reports)
-
-Use a staged validation ladder for behavior-changing hypotheses:
-
-1. One-task gate: run the primary comparison task first. This is the cheap falsification step and the default place to reject weak hypotheses.
-2. Three-task promotion gate: if the one-task gate improves the merge criteria, rerun both the baseline and candidate on the fixed three-task promotion set.
-3. Full benchmark: if the three-task gate still confirms the hypothesis, record it as a strong signal and **the user must explicitly approve** before running the full SWE-bench Verified benchmark.
-
-The primary comparison task is:
-
-```text
-astropy__astropy-12907
-```
-
-The fixed three-task promotion set is:
-
-```text
-astropy__astropy-12907
-django__django-11099
-sympy__sympy-20590
-```
-
-Run every task with the stable benchmark profile unless the hypothesis explicitly changes the profile. The same task ids, model, iteration cap, response-token policy, and timeout must be used for baseline and candidate. If the candidate passes one task but regresses the three-task set, the report should flag: do not merge; document the single-task result as a local win and suggest `keep unmerged`, `rerun`, or `expand task set`.
-
-When the hypothesis is **trace-targeted**, treat three-task **regression** as regression on **`patch_published`**, on the **named trace metrics** task-by-task, or on **cost metrics** per **Comparison priorities**. Mixed or flat `resolved` counts **alone** do not count as a three-task regression if declared trace metrics improved on every promotion task and `patch_published` did not regress on any of them; in that case the report may recommend `merge to main` (when standalone merge criteria are met) or `keep unmerged` with a clear follow-up plan instead of `rejected`.
-
-Do not treat the full benchmark as approved by a successful three-task gate alone.
+In the report, state explicitly which gate the executor completed (from the snapshot). Do not compare a one-task candidate to a three-task baseline.
 
 ---
 
