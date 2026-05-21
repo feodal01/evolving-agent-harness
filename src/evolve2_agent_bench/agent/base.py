@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -216,7 +217,33 @@ class BaselineLangChainAgent:
                             "action_args": action.args.model_dump(),
                         },
                     )
-                    result = self._execute(tools, action)
+                    finish_blocked = False
+                    blocked_summary = ""
+                    finish_args: FinishArgs | None = None
+                    if action.action == "finish":
+                        args = action.args
+                        if not isinstance(args, FinishArgs):
+                            raise TypeError("finish action received non-finish args")
+                        finish_args = args
+                        if not self._has_tracked_source_diff(workspace):
+                            finish_blocked = True
+                            blocked_summary = (
+                                "Finish blocked: no tracked source diff under src/ yet. "
+                                "Edit source files before trying finish again."
+                            )
+                            self.traces.append_agent(
+                                "agent_finish_blocked",
+                                {"iteration": iteration, "summary": blocked_summary},
+                            )
+                            result = {"ok": False, "output": blocked_summary}
+                        else:
+                            self.traces.append_agent(
+                                "agent_finish",
+                                {"iteration": iteration, "summary": args.summary},
+                            )
+                            result = {"ok": True, "output": args.summary}
+                    else:
+                        result = self._execute(tools, action)
                     self.traces.append_agent(
                         "agent_observation",
                         {
@@ -247,15 +274,11 @@ class BaselineLangChainAgent:
                             ensure_ascii=False,
                         )
                     )
+                    if finish_blocked:
+                        continue
                     if action.action == "finish":
-                        args = action.args
-                        if not isinstance(args, FinishArgs):
-                            raise TypeError("finish action received non-finish args")
-                        self.traces.append_agent(
-                            "agent_finish",
-                            {"iteration": iteration, "summary": args.summary},
-                        )
-                        final_summary = args.summary
+                        assert finish_args is not None
+                        final_summary = finish_args.summary
                         final_iterations = iteration
                         terminal = True
                         break
@@ -424,6 +447,21 @@ class BaselineLangChainAgent:
             if tsp is not None:
                 tsp.set_outputs(truncate_for_span(out))
             return out
+
+    def _has_tracked_source_diff(self, workspace: Path) -> bool:
+        proc = subprocess.run(
+            ["git", "-C", str(workspace), "diff", "--name-only", "--", "src"],
+            check=False,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        if proc.returncode != 0:
+            raise RuntimeError(
+                "Failed to inspect tracked source diff: "
+                f"returncode={proc.returncode}, stderr={proc.stderr.strip()}"
+            )
+        return any(line.strip() for line in proc.stdout.splitlines())
 
 
 def _json_object_spans(raw: str) -> list[tuple[int, int]]:
