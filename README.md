@@ -1,140 +1,78 @@
-# evolving-agent-harness
+# Evolve2
 
-`evolving-agent-harness` is a Python project for evolving an agent harness on SWE-bench Verified using Pareto-driven experiments.
+Evolve2 is a long-running experiment in self-improving coding agents.
 
-The core idea: keep the base coding agent intentionally simple and cheap to run, then let a meta-agent improve the harness around it through controlled hypotheses. Each hypothesis changes the agent or harness code, runs benchmark rollouts, compares metrics, and is merged only if it improves the Pareto frontier.
+The project starts with a deliberately small SWE-bench agent, then lets a meta-agent improve the harness around it: tools, prompts, tracing, validation, and recovery behavior. Every attempted improvement becomes an episode with a hypothesis, a branch, a benchmark run, and a verdict.
 
-## Why This Exists
+The fun part is not a polished final score. It is watching the agent learn how to become a better agent.
 
-Agent performance is not only a model problem. The harness around the model - tools, context, memory, action protocol, tracing, validation, and recovery behavior - strongly shapes what the agent can do.
+## Watch The Run
 
-This project is a small laboratory for pushing harness engineering as far as possible with a small LLM. Small models make rollouts cheaper and faster, and they make harness improvements easier to see: if the agent gets better, the surrounding engineering likely mattered.
+- **Live show page:** [feodal01.github.io/evolving-agent-harness](https://feodal01.github.io/evolving-agent-harness/) ([source](docs/show/index.html))
+- **Current board:** [artifacts/meta/hypotheses-board.json](artifacts/meta/hypotheses-board.json)
+- **Hypothesis archive:** [artifacts/meta/hypotheses](artifacts/meta/hypotheses)
+- **Operator manual:** [docs/meta/README.md](docs/meta/README.md)
 
-## Design Principles
+When GitHub Pages is enabled for this repository, the show page is deployed by `.github/workflows/showcase.yml` on every `main` update. It turns the meta-agent's ledger into a public scoreboard and episode feed.
 
-1. Git is the experiment control system.
-   `main` contains the mainstream agent. Every hypothesis gets its own `hyp/HXXXX-<slug>` branch. Failed branches are not deleted; they remain as evidence. Only Pareto-improving hypotheses are merged.
+## The Premise
 
-2. The central memory is explicit.
-   `artifacts/meta/hypothesis-index.jsonl` gives a compact status index, while `artifacts/meta/hypotheses/` stores full hypothesis dossiers from proposal through result. The project should not rely on chat history.
+Most agent progress is invisible: a prompt changes, a tool gets stricter, a failed run disappears into logs. Evolve2 makes that process visible.
 
-3. Use LangChain/LangGraph as the agent framework.
-   The evolving agent is a LangGraph ReAct agent with native tool calling. The meta-agent improves it by editing ordinary Python code: prompts, tool definitions, callbacks, memory, context handling, and LangGraph control flow.
+Each round asks:
 
-4. Use SWE-bench as the pressure test.
-   SWE-bench Verified gives real repository tasks, established evaluation tooling, and a large body of public literature. The meta-agent is expected to use relevant research, reference agents, and LangChain/LangGraph patterns when generating hypothesis families.
+1. What failure did the latest trace expose?
+2. What small harness change might move the frontier?
+3. Did it publish a patch, solve a task, or reveal a better next move?
+4. Should the change merge, stay as evidence, or become a deferred branch in the search tree?
 
-5. Keep rollouts cheap.
-   The default evaluated model is a small OpenRouter model: `google/gemma-4-26b-a4b-it`. This keeps iteration cost low and helps measure how far harness improvements can push a smaller model.
+The meta-agent is not allowed to rely on chat memory. Its memory is the repository: dossiers, events, traces, branches, and benchmark outputs.
 
-6. Markdown is the meta-agent interface.
-   The meta-agent workflow, research frame, local references, and operating rules live in markdown files. This keeps the project easy to inspect, fork, and resume.
+## Why It Matters
 
-## Repository Map
+Large models can hide weak harnesses. Small models expose them.
 
-- `src/evolve2_agent_bench/agent/`: evolving LangGraph ReAct coding agent.
-- `src/evolve2_agent_bench/bench/`: SWE-bench runner and evaluation (offline only).
-- `docs/meta/README.md`: entry point for meta-optimization prompts and artifact schemas.
-- `docs/meta/prompt-unified.md`: single-agent meta-optimization operating manual.
-- `artifacts/meta/hypotheses-board.json`: operational hypothesis board.
-- `artifacts/meta/hypothesis-index.jsonl`: compact index of hypothesis dossiers and statuses.
-- `artifacts/meta/hypotheses/`: full hypothesis dossiers, from proposal through result.
-- `docs/references/langchain/`: offline LangChain and LangGraph documentation.
-- `docs/references/research/agent-evolution-literature.md`: research frame for generating hypothesis families.
-- `artifacts/runs/<run_id>/`: local run traces and benchmark outputs (git-ignored).
-- `artifacts/mlruns/`: MLflow trace store (git-ignored).
+Evolve2 uses a small model by default and puts pressure on the surrounding system: action interfaces, file-editing affordances, feedback loops, observability, and benchmark discipline. A small improvement that turns an empty diff into a real patch is a visible step forward.
 
-## Setup
+The first major breakthrough was H0022: blocking untracked scratch-file writes. After many zero-patch runs, the agent finally produced a non-empty SWE-bench patch. It still did not solve the task, but it crossed a structural threshold: from talking about fixes to submitting diffs.
+
+## How To Read The Repository
+
+- `artifacts/meta/hypotheses/*.md` are episode dossiers.
+- `artifacts/meta/meta-events.jsonl` is the chronological production log.
+- `artifacts/meta/hypotheses-board.json` is the current season board.
+- `src/evolve2_agent_bench/agent/` is the evolving coding agent.
+- `src/evolve2_agent_bench/bench/` runs SWE-bench Verified tasks.
+- `docs/meta/` contains the operating prompts for the meta-agent.
+
+## Run It Locally
 
 ```bash
 uv sync
 set -a
 source .env
 set +a
-```
-
-The OpenRouter key is expected in local `.env` as `OPENROUTER_API_KEY=...`. `.env` is ignored by git. The default model is `google/gemma-4-26b-a4b-it` through OpenRouter.
-
-### SWE-bench Verified Dataset (offline, required)
-
-The dataset must be materialized locally before running tasks. No HuggingFace Hub fallback.
-
-```bash
-uv run evolve2 materialize-dataset
-uv run evolve2 dataset-status
-```
-
-Default location: `datasets/SWE-bench_Verified`. Override with `EVOLVE2_SWEBENCH_DATASET_ROOT`.
-
-## Smoke Check
-
-```bash
 uv run evolve2 model-check
-```
-
-## Run One SWE-bench Verified Task
-
-```bash
+uv run evolve2 dataset-status
 uv run evolve2 run-task --instance-id astropy__astropy-12907 --max-iterations 100 --evaluation-timeout 1800
 ```
 
-MLflow tracing is **auto-enabled** for every run. Disable with `--no-mlflow` or `EVOLVE2_MLFLOW_TRACING=0`.
+SWE-bench Verified must be materialized locally before benchmark runs. Use `uv run evolve2 materialize-dataset` if `dataset-status` says it is missing.
 
-Each run writes a directory under `artifacts/runs/<run_id>/` containing:
-
-- `trace.jsonl`: canonical unified timeline.
-- `task.json`: public SWE-bench instance fields given to the agent.
-- `agent_events.jsonl`: high-level agent decisions.
-- `llm_calls.jsonl`: model-specific slice of the unified trace.
-- `shell_events.jsonl`: shell-specific slice of the unified trace.
-- `patch.diff`: generated prediction patch.
-- `prediction.jsonl`: SWE-bench prediction input.
-- `evaluation_stdout.log` and `evaluation_stderr.log`: SWE-bench harness output.
-- `result.json`: compact outcome summary.
-
-Inspect a trace:
-
-```bash
-uv run evolve2 trace-view artifacts/runs/<run_id> --stream llm --stream agent
-```
-
-### MLflow UI
-
-View full span hierarchies for every LLM call, tool invocation, and evaluation:
+MLflow tracing is enabled by default:
 
 ```bash
 uv run evolve2 mlflow-ui
-# prints the command to launch MLflow UI
-# then open http://localhost:5000
 ```
 
-MLflow traces are stored locally in `artifacts/mlruns/`. Each benchmark run creates an MLflow run with nested spans showing the agent session, individual iterations, tool calls, and evaluation.
+## Build The Show Page
 
-## Meta-Agent Workflow
+```bash
+uv run python scripts/build_showcase.py
+```
 
-A **single unified agent** handles all meta-optimization phases. Start at [docs/meta/README.md](docs/meta/README.md), use [docs/meta/prompt-unified.md](docs/meta/prompt-unified.md) as the `/goal` prompt.
+The generated page is `docs/show/index.html`. The GitHub Pages workflow runs the same command before deployment.
 
-The meta-optimization loop:
+## Status
 
-1. **Round setup**: Checkout main, verify env, read hypothesis board.
-2. **Research scan**: Review reference agents (SWE-agent, Aider, OpenHands, Moatless), LangChain/LangGraph docs, research literature.
-3. **Hypothesis generation**: Generate three candidates (exploit/explore/bridge), classify as `mechanical` or `hypothesis`, select one.
-4. **Execution**: Branch, implement, validate according to fix type.
-5. **Analysis**: Pareto comparison using JSONL traces + MLflow span analysis.
-6. **Decision**: Merge / reject / keep, publish to registry.
-
-### Fix Types
-
-- **Mechanical** (`fix_type: mechanical`): Parser bugs, retry logic, infrastructure. One-task gate only, no baseline comparison. Cost: ~1 run.
-- **Hypothesis** (`fix_type: hypothesis`): Quality improvements. Full validation ladder with baseline comparison. Cost: 2-8 runs.
-
-This distinction prevents burning budget on expensive baseline comparisons for trivial fixes.
-
-## Offline References
-
-The project includes local references so the meta-agent can work without internet access:
-
-- LangChain/LangGraph docs: [docs/references/langchain/README.md](docs/references/langchain/README.md)
-- Research frame: [docs/references/research/agent-evolution-literature.md](docs/references/research/agent-evolution-literature.md)
-
-The research frame is intentionally not a backlog. It describes directions such as agent-computer interfaces, reflection, Pareto text evolution, bounded search, experience banks, skills, synthetic tasks, and evaluation robustness. A paper idea only becomes a branch after it maps to an observed trace failure.
+Evolve2 is intentionally unfinished. The goal is to make the improvement process legible enough that people can follow the arc: failed ideas, small discoveries, merged mechanics, and the next bet.

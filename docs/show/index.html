@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Evolve2 Live</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172026;
+      --muted: #66717a;
+      --line: #d7dde2;
+      --paper: #f6f7f8;
+      --panel: #ffffff;
+      --green: #1f7a4d;
+      --blue: #2563a8;
+      --red: #9c3d3d;
+      --amber: #8a6500;
+      --violet: #6b4aa0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--paper);
+      line-height: 1.55;
+    }
+    a { color: inherit; }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 32px 20px 56px; }
+    header {
+      min-height: 58vh;
+      display: grid;
+      align-content: center;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 28px;
+    }
+    .eyebrow { text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-size: 12px; font-weight: 700; }
+    h1 { font-size: clamp(42px, 7vw, 92px); line-height: .96; margin: 10px 0 18px; letter-spacing: 0; max-width: 900px; }
+    h2 { font-size: 28px; margin: 0 0 12px; letter-spacing: 0; }
+    h3 { margin: 10px 0 8px; font-size: 18px; letter-spacing: 0; }
+    .lead { font-size: 21px; max-width: 780px; color: #2e3a42; }
+    .meta { color: var(--muted); margin-top: 18px; }
+    .grid { display: grid; gap: 16px; }
+    .stats { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); margin: 28px 0; }
+    .stat { background: var(--panel); border: 1px solid var(--line); padding: 18px; }
+    .stat span { display: block; font-size: 34px; font-weight: 800; }
+    .stat label { color: var(--muted); text-transform: uppercase; font-size: 12px; font-weight: 700; }
+    section { margin: 34px 0; }
+    .breakthrough, .panel { background: var(--panel); border: 1px solid var(--line); padding: 24px; }
+    .breakthrough { border-left: 6px solid var(--green); }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+    .chips span { border: 1px solid var(--line); padding: 7px 10px; background: #f9fafb; font-size: 13px; }
+    .cards { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+    .card { background: var(--panel); border: 1px solid var(--line); padding: 18px; min-height: 190px; }
+    .card-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .hid { font-weight: 800; text-decoration: none; }
+    .pill { border: 1px solid var(--line); padding: 4px 8px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+    .merged { color: var(--green); }
+    .running { color: var(--blue); }
+    .idea { color: var(--violet); }
+    .rejected { color: var(--red); }
+    .inconclusive { color: var(--amber); }
+    .feed { list-style: none; padding: 0; margin: 0; }
+    .feed li { border-top: 1px solid var(--line); padding: 16px 0; }
+    .feed time { display: block; color: var(--muted); font-size: 13px; }
+    .feed strong { display: inline-block; margin-right: 8px; }
+    .feed p { margin: 6px 0 0; color: #2f3a42; }
+    .two { grid-template-columns: minmax(0, 1fr) minmax(280px, .55fr); align-items: start; }
+    .panel ul { margin: 0; padding-left: 20px; }
+    .panel li { margin: 0 0 12px; }
+    .panel li span { display: block; color: var(--muted); }
+    .muted { color: var(--muted); }
+    footer { margin-top: 48px; color: var(--muted); font-size: 14px; }
+    @media (max-width: 760px) {
+      header { min-height: 46vh; }
+      .two { grid-template-columns: 1fr; }
+      .lead { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <p class="eyebrow">Evolve2 live agent lab</p>
+      <h1>A coding agent trying to improve itself.</h1>
+      <p class="lead">Follow the experiment as a live series: each hypothesis is an episode, every branch is evidence, and every benchmark run moves the story forward or teaches the next move.</p>
+      <p class="meta">Last ledger event: 2026-05-22T10:37:40Z</p>
+    </header>
+
+    <section>
+      <div class="grid stats">
+        <div class="stat"><span>20</span><label>hypotheses</label></div>
+        <div class="stat"><span>1</span><label>merged</label></div>
+<div class="stat"><span>1</span><label>running</label></div>
+<div class="stat"><span>3</span><label>idea</label></div>
+<div class="stat"><span>11</span><label>inconclusive</label></div>
+<div class="stat"><span>3</span><label>rejected</label></div>
+<div class="stat"><span>1</span><label>baseline</label></div>
+      </div>
+    </section>
+
+    
+        <section class="breakthrough">
+          <p class="eyebrow">Latest breakthrough</p>
+          <h2>H0022: Block untracked file writes and inject tracked-path sed guidance</h2>
+          <p>First-ever non-zero patch_bytes across all hypotheses. Agent blocked on reproduce_issue.py write (shell_command_blocked event), then wrote to tracked test file via cat &gt;&gt;. Patch produced but agent wrote test function instead of fixing source - deferred to H0022-B for edit_file tool improvement.</p>
+          <div class="chips">
+            <span>1591 patch bytes</span>
+            <span>run 20260522-102940-astropy__astropy-12907</span>
+          </div>
+        </section>
+        
+
+    <section class="grid two">
+      <div>
+        <p class="eyebrow">Latest episodes</p>
+          <div class="grid cards">
+          
+            <article class="card">
+              <div class="card-top">
+                <a class="hid" href="https://github.com/feodal01/evolving-agent-harness/blob/main/artifacts/meta/hypotheses/H0022-block-untracked-writes.md">H0022</a>
+                <span class="pill merged">merged</span>
+              </div>
+              <h3>Block untracked file writes and inject tracked-path sed guidance</h3>
+              <p>Block the dominant no-patch failure path by constraining write_file to tracked paths only. First-ever non-zero patch_bytes (1591) after 17 prior hypotheses all produced patch_bytes=0.</p>
+            </article>
+            
+
+            <article class="card">
+              <div class="card-top">
+                <a class="hid" href="https://github.com/feodal01/evolving-agent-harness">H0019</a>
+                <span class="pill idea">idea</span>
+              </div>
+              <h3>Persistent tracked-src-edit state</h3>
+              <p>Keep a durable has_tracked_src_edit state that routes away from scratch writes until source edits exist.</p>
+            </article>
+            
+
+            <article class="card">
+              <div class="card-top">
+                <a class="hid" href="https://github.com/feodal01/evolving-agent-harness">H0018</a>
+                <span class="pill idea">idea</span>
+              </div>
+              <h3>Structured finalization schema</h3>
+              <p>Require structured finalization fields so the agent cannot hand-wave a finish without tracked-diff evidence.</p>
+            </article>
+            
+
+            <article class="card">
+              <div class="card-top">
+                <a class="hid" href="https://github.com/feodal01/evolving-agent-harness/blob/main/artifacts/meta/hypotheses/H0017-patch-confirmed-finalization-latch.md">H0017</a>
+                <span class="pill running">running</span>
+              </div>
+              <h3>Patch-confirmed finalization latch</h3>
+              <p>Block finish until a tracked src diff and compact changed-files summary are confirmed.</p>
+            </article>
+            
+
+            <article class="card">
+              <div class="card-top">
+                <a class="hid" href="https://github.com/feodal01/evolving-agent-harness/blob/main/artifacts/meta/hypotheses/H0016-third-iteration-source-edit-checkpoint.md">H0016</a>
+                <span class="pill inconclusive">inconclusive</span>
+              </div>
+              <h3>Third-iteration source-edit checkpoint</h3>
+              <p>Force a diff summary and changed-file count after iteration 3 before any final answer path.</p>
+            </article>
+            
+
+            <article class="card">
+              <div class="card-top">
+                <a class="hid" href="https://github.com/feodal01/evolving-agent-harness/blob/main/artifacts/meta/hypotheses/H0015-checkpointed-finalization-resume.md">H0015</a>
+                <span class="pill inconclusive">inconclusive</span>
+              </div>
+              <h3>Checkpointed finalization resume</h3>
+              <p>Use persistence and interrupts so clean-diff runs resume from an edit-confirmation checkpoint.</p>
+            </article>
+            
+
+            <article class="card">
+              <div class="card-top">
+                <a class="hid" href="https://github.com/feodal01/evolving-agent-harness/blob/main/artifacts/meta/hypotheses/H0014-ready-to-finish-graph-state.md">H0014</a>
+                <span class="pill inconclusive">inconclusive</span>
+              </div>
+              <h3>Ready-to-finish graph state</h3>
+              <p>Add an explicit ready_to_finish state gated by patch confirmation and tracked diff.</p>
+            </article>
+            
+
+            <article class="card">
+              <div class="card-top">
+                <a class="hid" href="https://github.com/feodal01/evolving-agent-harness/blob/main/artifacts/meta/hypotheses/H0013-forced-source-edit-checkpoint.md">H0013</a>
+                <span class="pill inconclusive">inconclusive</span>
+              </div>
+              <h3>Forced source-edit checkpoint</h3>
+              <p>Checkpoint immediately after scratch-file writes to redirect the agent to tracked `src/` edits.</p>
+            </article>
+            
+        </div>
+      </div>
+      <aside class="panel">
+        <p class="eyebrow">On deck</p>
+        <ul>
+            <li>
+              <strong>H0012: Explicit ready-to-finish graph state</strong>
+              <span>Use an explicit graph state to gate termination on patch confirmation.</span>
+            </li>
+            
+
+            <li>
+              <strong>H0017: Patch-confirmed finalization latch</strong>
+              <span>Block finish until a tracked src diff and compact changed-files summary are confirmed.</span>
+            </li>
+            
+
+            <li>
+              <strong>H0018: Structured finalization schema</strong>
+              <span>Require structured finalization fields so the agent cannot hand-wave a finish without tracked-diff evidence.</span>
+            </li>
+            
+
+            <li>
+              <strong>H0019: Persistent tracked-src-edit state</strong>
+              <span>Keep a durable has_tracked_src_edit state that routes away from scratch writes until source edits exist.</span>
+            </li>
+            </ul>
+      </aside>
+    </section>
+
+    <section class="panel">
+      <p class="eyebrow">Production log</p>
+      <ul class="feed">
+        
+            <li>
+              <time>2026-05-22T10:37:40Z</time>
+              <strong>round.closed</strong>
+              <span>H0022 - Block untracked file writes and inject tracked-path sed guidance</span>
+              <p>H0022 merged: untracked-write blocking + system prompt CRITICAL RULES + pytest-unavailable message + repeated-command detection. One-task gate: patch_bytes=1591 (first non-zero in 17+ hypotheses). Agent blocked on reproduce_issue.py, successfully redirected to tracked file. Patch not resolving yet - H0022-B (edit_file tool) deferred as next lever.</p>
+            </li>
+            
+
+            <li>
+              <time>2026-05-22T10:37:30Z</time>
+              <strong>merge.decided</strong>
+              <span>H0022 - Block untracked file writes and inject tracked-path sed guidance</span>
+              <p>Mechanical fix verified: patch_bytes went from 0 to 1591 on one-task gate. The block on untracked writes is objectively correct - agent was structurally unable to produce patches before because it wasted all iterations on scratch files. No baseline comparison needed per mechanical-fix protocol.</p>
+            </li>
+            
+
+            <li>
+              <time>2026-05-22T10:37:23Z</time>
+              <strong>executor.finished</strong>
+              <span>H0022 - Block untracked file writes and inject tracked-path sed guidance</span>
+              <p>First-ever non-zero patch_bytes across all hypotheses. Agent blocked on reproduce_issue.py write (shell_command_blocked event), then wrote to tracked test file via cat &gt;&gt;. Patch produced but agent wrote test function instead of fixing source - deferred to H0022-B for edit_file tool improvement.</p>
+            </li>
+            
+
+            <li>
+              <time>2026-05-22T10:29:40Z</time>
+              <strong>executor.started</strong>
+              <span>H0022 - Block untracked file writes and inject tracked-path sed guidance</span>
+              <p></p>
+            </li>
+            
+
+            <li>
+              <time>2026-05-21T18:00:00Z</time>
+              <strong>round.opened</strong>
+              <span>round</span>
+              <p>new round: focus on achieving Pareto improvement over baseline - 17 prior hypotheses all failed to produce a non-empty patch</p>
+            </li>
+            
+
+            <li>
+              <time>2026-05-21T09:41:38Z</time>
+              <strong>executor.started</strong>
+              <span>H0017 - Patch-confirmed finalization latch</span>
+              <p></p>
+            </li>
+            
+
+            <li>
+              <time>2026-05-21T09:40:28Z</time>
+              <strong>executor.started</strong>
+              <span>H0017 - Patch-confirmed finalization latch</span>
+              <p></p>
+            </li>
+            
+
+            <li>
+              <time>2026-05-21T09:29:52Z</time>
+              <strong>executor.started</strong>
+              <span>H0017 - Patch-confirmed finalization latch</span>
+              <p></p>
+            </li>
+            
+
+            <li>
+              <time>2026-05-21T09:23:16Z</time>
+              <strong>executor.started</strong>
+              <span>H0017 - Patch-confirmed finalization latch</span>
+              <p></p>
+            </li>
+            
+
+            <li>
+              <time>2026-05-21T09:16:00Z</time>
+              <strong>executor.started</strong>
+              <span>H0017 - Patch-confirmed finalization latch</span>
+              <p></p>
+            </li>
+            
+
+            <li>
+              <time>2026-05-21T09:07:15Z</time>
+              <strong>executor.started</strong>
+              <span>H0017 - Patch-confirmed finalization latch</span>
+              <p></p>
+            </li>
+            
+
+            <li>
+              <time>2026-05-21T08:31:23Z</time>
+              <strong>sample.selected</strong>
+              <span>H0017 - Patch-confirmed finalization latch</span>
+              <p>This is the most direct fix for the dominant no-patch / finish-without-confirmation failure: it blocks finalization until a tracked src diff and changed-files summary are explicitly confirmed. That makes it a strong exploit choice over the broader graph-state or schema variants.</p>
+            </li>
+            
+      </ul>
+    </section>
+
+    <footer>
+      Generated from <a href="https://github.com/feodal01/evolving-agent-harness/blob/main/artifacts/meta"><code>artifacts/meta</code></a> by <a href="https://github.com/feodal01/evolving-agent-harness/blob/main/scripts/build_showcase.py"><code>scripts/build_showcase.py</code></a>. The public README is the trailer; this page is the episode feed.
+    </footer>
+  </div>
+</body>
+</html>
