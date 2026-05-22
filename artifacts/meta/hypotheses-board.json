@@ -3,6 +3,7 @@
     {
       "hypothesis_id": "H0008",
       "title": "Bounded empty-response recovery repair",
+      "summary": "Limit how many times the agent retries after getting empty responses, to stop it from looping forever.",
       "status": "inconclusive",
       "branch": "hyp/H0008-bounded-empty-response-recovery",
       "dossier_path": "artifacts/meta/hypotheses/H0008-bounded-empty-response-recovery.md",
@@ -24,6 +25,7 @@
     {
       "hypothesis_id": "H0009",
       "title": "Structured action contract for tool args",
+      "summary": "Force the agent to follow a strict format when calling tools, so it stops sending garbled instructions.",
       "status": "inconclusive",
       "branch": "hyp/H0009-structured-action-contract",
       "dossier_path": "artifacts/meta/hypotheses/H0009-structured-action-contract.md",
@@ -45,6 +47,7 @@
     {
       "hypothesis_id": "H0010",
       "title": "No-patch control with bounded retries",
+      "summary": "Add a retry limit for when the agent finishes without producing any code changes, to prevent wasted compute.",
       "status": "inconclusive",
       "branch": "hyp/H0010-no-patch-bounded-retries",
       "dossier_path": "artifacts/meta/hypotheses/H0010-no-patch-bounded-retries.md",
@@ -66,6 +69,7 @@
     {
       "hypothesis_id": "H0011",
       "title": "Hard finalization diff gate",
+      "summary": "Refuse to let the agent finish unless it can prove it actually edited source files.",
       "status": "inconclusive",
       "branch": "hyp/H0011-hard-finalization-diff-gate",
       "dossier_path": "artifacts/meta/hypotheses/H0011-hard-finalization-diff-gate.md",
@@ -84,6 +88,7 @@
     {
       "hypothesis_id": "H0012",
       "title": "Explicit ready-to-finish graph state",
+      "summary": "Make the agent pass through a checklist before it can declare done, so it can't skip writing code.",
       "status": "idea",
       "parent_hypothesis_id": "H0010",
       "parent_commit": "0cf10077bb2d447f8216e3c6f7c671e6d6f627c3",
@@ -99,6 +104,7 @@
     {
       "hypothesis_id": "H0013",
       "title": "Forced source-edit checkpoint",
+      "summary": "Pause the agent right after it writes scratch files and redirect it to edit the actual source code instead.",
       "status": "inconclusive",
       "branch": "hyp/H0013-forced-source-edit-checkpoint",
       "dossier_path": "artifacts/meta/hypotheses/H0013-forced-source-edit-checkpoint.md",
@@ -117,7 +123,8 @@
     {
       "hypothesis_id": "H0017",
       "title": "Patch-confirmed finalization latch",
-      "status": "running",
+      "summary": "Lock the finish button until the agent confirms it has real code changes to show.",
+      "status": "inconclusive",
       "branch": "hyp/H0017-patch-confirmed-finalization-latch",
       "dossier_path": "artifacts/meta/hypotheses/H0017-patch-confirmed-finalization-latch.md",
       "parent_hypothesis_id": "H0013",
@@ -135,6 +142,7 @@
     {
       "hypothesis_id": "H0018",
       "title": "Structured finalization schema",
+      "summary": "Require the agent to fill out a form proving it made real edits before it can submit its answer.",
       "status": "idea",
       "parent_hypothesis_id": "H0013",
       "parent_commit": "0cf10077bb2d447f8216e3c6f7c671e6d627c3",
@@ -150,6 +158,7 @@
     {
       "hypothesis_id": "H0019",
       "title": "Persistent tracked-src-edit state",
+      "summary": "Remember whether the agent has edited source files yet, and block it from finishing until it has.",
       "status": "idea",
       "parent_hypothesis_id": "H0013",
       "parent_commit": "0cf10077bb2d447f8216e3c6f7c671e6d627c3",
@@ -165,6 +174,7 @@
     {
       "hypothesis_id": "H0014",
       "title": "Ready-to-finish graph state",
+      "summary": "Add a separate 'ready to finish' step the agent must pass, checking that code was actually changed.",
       "status": "inconclusive",
       "branch": "hyp/H0014-ready-to-finish-graph-state",
       "dossier_path": "artifacts/meta/hypotheses/H0014-ready-to-finish-graph-state.md",
@@ -184,6 +194,7 @@
     {
       "hypothesis_id": "H0015",
       "title": "Checkpointed finalization resume",
+      "summary": "Save the agent's progress after code edits so it can pick up from there instead of starting over.",
       "status": "inconclusive",
       "branch": "hyp/H0015-checkpointed-finalization-resume",
       "dossier_path": "artifacts/meta/hypotheses/H0015-checkpointed-finalization-resume.md",
@@ -202,6 +213,7 @@
     {
       "hypothesis_id": "H0016",
       "title": "Third-iteration source-edit checkpoint",
+      "summary": "After three rounds of work, force the agent to show what files it changed before it can wrap up.",
       "status": "inconclusive",
       "branch": "hyp/H0016-third-iteration-source-edit-checkpoint",
       "dossier_path": "artifacts/meta/hypotheses/H0016-third-iteration-source-edit-checkpoint.md",
@@ -221,6 +233,7 @@
     {
       "hypothesis_id": "H0022",
       "title": "Block untracked file writes and inject tracked-path sed guidance",
+      "summary": "Stop the agent from writing to random files and guide it to edit only the right source code.",
       "status": "merged",
       "branch": "hyp/H0022-block-untracked-writes",
       "dossier_path": "artifacts/meta/hypotheses/H0022-block-untracked-writes.md",

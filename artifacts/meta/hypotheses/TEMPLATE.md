@@ -1,5 +1,7 @@
 # HXXXX Short Hypothesis Title
 
+Summary: One-sentence human-readable description for the public showcase page.
+
 Status: proposed
 
 Branch: `hyp/HXXXX-short-slug`

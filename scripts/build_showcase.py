@@ -153,10 +153,11 @@ def find_breakthrough(events: list[dict[str, Any]], hypotheses: list[dict[str, A
             continue
         if payload.get("patch_bytes", 0) and int(payload.get("patch_bytes", 0)) > 0:
             hypothesis_id = event.get("hypothesis_id")
-            title = next((row.get("title") for row in hypotheses if row.get("hypothesis_id") == hypothesis_id), "")
+            hyp = next((row for row in hypotheses if row.get("hypothesis_id") == hypothesis_id), {})
             return {
                 "hypothesis_id": hypothesis_id,
-                "title": title,
+                "title": hyp.get("title", ""),
+                "summary": hyp.get("summary", ""),
                 "patch_bytes": payload.get("patch_bytes"),
                 "run_id": payload.get("run_id"),
                 "detail": payload.get("detail"),
@@ -184,7 +185,7 @@ def render_hypothesis_cards(repo_url: str, rows: list[dict[str, Any]], limit: in
         state, label = funnel_state(row)
         dossier = row.get("dossier") or row.get("dossier_path")
         href = repo_blob_url(repo_url, str(dossier)) if dossier else repo_url
-        headline = row.get("value_headline") or "No value headline recorded yet."
+        headline = row.get("summary") or row.get("value_headline") or "No summary recorded yet."
         cards.append(
             f"""
             <article class="card">
@@ -225,11 +226,12 @@ def render_active_rows(rows: list[dict[str, Any]]) -> str:
         return '<p class="muted">No active rows are recorded on the board right now.</p>'
     items = []
     for row in active[:6]:
+        summary = row.get("summary") or row.get("value_headline", "")
         items.append(
             f"""
             <li>
               <strong>{esc(row.get("hypothesis_id"))}: {esc(row.get("title"))}</strong>
-              <span>{esc(row.get("value_headline", ""))}</span>
+              <span>{esc(summary)}</span>
             </li>
             """
         )
@@ -250,11 +252,12 @@ def build_html() -> str:
 
     breakthrough_html = ""
     if breakthrough:
+        breakthrough_desc = breakthrough.get("summary") or breakthrough.get("detail") or ""
         breakthrough_html = f"""
         <section class="breakthrough">
           <p class="eyebrow">Latest breakthrough</p>
           <h2>{esc(breakthrough.get("hypothesis_id"))}: {esc(breakthrough.get("title"))}</h2>
-          <p>{esc(breakthrough.get("detail"))}</p>
+          <p>{esc(breakthrough_desc)}</p>
           <div class="chips">
             <span>{esc(breakthrough.get("patch_bytes"))} patch bytes</span>
             <span>run {esc(breakthrough.get("run_id"))}</span>

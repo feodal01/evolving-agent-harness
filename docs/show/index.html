@@ -85,15 +85,14 @@
       <p class="eyebrow">Evolve2 live agent lab</p>
       <h1>A coding agent trying to improve itself.</h1>
       <p class="lead">Follow the experiment as a live series: each hypothesis is an episode, every branch is evidence, and every benchmark run moves the story forward or teaches the next move.</p>
-      <p class="meta">Last ledger event: 2026-05-22T10:37:40Z</p>
+      <p class="meta">Last ledger event: 2026-05-22T10:00:00Z</p>
     </header>
 
     <section>
       <div class="grid stats">
         <div class="stat"><span>19</span><label>Total ideas</label></div>
         <div class="stat backlog"><span>3</span><label>Backlog</label></div>
-<div class="stat testing"><span>1</span><label>Testing now</label></div>
-<div class="stat tested"><span>11</span><label>Tested</label></div>
+<div class="stat tested"><span>12</span><label>Tested</label></div>
 <div class="stat dropped"><span>3</span><label>Dropped</label></div>
 <div class="stat shipped"><span>1</span><label>Shipped</label></div>
       </div>
@@ -103,7 +102,7 @@
         <section class="breakthrough">
           <p class="eyebrow">Latest breakthrough</p>
           <h2>H0022: Block untracked file writes and inject tracked-path sed guidance</h2>
-          <p>First-ever non-zero patch_bytes across all hypotheses. Agent blocked on reproduce_issue.py write (shell_command_blocked event), then wrote to tracked test file via cat &gt;&gt;. Patch produced but agent wrote test function instead of fixing source - deferred to H0022-B for edit_file tool improvement.</p>
+          <p>Stop the agent from writing to random files and guide it to edit only the right source code.</p>
           <div class="chips">
             <span>1591 patch bytes</span>
             <span>run 20260522-102940-astropy__astropy-12907</span>
@@ -122,7 +121,7 @@
                 <span class="pill shipped">Shipped</span>
               </div>
               <h3>Block untracked file writes and inject tracked-path sed guidance</h3>
-              <p>Block the dominant no-patch failure path by constraining write_file to tracked paths only. First-ever non-zero patch_bytes (1591) after 17 prior hypotheses all produced patch_bytes=0.</p>
+              <p>Stop the agent from writing to random files and guide it to edit only the right source code.</p>
             </article>
             
 
@@ -132,7 +131,7 @@
                 <span class="pill backlog">Backlog</span>
               </div>
               <h3>Persistent tracked-src-edit state</h3>
-              <p>Keep a durable has_tracked_src_edit state that routes away from scratch writes until source edits exist.</p>
+              <p>Remember whether the agent has edited source files yet, and block it from finishing until it has.</p>
             </article>
             
 
@@ -142,17 +141,17 @@
                 <span class="pill backlog">Backlog</span>
               </div>
               <h3>Structured finalization schema</h3>
-              <p>Require structured finalization fields so the agent cannot hand-wave a finish without tracked-diff evidence.</p>
+              <p>Require the agent to fill out a form proving it made real edits before it can submit its answer.</p>
             </article>
             
 
             <article class="card">
               <div class="card-top">
                 <a class="hid" href="https://github.com/feodal01/evolving-agent-harness/blob/main/artifacts/meta/hypotheses/H0017-patch-confirmed-finalization-latch.md">H0017</a>
-                <span class="pill testing">Testing now</span>
+                <span class="pill tested">Tested</span>
               </div>
               <h3>Patch-confirmed finalization latch</h3>
-              <p>Block finish until a tracked src diff and compact changed-files summary are confirmed.</p>
+              <p>Lock the finish button until the agent confirms it has real code changes to show.</p>
             </article>
             
 
@@ -162,7 +161,7 @@
                 <span class="pill tested">Tested</span>
               </div>
               <h3>Third-iteration source-edit checkpoint</h3>
-              <p>Force a diff summary and changed-file count after iteration 3 before any final answer path.</p>
+              <p>After three rounds of work, force the agent to show what files it changed before it can wrap up.</p>
             </article>
             
 
@@ -172,7 +171,7 @@
                 <span class="pill tested">Tested</span>
               </div>
               <h3>Checkpointed finalization resume</h3>
-              <p>Use persistence and interrupts so clean-diff runs resume from an edit-confirmation checkpoint.</p>
+              <p>Save the agent&#x27;s progress after code edits so it can pick up from there instead of starting over.</p>
             </article>
             
 
@@ -182,7 +181,7 @@
                 <span class="pill tested">Tested</span>
               </div>
               <h3>Ready-to-finish graph state</h3>
-              <p>Add an explicit ready_to_finish state gated by patch confirmation and tracked diff.</p>
+              <p>Add a separate &#x27;ready to finish&#x27; step the agent must pass, checking that code was actually changed.</p>
             </article>
             
 
@@ -192,7 +191,7 @@
                 <span class="pill tested">Tested</span>
               </div>
               <h3>Forced source-edit checkpoint</h3>
-              <p>Checkpoint immediately after scratch-file writes to redirect the agent to tracked `src/` edits.</p>
+              <p>Pause the agent right after it writes scratch files and redirect it to edit the actual source code instead.</p>
             </article>
             
         </div>
@@ -202,25 +201,19 @@
         <ul>
             <li>
               <strong>H0012: Explicit ready-to-finish graph state</strong>
-              <span>Use an explicit graph state to gate termination on patch confirmation.</span>
-            </li>
-            
-
-            <li>
-              <strong>H0017: Patch-confirmed finalization latch</strong>
-              <span>Block finish until a tracked src diff and compact changed-files summary are confirmed.</span>
+              <span>Make the agent pass through a checklist before it can declare done, so it can&#x27;t skip writing code.</span>
             </li>
             
 
             <li>
               <strong>H0018: Structured finalization schema</strong>
-              <span>Require structured finalization fields so the agent cannot hand-wave a finish without tracked-diff evidence.</span>
+              <span>Require the agent to fill out a form proving it made real edits before it can submit its answer.</span>
             </li>
             
 
             <li>
               <strong>H0019: Persistent tracked-src-edit state</strong>
-              <span>Keep a durable has_tracked_src_edit state that routes away from scratch writes until source edits exist.</span>
+              <span>Remember whether the agent has edited source files yet, and block it from finishing until it has.</span>
             </li>
             </ul>
       </aside>
@@ -230,6 +223,14 @@
       <p class="eyebrow">Production log</p>
       <ul class="feed">
         
+            <li>
+              <time>2026-05-22T10:00:00Z</time>
+              <strong>status.override</strong>
+              <span>H0017 - Patch-confirmed finalization latch</span>
+              <p>H0017 had 6 executor.started events with no executor.finished; execution stalled over 24h ago. H0022 (merged) addressed the same no-patch failure class with a different mechanism.</p>
+            </li>
+            
+
             <li>
               <time>2026-05-22T10:37:40Z</time>
               <strong>round.closed</strong>
@@ -315,14 +316,6 @@
               <strong>executor.started</strong>
               <span>H0017 - Patch-confirmed finalization latch</span>
               <p></p>
-            </li>
-            
-
-            <li>
-              <time>2026-05-21T08:31:23Z</time>
-              <strong>sample.selected</strong>
-              <span>H0017 - Patch-confirmed finalization latch</span>
-              <p>This is the most direct fix for the dominant no-patch / finish-without-confirmation failure: it blocks finalization until a tracked src diff and changed-files summary are explicitly confirmed. That makes it a strong exploit choice over the broader graph-state or schema variants.</p>
             </li>
             
       </ul>
