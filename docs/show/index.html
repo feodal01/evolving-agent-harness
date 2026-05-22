@@ -27,9 +27,9 @@
       line-height: 1.55;
     }
     a { color: inherit; }
-    .wrap { max-width: 1120px; margin: 0 auto; padding: 32px 20px 56px; }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 32px 20px 56px; }
     header {
-      min-height: 58vh;
+      min-height: 48vh;
       display: grid;
       align-content: center;
       border-bottom: 1px solid var(--line);
@@ -37,8 +37,8 @@
     }
     .eyebrow { text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-size: 12px; font-weight: 700; }
     h1 { font-size: clamp(42px, 7vw, 92px); line-height: .96; margin: 10px 0 18px; letter-spacing: 0; max-width: 900px; }
-    h2 { font-size: 28px; margin: 0 0 12px; letter-spacing: 0; }
-    h3 { margin: 10px 0 8px; font-size: 18px; letter-spacing: 0; }
+    h2 { font-size: 20px; margin: 0 0 12px; letter-spacing: 0; }
+    h3 { margin: 10px 0 8px; font-size: 16px; letter-spacing: 0; line-height: 1.3; }
     .lead { font-size: 21px; max-width: 780px; color: #2e3a42; }
     .meta { color: var(--muted); margin-top: 18px; }
     .grid { display: grid; gap: 16px; }
@@ -47,34 +47,70 @@
     .stat span { display: block; font-size: 34px; font-weight: 800; }
     .stat label { color: var(--muted); text-transform: uppercase; font-size: 12px; font-weight: 700; }
     section { margin: 34px 0; }
-    .breakthrough, .panel { background: var(--panel); border: 1px solid var(--line); padding: 24px; }
-    .breakthrough { border-left: 6px solid var(--green); }
+    .breakthrough { background: var(--panel); border: 1px solid var(--line); border-left: 6px solid var(--green); padding: 24px; }
     .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
     .chips span { border: 1px solid var(--line); padding: 7px 10px; background: #f9fafb; font-size: 13px; }
-    .cards { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
-    .card { background: var(--panel); border: 1px solid var(--line); padding: 18px; min-height: 190px; }
+
+    /* Funnel columns */
+    .funnel { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
+    .funnel-col {
+      border: 1px solid var(--line);
+      border-right: none;
+      background: var(--panel);
+    }
+    .funnel-col:last-child { border-right: 1px solid var(--line); }
+    .funnel-header {
+      padding: 14px 16px 10px;
+      background: var(--panel);
+      position: sticky;
+      top: 0;
+    }
+    .funnel-header h2 { display: flex; align-items: baseline; gap: 8px; margin: 0; }
+    .funnel-count {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--muted);
+      background: #eef0f2;
+      border-radius: 10px;
+      padding: 2px 8px;
+    }
+    .funnel-cards { padding: 0 12px 16px; }
+
+    .card {
+      background: #fafbfc;
+      border: 1px solid var(--line);
+      border-top: 3px solid var(--line);
+      padding: 14px;
+      margin-bottom: 10px;
+      min-height: 120px;
+    }
+    .card.shipped { border-top-color: var(--green); }
+    .card.dropped { border-top-color: var(--red); }
+    .card.backlog { border-top-color: var(--violet); }
+    .card.testing { border-top-color: var(--blue); }
     .card-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
     .hid { font-weight: 800; text-decoration: none; }
-    .pill { border: 1px solid var(--line); padding: 4px 8px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+    .pill { border: 1px solid var(--line); padding: 4px 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
     .backlog { color: var(--violet); }
     .testing { color: var(--blue); }
-    .tested { color: var(--amber); }
     .dropped { color: var(--red); }
     .shipped { color: var(--green); }
+    .card p { font-size: 14px; color: #3a454d; margin: 6px 0 0; }
+
+    /* Event feed */
+    .panel { background: var(--panel); border: 1px solid var(--line); padding: 24px; }
     .feed { list-style: none; padding: 0; margin: 0; }
     .feed li { border-top: 1px solid var(--line); padding: 16px 0; }
     .feed time { display: block; color: var(--muted); font-size: 13px; }
     .feed strong { display: inline-block; margin-right: 8px; }
     .feed p { margin: 6px 0 0; color: #2f3a42; }
-    .two { grid-template-columns: minmax(0, 1fr) minmax(280px, .55fr); align-items: start; }
-    .panel ul { margin: 0; padding-left: 20px; }
-    .panel li { margin: 0 0 12px; }
-    .panel li span { display: block; color: var(--muted); }
     .muted { color: var(--muted); }
     footer { margin-top: 48px; color: var(--muted); font-size: 14px; }
     @media (max-width: 760px) {
-      header { min-height: 46vh; }
-      .two { grid-template-columns: 1fr; }
+      header { min-height: 40vh; }
+      .funnel { grid-template-columns: 1fr; }
+      .funnel-col { border-right: 1px solid var(--line); border-bottom: none; }
+      .funnel-col:last-child { border-bottom: 1px solid var(--line); }
       .lead { font-size: 18px; }
     }
   </style>
@@ -109,22 +145,17 @@
         </section>
         
 
-    <section class="grid two">
-      <div>
-        <p class="eyebrow">Latest episodes</p>
-          <div class="grid cards">
+    <section>
+      <p class="eyebrow">Hypothesis funnel</p>
+      <div class="funnel">
+        
+      <div class="funnel-col">
+        <div class="funnel-header" style="border-top: 4px solid var(--violet)">
+          <h2>Backlog <span class="funnel-count">3</span></h2>
+        </div>
+        <div class="funnel-cards">
           
-            <article class="card">
-              <div class="card-top">
-                <a class="hid" href="https://github.com/feodal01/evolving-agent-harness/blob/main/artifacts/meta/hypotheses/H0022-block-untracked-writes.md">H0022</a>
-                <span class="pill shipped">Shipped</span>
-              </div>
-              <h3>Block untracked file writes and inject tracked-path sed guidance</h3>
-              <p>Stop the agent from writing to random files and guide it to edit only the right source code.</p>
-            </article>
-            
-
-            <article class="card">
+            <article class="card backlog">
               <div class="card-top">
                 <a class="hid" href="https://github.com/feodal01/evolving-agent-harness">H0019</a>
                 <span class="pill backlog">Backlog</span>
@@ -132,9 +163,8 @@
               <h3>Persistent tracked-src-edit state</h3>
               <p>Remember whether the agent has edited source files yet, and block it from finishing until it has.</p>
             </article>
-            
 
-            <article class="card">
+            <article class="card backlog">
               <div class="card-top">
                 <a class="hid" href="https://github.com/feodal01/evolving-agent-harness">H0018</a>
                 <span class="pill backlog">Backlog</span>
@@ -142,9 +172,34 @@
               <h3>Structured finalization schema</h3>
               <p>Require the agent to fill out a form proving it made real edits before it can submit its answer.</p>
             </article>
-            
 
-            <article class="card">
+            <article class="card backlog">
+              <div class="card-top">
+                <a class="hid" href="https://github.com/feodal01/evolving-agent-harness">H0012</a>
+                <span class="pill backlog">Backlog</span>
+              </div>
+              <h3>Explicit ready-to-finish graph state</h3>
+              <p>Make the agent pass through a checklist before it can declare done, so it can&#x27;t skip writing code.</p>
+            </article>
+        </div>
+      </div>
+
+      <div class="funnel-col">
+        <div class="funnel-header" style="border-top: 4px solid var(--blue)">
+          <h2>Testing now <span class="funnel-count">0</span></h2>
+        </div>
+        <div class="funnel-cards">
+          <p class="muted">None yet.</p>
+        </div>
+      </div>
+
+      <div class="funnel-col">
+        <div class="funnel-header" style="border-top: 4px solid var(--red)">
+          <h2>Dropped <span class="funnel-count">15</span></h2>
+        </div>
+        <div class="funnel-cards">
+          
+            <article class="card dropped">
               <div class="card-top">
                 <a class="hid" href="https://github.com/feodal01/evolving-agent-harness/blob/main/artifacts/meta/hypotheses/H0017-patch-confirmed-finalization-latch.md">H0017</a>
                 <span class="pill dropped">Dropped</span>
@@ -152,9 +207,8 @@
               <h3>Patch-confirmed finalization latch</h3>
               <p>Lock the finish button until the agent confirms it has real code changes to show.</p>
             </article>
-            
 
-            <article class="card">
+            <article class="card dropped">
               <div class="card-top">
                 <a class="hid" href="https://github.com/feodal01/evolving-agent-harness/blob/main/artifacts/meta/hypotheses/H0016-third-iteration-source-edit-checkpoint.md">H0016</a>
                 <span class="pill dropped">Dropped</span>
@@ -162,9 +216,8 @@
               <h3>Third-iteration source-edit checkpoint</h3>
               <p>After three rounds of work, force the agent to show what files it changed before it can wrap up.</p>
             </article>
-            
 
-            <article class="card">
+            <article class="card dropped">
               <div class="card-top">
                 <a class="hid" href="https://github.com/feodal01/evolving-agent-harness/blob/main/artifacts/meta/hypotheses/H0015-checkpointed-finalization-resume.md">H0015</a>
                 <span class="pill dropped">Dropped</span>
@@ -172,9 +225,8 @@
               <h3>Checkpointed finalization resume</h3>
               <p>Save the agent&#x27;s progress after code edits so it can pick up from there instead of starting over.</p>
             </article>
-            
 
-            <article class="card">
+            <article class="card dropped">
               <div class="card-top">
                 <a class="hid" href="https://github.com/feodal01/evolving-agent-harness/blob/main/artifacts/meta/hypotheses/H0014-ready-to-finish-graph-state.md">H0014</a>
                 <span class="pill dropped">Dropped</span>
@@ -182,9 +234,8 @@
               <h3>Ready-to-finish graph state</h3>
               <p>Add a separate &#x27;ready to finish&#x27; step the agent must pass, checking that code was actually changed.</p>
             </article>
-            
 
-            <article class="card">
+            <article class="card dropped">
               <div class="card-top">
                 <a class="hid" href="https://github.com/feodal01/evolving-agent-harness/blob/main/artifacts/meta/hypotheses/H0013-forced-source-edit-checkpoint.md">H0013</a>
                 <span class="pill dropped">Dropped</span>
@@ -192,30 +243,116 @@
               <h3>Forced source-edit checkpoint</h3>
               <p>Pause the agent right after it writes scratch files and redirect it to edit the actual source code instead.</p>
             </article>
-            
+
+            <article class="card dropped">
+              <div class="card-top">
+                <a class="hid" href="https://github.com/feodal01/evolving-agent-harness/blob/main/artifacts/meta/hypotheses/H0011-hard-finalization-diff-gate.md">H0011</a>
+                <span class="pill dropped">Dropped</span>
+              </div>
+              <h3>Hard finalization diff gate</h3>
+              <p>Refuse to let the agent finish unless it can prove it actually edited source files.</p>
+            </article>
+
+            <article class="card dropped">
+              <div class="card-top">
+                <a class="hid" href="https://github.com/feodal01/evolving-agent-harness/blob/main/artifacts/meta/hypotheses/H0010-no-patch-bounded-retries.md">H0010</a>
+                <span class="pill dropped">Dropped</span>
+              </div>
+              <h3>No-patch control with bounded retries</h3>
+              <p>Add a retry limit for when the agent finishes without producing any code changes, to prevent wasted compute.</p>
+            </article>
+
+            <article class="card dropped">
+              <div class="card-top">
+                <a class="hid" href="https://github.com/feodal01/evolving-agent-harness/blob/main/artifacts/meta/hypotheses/H0009-structured-action-contract.md">H0009</a>
+                <span class="pill dropped">Dropped</span>
+              </div>
+              <h3>Structured action contract for tool args</h3>
+              <p>Force the agent to follow a strict format when calling tools, so it stops sending garbled instructions.</p>
+            </article>
+
+            <article class="card dropped">
+              <div class="card-top">
+                <a class="hid" href="https://github.com/feodal01/evolving-agent-harness/blob/main/artifacts/meta/hypotheses/H0008-bounded-empty-response-recovery.md">H0008</a>
+                <span class="pill dropped">Dropped</span>
+              </div>
+              <h3>Bounded empty-response recovery repair</h3>
+              <p>Limit how many times the agent retries after getting empty responses, to stop it from looping forever.</p>
+            </article>
+
+            <article class="card dropped">
+              <div class="card-top">
+                <a class="hid" href="https://github.com/feodal01/evolving-agent-harness/blob/main/artifacts/meta/hypotheses/H0007-langgraph-recovery.md">H0007</a>
+                <span class="pill dropped">Dropped</span>
+              </div>
+              <h3>LangGraph-style empty response recovery</h3>
+              <p>Recover gracefully when the agent sends an empty message, using LangGraph&#x27;s built-in retry logic.</p>
+            </article>
+
+            <article class="card dropped">
+              <div class="card-top">
+                <a class="hid" href="https://github.com/feodal01/evolving-agent-harness/blob/main/artifacts/meta/hypotheses/H0006-source-edit-finalization.md">H0006</a>
+                <span class="pill dropped">Dropped</span>
+              </div>
+              <h3>Source edit finalization</h3>
+              <p>Make sure the agent actually saves its code edits before declaring the task done.</p>
+            </article>
+
+            <article class="card dropped">
+              <div class="card-top">
+                <a class="hid" href="https://github.com/feodal01/evolving-agent-harness/blob/main/artifacts/meta/hypotheses/H0005-observation-discipline.md">H0005</a>
+                <span class="pill dropped">Dropped</span>
+              </div>
+              <h3>Observation discipline for no-patch loops</h3>
+              <p>Train the agent to observe results before acting again, breaking the loop of doing nothing useful.</p>
+            </article>
+
+            <article class="card dropped">
+              <div class="card-top">
+                <a class="hid" href="https://github.com/feodal01/evolving-agent-harness/blob/main/artifacts/meta/hypotheses/H0004-robust-action-extraction.md">H0004</a>
+                <span class="pill dropped">Dropped</span>
+              </div>
+              <h3>Robust action extraction</h3>
+              <p>Extract what the agent wants to do even when its output is messy or incomplete.</p>
+            </article>
+
+            <article class="card dropped">
+              <div class="card-top">
+                <a class="hid" href="https://github.com/feodal01/evolving-agent-harness/blob/main/artifacts/meta/hypotheses/H0003-tool-call-action-parser.md">H0003</a>
+                <span class="pill dropped">Dropped</span>
+              </div>
+              <h3>Tool call action parser</h3>
+              <p>Parse the agent&#x27;s tool calls more carefully so broken instructions don&#x27;t crash the system.</p>
+            </article>
+
+            <article class="card dropped">
+              <div class="card-top">
+                <a class="hid" href="https://github.com/feodal01/evolving-agent-harness/blob/main/artifacts/meta/hypotheses/H0002-block-repro-writes.md">H0002</a>
+                <span class="pill dropped">Dropped</span>
+              </div>
+              <h3>Block reproduction file writes</h3>
+              <p>Stop the agent from writing reproduction scripts instead of fixing the actual bug.</p>
+            </article>
         </div>
       </div>
-      <aside class="panel">
-        <p class="eyebrow">On deck</p>
-        <ul>
-            <li>
-              <strong>H0012: Explicit ready-to-finish graph state</strong>
-              <span>Make the agent pass through a checklist before it can declare done, so it can&#x27;t skip writing code.</span>
-            </li>
-            
 
-            <li>
-              <strong>H0018: Structured finalization schema</strong>
-              <span>Require the agent to fill out a form proving it made real edits before it can submit its answer.</span>
-            </li>
-            
-
-            <li>
-              <strong>H0019: Persistent tracked-src-edit state</strong>
-              <span>Remember whether the agent has edited source files yet, and block it from finishing until it has.</span>
-            </li>
-            </ul>
-      </aside>
+      <div class="funnel-col">
+        <div class="funnel-header" style="border-top: 4px solid var(--green)">
+          <h2>Shipped <span class="funnel-count">1</span></h2>
+        </div>
+        <div class="funnel-cards">
+          
+            <article class="card shipped">
+              <div class="card-top">
+                <a class="hid" href="https://github.com/feodal01/evolving-agent-harness/blob/main/artifacts/meta/hypotheses/H0022-block-untracked-writes.md">H0022</a>
+                <span class="pill shipped">Shipped</span>
+              </div>
+              <h3>Block untracked file writes and inject tracked-path sed guidance</h3>
+              <p>Stop the agent from writing to random files and guide it to edit only the right source code.</p>
+            </article>
+        </div>
+      </div>
+      </div>
     </section>
 
     <section class="panel">
