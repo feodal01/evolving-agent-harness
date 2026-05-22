@@ -56,11 +56,11 @@
     .card-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
     .hid { font-weight: 800; text-decoration: none; }
     .pill { border: 1px solid var(--line); padding: 4px 8px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
-    .merged { color: var(--green); }
-    .running { color: var(--blue); }
-    .idea { color: var(--violet); }
-    .rejected { color: var(--red); }
-    .inconclusive { color: var(--amber); }
+    .backlog { color: var(--violet); }
+    .testing { color: var(--blue); }
+    .tested { color: var(--amber); }
+    .dropped { color: var(--red); }
+    .shipped { color: var(--green); }
     .feed { list-style: none; padding: 0; margin: 0; }
     .feed li { border-top: 1px solid var(--line); padding: 16px 0; }
     .feed time { display: block; color: var(--muted); font-size: 13px; }
@@ -90,13 +90,12 @@
 
     <section>
       <div class="grid stats">
-        <div class="stat"><span>20</span><label>hypotheses</label></div>
-        <div class="stat"><span>1</span><label>merged</label></div>
-<div class="stat"><span>1</span><label>running</label></div>
-<div class="stat"><span>3</span><label>idea</label></div>
-<div class="stat"><span>11</span><label>inconclusive</label></div>
-<div class="stat"><span>3</span><label>rejected</label></div>
-<div class="stat"><span>1</span><label>baseline</label></div>
+        <div class="stat"><span>19</span><label>Total ideas</label></div>
+        <div class="stat backlog"><span>3</span><label>Backlog</label></div>
+<div class="stat testing"><span>1</span><label>Testing now</label></div>
+<div class="stat tested"><span>11</span><label>Tested</label></div>
+<div class="stat dropped"><span>3</span><label>Dropped</label></div>
+<div class="stat shipped"><span>1</span><label>Shipped</label></div>
       </div>
     </section>
 
@@ -120,7 +119,7 @@
             <article class="card">
               <div class="card-top">
                 <a class="hid" href="https://github.com/feodal01/evolving-agent-harness/blob/main/artifacts/meta/hypotheses/H0022-block-untracked-writes.md">H0022</a>
-                <span class="pill merged">merged</span>
+                <span class="pill shipped">Shipped</span>
               </div>
               <h3>Block untracked file writes and inject tracked-path sed guidance</h3>
               <p>Block the dominant no-patch failure path by constraining write_file to tracked paths only. First-ever non-zero patch_bytes (1591) after 17 prior hypotheses all produced patch_bytes=0.</p>
@@ -130,7 +129,7 @@
             <article class="card">
               <div class="card-top">
                 <a class="hid" href="https://github.com/feodal01/evolving-agent-harness">H0019</a>
-                <span class="pill idea">idea</span>
+                <span class="pill backlog">Backlog</span>
               </div>
               <h3>Persistent tracked-src-edit state</h3>
               <p>Keep a durable has_tracked_src_edit state that routes away from scratch writes until source edits exist.</p>
@@ -140,7 +139,7 @@
             <article class="card">
               <div class="card-top">
                 <a class="hid" href="https://github.com/feodal01/evolving-agent-harness">H0018</a>
-                <span class="pill idea">idea</span>
+                <span class="pill backlog">Backlog</span>
               </div>
               <h3>Structured finalization schema</h3>
               <p>Require structured finalization fields so the agent cannot hand-wave a finish without tracked-diff evidence.</p>
@@ -150,7 +149,7 @@
             <article class="card">
               <div class="card-top">
                 <a class="hid" href="https://github.com/feodal01/evolving-agent-harness/blob/main/artifacts/meta/hypotheses/H0017-patch-confirmed-finalization-latch.md">H0017</a>
-                <span class="pill running">running</span>
+                <span class="pill testing">Testing now</span>
               </div>
               <h3>Patch-confirmed finalization latch</h3>
               <p>Block finish until a tracked src diff and compact changed-files summary are confirmed.</p>
@@ -160,7 +159,7 @@
             <article class="card">
               <div class="card-top">
                 <a class="hid" href="https://github.com/feodal01/evolving-agent-harness/blob/main/artifacts/meta/hypotheses/H0016-third-iteration-source-edit-checkpoint.md">H0016</a>
-                <span class="pill inconclusive">inconclusive</span>
+                <span class="pill tested">Tested</span>
               </div>
               <h3>Third-iteration source-edit checkpoint</h3>
               <p>Force a diff summary and changed-file count after iteration 3 before any final answer path.</p>
@@ -170,7 +169,7 @@
             <article class="card">
               <div class="card-top">
                 <a class="hid" href="https://github.com/feodal01/evolving-agent-harness/blob/main/artifacts/meta/hypotheses/H0015-checkpointed-finalization-resume.md">H0015</a>
-                <span class="pill inconclusive">inconclusive</span>
+                <span class="pill tested">Tested</span>
               </div>
               <h3>Checkpointed finalization resume</h3>
               <p>Use persistence and interrupts so clean-diff runs resume from an edit-confirmation checkpoint.</p>
@@ -180,7 +179,7 @@
             <article class="card">
               <div class="card-top">
                 <a class="hid" href="https://github.com/feodal01/evolving-agent-harness/blob/main/artifacts/meta/hypotheses/H0014-ready-to-finish-graph-state.md">H0014</a>
-                <span class="pill inconclusive">inconclusive</span>
+                <span class="pill tested">Tested</span>
               </div>
               <h3>Ready-to-finish graph state</h3>
               <p>Add an explicit ready_to_finish state gated by patch confirmation and tracked diff.</p>
@@ -190,7 +189,7 @@
             <article class="card">
               <div class="card-top">
                 <a class="hid" href="https://github.com/feodal01/evolving-agent-harness/blob/main/artifacts/meta/hypotheses/H0013-forced-source-edit-checkpoint.md">H0013</a>
-                <span class="pill inconclusive">inconclusive</span>
+                <span class="pill tested">Tested</span>
               </div>
               <h3>Forced source-edit checkpoint</h3>
               <p>Checkpoint immediately after scratch-file writes to redirect the agent to tracked `src/` edits.</p>

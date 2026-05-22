@@ -110,14 +110,28 @@ def esc(value: Any) -> str:
     return html.escape(text(value), quote=True)
 
 
-def status_label(status: str) -> str:
-    normalized = status.replace("_", " ").strip()
-    return normalized or "unknown"
+FUNNEL = {
+    "idea": ("backlog", "Backlog"),
+    "running": ("testing", "Testing now"),
+    "inconclusive": ("tested", "Tested"),
+    "rejected": ("dropped", "Dropped"),
+    "merged": ("shipped", "Shipped"),
+    "baseline": ("reference", "Reference"),
+}
+
+FUNNEL_ORDER = ["backlog", "testing", "tested", "dropped", "shipped"]
+FUNNEL_LABELS = {
+    "backlog": "Backlog",
+    "testing": "Testing now",
+    "tested": "Tested",
+    "dropped": "Dropped",
+    "shipped": "Shipped",
+}
 
 
-def status_class(status: str) -> str:
-    allowed = {"merged", "running", "idea", "rejected", "inconclusive", "baseline"}
-    return status if status in allowed else "other"
+def funnel_state(row: dict[str, Any]) -> tuple[str, str]:
+    status = str(row.get("status") or "unknown")
+    return FUNNEL.get(status, ("tested", "Tested"))
 
 
 def event_summary(event: dict[str, Any]) -> str:
@@ -150,13 +164,16 @@ def find_breakthrough(events: list[dict[str, Any]], hypotheses: list[dict[str, A
     return None
 
 
-def render_status_counts(counts: Counter[str]) -> str:
-    order = ["merged", "running", "idea", "inconclusive", "rejected", "baseline"]
+def public_hypotheses(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [row for row in rows if funnel_state(row)[0] != "reference"]
+
+
+def render_funnel_counts(counts: Counter[str]) -> str:
     items = []
-    for status in order:
-        if counts.get(status, 0):
+    for state in FUNNEL_ORDER:
+        if counts.get(state, 0):
             items.append(
-                f'<div class="stat"><span>{counts[status]}</span><label>{esc(status_label(status))}</label></div>'
+                f'<div class="stat {state}"><span>{counts[state]}</span><label>{esc(FUNNEL_LABELS[state])}</label></div>'
             )
     return "\n".join(items)
 
@@ -164,7 +181,7 @@ def render_status_counts(counts: Counter[str]) -> str:
 def render_hypothesis_cards(repo_url: str, rows: list[dict[str, Any]], limit: int = 8) -> str:
     cards = []
     for row in rows[:limit]:
-        status = str(row.get("status") or "unknown")
+        state, label = funnel_state(row)
         dossier = row.get("dossier") or row.get("dossier_path")
         href = repo_blob_url(repo_url, str(dossier)) if dossier else repo_url
         headline = row.get("value_headline") or "No value headline recorded yet."
@@ -173,7 +190,7 @@ def render_hypothesis_cards(repo_url: str, rows: list[dict[str, Any]], limit: in
             <article class="card">
               <div class="card-top">
                 <a class="hid" href="{esc(href)}">{esc(row.get("hypothesis_id", "?"))}</a>
-                <span class="pill {status_class(status)}">{esc(status_label(status))}</span>
+                <span class="pill {state}">{esc(label)}</span>
               </div>
               <h3>{esc(row.get("title", "Untitled hypothesis"))}</h3>
               <p>{esc(headline)}</p>
@@ -203,7 +220,7 @@ def render_event_feed(events: list[dict[str, Any]], title_by_id: dict[str, str],
 
 
 def render_active_rows(rows: list[dict[str, Any]]) -> str:
-    active = [row for row in rows if row.get("status") in {"running", "idea"}]
+    active = [row for row in rows if funnel_state(row)[0] in {"testing", "backlog"}]
     if not active:
         return '<p class="muted">No active rows are recorded on the board right now.</p>'
     items = []
@@ -224,8 +241,9 @@ def build_html() -> str:
     board_rows = read_board_rows()
     events = read_jsonl(META / "meta-events.jsonl")
     hypotheses = merged_hypotheses(index_rows, board_rows)
+    visible_hypotheses = public_hypotheses(hypotheses)
     title_by_id = {str(row.get("hypothesis_id")): str(row.get("title", "")) for row in hypotheses}
-    counts = Counter(str(row.get("status") or "unknown") for row in hypotheses)
+    counts = Counter(funnel_state(row)[0] for row in visible_hypotheses)
     breakthrough = find_breakthrough(events, hypotheses)
     updated = latest_timestamp(events)
     repo_url = github_repo_url()
@@ -302,11 +320,11 @@ def build_html() -> str:
     .card-top {{ display: flex; justify-content: space-between; align-items: center; gap: 10px; }}
     .hid {{ font-weight: 800; text-decoration: none; }}
     .pill {{ border: 1px solid var(--line); padding: 4px 8px; font-size: 12px; font-weight: 700; text-transform: uppercase; }}
-    .merged {{ color: var(--green); }}
-    .running {{ color: var(--blue); }}
-    .idea {{ color: var(--violet); }}
-    .rejected {{ color: var(--red); }}
-    .inconclusive {{ color: var(--amber); }}
+    .backlog {{ color: var(--violet); }}
+    .testing {{ color: var(--blue); }}
+    .tested {{ color: var(--amber); }}
+    .dropped {{ color: var(--red); }}
+    .shipped {{ color: var(--green); }}
     .feed {{ list-style: none; padding: 0; margin: 0; }}
     .feed li {{ border-top: 1px solid var(--line); padding: 16px 0; }}
     .feed time {{ display: block; color: var(--muted); font-size: 13px; }}
@@ -336,8 +354,8 @@ def build_html() -> str:
 
     <section>
       <div class="grid stats">
-        <div class="stat"><span>{len(hypotheses)}</span><label>hypotheses</label></div>
-        {render_status_counts(counts)}
+        <div class="stat"><span>{len(visible_hypotheses)}</span><label>Total ideas</label></div>
+        {render_funnel_counts(counts)}
       </div>
     </section>
 
@@ -347,7 +365,7 @@ def build_html() -> str:
       <div>
         <p class="eyebrow">Latest episodes</p>
           <div class="grid cards">
-          {render_hypothesis_cards(repo_url, hypotheses)}
+          {render_hypothesis_cards(repo_url, visible_hypotheses)}
         </div>
       </div>
       <aside class="panel">

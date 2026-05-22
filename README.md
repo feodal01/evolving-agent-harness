@@ -13,7 +13,7 @@ The fun part is not a polished final score. It is watching the agent learn how t
 - **Hypothesis archive:** [artifacts/meta/hypotheses](artifacts/meta/hypotheses)
 - **Operator manual:** [docs/meta/README.md](docs/meta/README.md)
 
-When GitHub Pages is enabled for this repository, the show page is deployed by `.github/workflows/showcase.yml` on every `main` update. It turns the meta-agent's ledger into a public scoreboard and episode feed.
+The show page is deployed by `.github/workflows/showcase.yml` on every `main` update. It turns the meta-agent's ledger into a public funnel: backlog, testing, tested, dropped, shipped.
 
 ## The Premise
 
@@ -75,4 +75,4 @@ The generated page is `docs/show/index.html`. The GitHub Pages workflow runs the
 
 ## Status
 
-Evolve2 is intentionally unfinished. The goal is to make the improvement process legible enough that people can follow the arc: failed ideas, small discoveries, merged mechanics, and the next bet.
+Evolve2 is intentionally unfinished. The goal is to make the improvement process legible enough that people can follow the arc: backlog ideas, live tests, discarded paths, shipped mechanics, and the next bet.
