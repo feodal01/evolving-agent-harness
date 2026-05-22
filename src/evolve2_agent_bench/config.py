@@ -4,27 +4,18 @@ import os
 from dataclasses import dataclass
 
 
-DEFAULT_MODEL = "glm5-fp8"
-DEFAULT_BASE_URL = "https://REDACTED"
-
-
 @dataclass(frozen=True)
 class LLMConfig:
     api_key: str
-    model: str = DEFAULT_MODEL
-    base_url: str = DEFAULT_BASE_URL
+    model: str
+    base_url: str
 
     @classmethod
-    def from_env(cls, model: str | None = None) -> "LLMConfig":
+    def from_env(cls) -> "LLMConfig":
         api_key = os.environ.get("LLM_API_KEY")
-        if not api_key:
-            raise RuntimeError("LLM_API_KEY is required.")
-        return cls(
-            api_key=api_key,
-            model=model or os.environ.get("LLM_MODEL", DEFAULT_MODEL),
-            base_url=os.environ.get("LLM_BASE_URL", DEFAULT_BASE_URL),
-        )
-
-
-# Backward compatibility alias
-OpenRouterConfig = LLMConfig
+        model = os.environ.get("LLM_MODEL")
+        base_url = os.environ.get("LLM_BASE_URL")
+        missing = [k for k, v in [("LLM_API_KEY", api_key), ("LLM_MODEL", model), ("LLM_BASE_URL", base_url)] if not v]
+        if missing:
+            raise RuntimeError(f"Required env vars not set: {', '.join(missing)}")
+        return cls(api_key=api_key, model=model, base_url=base_url)  # type: ignore[arg-type]

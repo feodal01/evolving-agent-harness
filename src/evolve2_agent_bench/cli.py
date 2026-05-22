@@ -15,7 +15,7 @@ from evolve2_agent_bench.bench.swebench_runner import (
     resolve_dataset_root,
     run_one_task,
 )
-from evolve2_agent_bench.config import DEFAULT_MODEL, OpenRouterConfig
+from evolve2_agent_bench.config import LLMConfig
 from evolve2_agent_bench.mlflow_tracing import launch_mlflow_ui
 from evolve2_agent_bench.trace_view import format_compact_trace
 
@@ -28,11 +28,9 @@ def project_root() -> Path:
 
 
 @app.command()
-def model_check(
-    model: Annotated[str, typer.Option(help="LLM model id.")] = DEFAULT_MODEL,
-) -> None:
+def model_check() -> None:
     """Verify LLM connectivity and model availability."""
-    config = OpenRouterConfig.from_env(model=model)
+    config = LLMConfig.from_env()
     llm = ChatOpenAI(  # type: ignore[call-arg]
         model=config.model,
         api_key=config.api_key,
@@ -145,7 +143,6 @@ def run_task(
         str,
         typer.Option(help="SWE-bench Verified instance id."),
     ] = "astropy__astropy-12907",
-    model: Annotated[str, typer.Option(help="LLM model id.")] = DEFAULT_MODEL,
     max_iterations: Annotated[
         int,
         typer.Option(min=1, max=200, help="Emergency loop cap, not a short work budget."),
@@ -168,7 +165,7 @@ def run_task(
 ) -> None:
     """Run the ReAct coding agent on a single SWE-bench task with evaluation."""
     root = project_root()
-    config = OpenRouterConfig.from_env(model=model)
+    config = LLMConfig.from_env()
     mlflow_flag: bool | None = False if no_mlflow else None
     result = run_one_task(
         project_root=root,

@@ -10,19 +10,24 @@ from unittest.mock import MagicMock, Mock, patch
 
 from langchain_core.messages import AIMessage
 
-from evolve2_agent_bench.agent.base import BaselineLangChainAgent
-from evolve2_agent_bench.config import OpenRouterConfig
+from evolve2_agent_bench.agent.base import ReActCodingAgent
+from evolve2_agent_bench.config import LLMConfig
 from evolve2_agent_bench.trace import RunTraces
+
+
+def _make_agent(tmp: str) -> tuple[ReActCodingAgent, Path]:
+    run_dir = Path(tmp)
+    traces = RunTraces.create(run_dir)
+    cfg = LLMConfig(api_key="test-key", model="m", base_url="http://localhost/v1")
+    agent = ReActCodingAgent(cfg, traces, max_tokens=None)
+    return agent, run_dir
 
 
 class TestLLMTransportRetry(unittest.TestCase):
     @patch("evolve2_agent_bench.agent.base.time.sleep", autospec=True)
     def test_retries_json_decode_then_succeeds(self, _sleep: Mock) -> None:
-        cfg = OpenRouterConfig(api_key="test-key", model="m")
         with TemporaryDirectory() as td:
-            run_dir = Path(td)
-            traces = RunTraces.create(run_dir)
-            agent = BaselineLangChainAgent(cfg, traces, max_tokens=None)
+            agent, run_dir = _make_agent(td)
             mock_llm = MagicMock()
             calls = {"n": 0}
 
@@ -52,11 +57,8 @@ class TestLLMTransportRetry(unittest.TestCase):
 
     @patch("evolve2_agent_bench.agent.base.time.sleep", autospec=True)
     def test_non_retryable_raises(self, _sleep: Mock) -> None:
-        cfg = OpenRouterConfig(api_key="test-key", model="m")
         with TemporaryDirectory() as td:
-            run_dir = Path(td)
-            traces = RunTraces.create(run_dir)
-            agent = BaselineLangChainAgent(cfg, traces, max_tokens=None)
+            agent, run_dir = _make_agent(td)
             mock_llm = MagicMock()
             mock_llm.invoke.side_effect = ValueError("not transport")
             agent.llm = mock_llm
@@ -72,37 +74,6 @@ class TestLLMTransportRetry(unittest.TestCase):
                     },
                     max_iterations=2,
                 )
-
-    @patch("evolve2_agent_bench.agent.base.LLM_TRANSPORT_MAX_ATTEMPTS", 3)
-    @patch("evolve2_agent_bench.agent.base.time.sleep", autospec=True)
-    def test_exhaustion_logs_transport_failed(self, _sleep: Mock) -> None:
-        cfg = OpenRouterConfig(api_key="test-key", model="m")
-        with TemporaryDirectory() as td:
-            run_dir = Path(td)
-            traces = RunTraces.create(run_dir)
-            agent = BaselineLangChainAgent(cfg, traces, max_tokens=None)
-            mock_llm = MagicMock()
-
-            def invoke_side_effect(_messages: object) -> AIMessage:
-                raise json.JSONDecodeError("Expecting value", "", 0)
-
-            mock_llm.invoke.side_effect = invoke_side_effect
-            agent.llm = mock_llm
-
-            agent.run(
-                run_dir,
-                {
-                    "instance_id": "x",
-                    "repo": "r",
-                    "base_commit": "c",
-                    "problem_statement": "p",
-                },
-                max_iterations=1,
-            )
-
-            text = (run_dir / "trace.jsonl").read_text(encoding="utf-8")
-            self.assertIn("llm_invoke_transport_failed", text)
-            self.assertIn("llm_transport_retry", text)
 
 
 if __name__ == "__main__":

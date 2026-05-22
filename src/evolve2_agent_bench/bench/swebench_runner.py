@@ -12,7 +12,7 @@ from typing import Any
 from datasets import load_from_disk
 
 from evolve2_agent_bench.agent.base import ReActCodingAgent
-from evolve2_agent_bench.config import OpenRouterConfig
+from evolve2_agent_bench.config import LLMConfig
 from evolve2_agent_bench.mlflow_tracing import mlflow_parent_run, mlflow_span, tracing_requested, truncate_for_span
 from evolve2_agent_bench.trace import RunTraces
 
@@ -254,7 +254,7 @@ def evaluate_prediction(
 def run_one_task(
     project_root: Path,
     instance_id: str,
-    config: OpenRouterConfig,
+    config: LLMConfig,
     max_iterations: int,
     agent_max_tokens: int | None,
     evaluation_timeout: int,
@@ -296,7 +296,7 @@ def _run_one_task_impl(
     paths: RunPaths,
     run_id: str,
     instance_id: str,
-    config: OpenRouterConfig,
+    config: LLMConfig,
     max_iterations: int,
     agent_max_tokens: int | None,
     evaluation_timeout: int,

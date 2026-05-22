@@ -18,7 +18,7 @@ from langchain_openai import ChatOpenAI
 
 from evolve2_agent_bench.agent.callbacks import AgentTraceCallback
 from evolve2_agent_bench.agent.tools import make_workspace_tools
-from evolve2_agent_bench.config import OpenRouterConfig
+from evolve2_agent_bench.config import LLMConfig
 from evolve2_agent_bench.mlflow_tracing import mlflow_span, truncate_for_span
 from evolve2_agent_bench.trace import RunTraces
 
@@ -56,7 +56,7 @@ class ReActCodingAgent:
 
     def __init__(
         self,
-        config: OpenRouterConfig,
+        config: LLMConfig,
         traces: RunTraces,
         max_tokens: int | None,
     ) -> None:
