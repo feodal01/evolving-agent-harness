@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import subprocess
 import time
 from pathlib import Path
@@ -11,6 +12,40 @@ from pydantic import Field
 from evolve2_agent_bench.trace import RunTraces
 
 MAX_TOOL_OUTPUT = 12_000
+
+_SCRATCH_WRITE_BLOCKED = (
+    "\n\nBLOCKED: Writing to untracked files is not allowed. "
+    "SWE-bench evaluates your git diff — only edits to existing tracked source files count. "
+    "Use `sed -i` to edit an existing tracked file, or write_file on a tracked path. "
+    "Run `git ls-files` to see tracked files."
+)
+
+_PYTEST_UNAVAILABLE = (
+    "\n\npytest is unavailable in this agent shell. Do not retry pytest or pip. "
+    "Apply the fix directly with sed -i or write_file on the source file you already read."
+)
+
+_NO_EDIT_REMINDER = (
+    "\n\nREMINDER: You have read the source code but not edited anything yet. "
+    "You MUST apply a fix now using `sed -i` or `write_file`. "
+    "Do not write reproduction scripts or run tests — edit the tracked source file."
+)
+
+_REPEATED_COMMAND_BREAK = (
+    "\n\nSTOP: You have run the same command multiple times without progress. "
+    "You are stuck in a loop. Break out by editing the source file now with `sed -i`."
+)
+
+_REDIRECT_RE = re.compile(
+    r">+\s*"
+    r"(?:"
+    r'["\']?([\w./-]+\.(?:py|sh|txt|json))["\']?'
+    r"|"
+    r"['\"]?(\w+\.py)['\"]?"
+    r")"
+)
+
+_HEREDOC_RE = re.compile(r"<<+\s*['\"]?(\w+)['\"]?\s*")
 
 
 def _resolve_inside(root: Path, requested: str) -> Path:
@@ -27,8 +62,50 @@ def _truncate(text: str, limit: int = MAX_TOOL_OUTPUT) -> str:
     return text[:limit] + "\n\n[output truncated]"
 
 
+def _is_tracked(root: Path, rel_path: str) -> bool:
+    normalized = rel_path.strip().replace("\\", "/").lstrip("./")
+    try:
+        proc = subprocess.run(
+            ["git", "ls-files", "--", normalized],
+            cwd=root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=10,
+        )
+        return bool(proc.stdout.strip())
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return True
+
+
+def _detect_untracked_write_target(root: Path, command: str) -> str | None:
+    for m in _REDIRECT_RE.finditer(command):
+        path = m.group(1) or m.group(2)
+        if path and not _is_tracked(root, path):
+            return path
+    return None
+
+
+class _CommandHistory:
+    def __init__(self, max_window: int = 3) -> None:
+        self._commands: list[str] = []
+        self._max_window = max_window
+
+    def record(self, command: str) -> None:
+        self._commands.append(command.strip())
+        if len(self._commands) > self._max_window * 2:
+            self._commands = self._commands[-self._max_window * 2 :]
+
+    def is_repeated(self) -> bool:
+        if len(self._commands) < self._max_window:
+            return False
+        last = self._commands[-self._max_window :]
+        return len(set(last)) == 1
+
+
 def make_workspace_tools(root: Path, traces: RunTraces) -> list:
     """Build LangChain tool instances bound to a workspace root and trace sink."""
+    cmd_history = _CommandHistory()
 
     @tool
     def run_shell(
@@ -38,8 +115,29 @@ def make_workspace_tools(root: Path, traces: RunTraces) -> list:
         ] = 120,
     ) -> str:
         """Execute a shell command in the repository workspace. Use for searching code (rg, grep),
-        running tests (pytest), applying edits (sed, patch), git operations, or any CLI tool.
-        Prefer targeted commands over broad searches."""
+        applying edits (sed -i, patch), and git operations. Do NOT use for creating new files —
+        only edit existing tracked source files. Prefer sed -i for targeted edits."""
+        untracked_target = _detect_untracked_write_target(root, command)
+        if untracked_target is not None:
+            output = f"BLOCKED: Cannot write to untracked file {untracked_target}." + _SCRATCH_WRITE_BLOCKED
+            traces.append(
+                "tool_call",
+                {"stream": "tool", "tool_name": "shell", "tool_input": {"command": command, "timeout_seconds": timeout_seconds}},
+            )
+            traces.append_shell(
+                "shell_command_blocked",
+                {
+                    "command": command,
+                    "tool_input": {"command": command, "timeout_seconds": timeout_seconds},
+                    "tool_output": output,
+                    "block_reason": "untracked_write",
+                    "blocked_path": untracked_target,
+                    "output": output,
+                },
+            )
+            return output
+
+        cmd_history.record(command)
         traces.append(
             "tool_call",
             {
@@ -77,6 +175,14 @@ def make_workspace_tools(root: Path, traces: RunTraces) -> list:
 
         elapsed = time.monotonic() - started
         output = f"$ {command}\n\nSTDOUT:\n{proc.stdout}\n\nSTDERR:\n{proc.stderr}"
+        if "pytest" in command and (
+            "No module named pytest" in output
+            or "pytest: command not found" in output
+            or "command not found" in (proc.stderr or "")
+        ):
+            output += _PYTEST_UNAVAILABLE
+        if cmd_history.is_repeated():
+            output += _REPEATED_COMMAND_BREAK
         truncated = _truncate(output)
         traces.append_shell(
             "shell_command",
@@ -150,7 +256,8 @@ def make_workspace_tools(root: Path, traces: RunTraces) -> list:
         content: Annotated[str, Field(description="Complete new file content.")],
     ) -> str:
         """Write a file in the repository. Overwrites the entire file with the provided content.
-        Use for creating new files or replacing file contents after reading and understanding the original."""
+        Only works on files that already exist in the repository (tracked by git). New files
+        at the repo root are blocked — SWE-bench evaluates your git diff, not new files."""
         tool_input = {
             "path": path,
             "content_bytes": len(content.encode("utf-8")),
@@ -161,6 +268,19 @@ def make_workspace_tools(root: Path, traces: RunTraces) -> list:
             {"stream": "tool", "tool_name": "write_file", "tool_input": tool_input},
         )
         target = _resolve_inside(root, path)
+        if not _is_tracked(root, path):
+            output = f"BLOCKED: {path} is not a tracked file." + _SCRATCH_WRITE_BLOCKED
+            traces.append(
+                "tool_result",
+                {
+                    "stream": "tool",
+                    "tool_name": "write_file",
+                    "ok": False,
+                    "tool_input": tool_input,
+                    "tool_output": output,
+                },
+            )
+            return output
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(content, encoding="utf-8")
         output = f"Wrote {path} ({len(content.encode('utf-8'))} bytes)"
