@@ -29,9 +29,9 @@ def project_root() -> Path:
 
 @app.command()
 def model_check(
-    model: Annotated[str, typer.Option(help="OpenRouter model id.")] = DEFAULT_MODEL,
+    model: Annotated[str, typer.Option(help="LLM model id.")] = DEFAULT_MODEL,
 ) -> None:
-    """Verify OpenRouter connectivity and model availability."""
+    """Verify LLM connectivity and model availability."""
     config = OpenRouterConfig.from_env(model=model)
     llm = ChatOpenAI(  # type: ignore[call-arg]
         model=config.model,
@@ -145,7 +145,7 @@ def run_task(
         str,
         typer.Option(help="SWE-bench Verified instance id."),
     ] = "astropy__astropy-12907",
-    model: Annotated[str, typer.Option(help="OpenRouter model id.")] = DEFAULT_MODEL,
+    model: Annotated[str, typer.Option(help="LLM model id.")] = DEFAULT_MODEL,
     max_iterations: Annotated[
         int,
         typer.Option(min=1, max=200, help="Emergency loop cap, not a short work budget."),

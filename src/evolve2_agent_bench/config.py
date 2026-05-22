@@ -4,19 +4,27 @@ import os
 from dataclasses import dataclass
 
 
-DEFAULT_MODEL = "google/gemma-4-26b-a4b-it"
-OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+DEFAULT_MODEL = "glm5-fp8"
+DEFAULT_BASE_URL = "https://REDACTED"
 
 
 @dataclass(frozen=True)
-class OpenRouterConfig:
+class LLMConfig:
     api_key: str
     model: str = DEFAULT_MODEL
-    base_url: str = OPENROUTER_BASE_URL
+    base_url: str = DEFAULT_BASE_URL
 
     @classmethod
-    def from_env(cls, model: str = DEFAULT_MODEL) -> "OpenRouterConfig":
-        api_key = os.environ.get("OPENROUTER_API_KEY")
+    def from_env(cls, model: str | None = None) -> "LLMConfig":
+        api_key = os.environ.get("LLM_API_KEY")
         if not api_key:
-            raise RuntimeError("OPENROUTER_API_KEY is required.")
-        return cls(api_key=api_key, model=model)
+            raise RuntimeError("LLM_API_KEY is required.")
+        return cls(
+            api_key=api_key,
+            model=model or os.environ.get("LLM_MODEL", DEFAULT_MODEL),
+            base_url=os.environ.get("LLM_BASE_URL", DEFAULT_BASE_URL),
+        )
+
+
+# Backward compatibility alias
+OpenRouterConfig = LLMConfig
