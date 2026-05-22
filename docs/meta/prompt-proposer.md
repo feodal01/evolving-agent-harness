@@ -43,7 +43,7 @@ Generate exactly three candidates, each specific enough to test but not yet impl
 - `medium`: same failure class, indirect trace support.
 - `weak`: mechanism-first; use rarely, paired with rapid falsification plan.
 
-Inputs: latest `trace.jsonl` and `result.json`; recent dossiers (especially rejected/inconclusive); `docs/references/research/agent-evolution-literature.md`; relevant LangChain/LangGraph curated docs; GitHub examples from maintained SWE-bench agent repos (record link + mechanism only).
+Inputs: latest `trace.jsonl` and `result.json`; recent dossiers (especially rejected/rejected); `docs/references/research/agent-evolution-literature.md`; relevant LangChain/LangGraph curated docs; GitHub examples from maintained SWE-bench agent repos (record link + mechanism only).
 
 Score each candidate:
 

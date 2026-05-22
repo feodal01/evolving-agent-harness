@@ -14,7 +14,7 @@ Canonical data and file layout for meta-optimization. All role prompts in `docs/
 |-------|------|----------|-------------|
 | `hypothesis_id` | string | yes | Stable id, e.g. `H0001` |
 | `title` | string | yes | Short title |
-| `status` | string | yes | One of: `idea`, `queued`, `running`, `analyzed`, `merged`, `rejected`, `inconclusive`, `superseded` |
+| `status` | string | yes | One of: `idea`, `queued`, `running`, `analyzed`, `merged`, `rejected`, `superseded` |
 | `fix_type` | string | yes | One of: `mechanical`, `hypothesis`. Determines validation path and budget. |
 | `branch` | string | no | e.g. `hyp/H0001-slug` (set when execution starts) |
 | `dossier_path` | string | no | e.g. `artifacts/meta/hypotheses/H0001-slug.md` |
@@ -33,7 +33,7 @@ Canonical data and file layout for meta-optimization. All role prompts in `docs/
 - `idea` → `queued` (orchestrator accepts proposer payload)
 - `queued` → `running` (orchestrator records `sample.selected` and assigns work)
 - `running` → `analyzed` (orchestrator after analyzer report accepted)
-- `analyzed` → `merged` \| `rejected` \| `inconclusive` \| `superseded` (orchestrator merge/registry decision)
+- `analyzed` → `merged` | `rejected` | `superseded` (orchestrator merge/registry decision)
 
 Invalid transitions are reconciled via `meta-events` rows and board corrections.
 
@@ -106,7 +106,7 @@ Compact JSONL; long text lives in dossiers.
 {
   "hypothesis_id": "H0002",
   "title": "Structured edit tool reduces no_patch failures",
-  "status": "proposed | running | confirmed | rejected | inconclusive | superseded | baseline",
+  "status": "proposed | running | confirmed | rejected | superseded | baseline",
   "fix_type": "hypothesis | mechanical",
   "branch": "hyp/H0002-structured-edit-tool",
   "dossier": "artifacts/meta/hypotheses/H0002-structured-edit-tool.md",

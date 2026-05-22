@@ -1,6 +1,6 @@
 # H0014 Ready-to-Finish Graph State
 
-Status: inconclusive
+Status: rejected
 
 Branch: `hyp/H0014-ready-to-finish-graph-state`
 

@@ -1,6 +1,6 @@
 # H0010 No-Patch Control with Bounded Retries
 
-Status: inconclusive
+Status: rejected
 
 Branch: `hyp/H0010-no-patch-bounded-retries`
 
@@ -17,7 +17,7 @@ Combines observation discipline themes (H0005/H0006 dossiers) with explicit git-
 
 ## Baseline Evidence
 
-- Related dossiers: H0005, H0006, H0007 (inconclusive cluster).
+- Related dossiers: H0005, H0006, H0007 (rejected cluster).
 - One-task gate attempts on this branch are recorded below; neither produced `artifacts/runs/<id>/result.json` (no resolved / SWE-bench report).
 
 ## Proposed Change
@@ -51,7 +51,7 @@ Two one-task attempts under `artifacts/worktrees/H0010-no-patch` (paths relative
 1. **`20260517-085043-astropy__astropy-12907`** — trace grows through **iteration 86** (`invalid_action` last event); **no `result.json`**. Long wall-clock session ended without harness completion (process teardown; leaked multiprocessing semaphore warning). Trace shows **3×** `no_patch_control_hint` events.
 2. **`20260517-130951-astropy__astropy-12907`** — trace reaches **iteration 89** then **`run-task` exits code 1**: OpenRouter/LangChain stack raised **`JSONDecodeError: Expecting value`** while parsing the HTTP response body (`httpx` → `response.json()`). **No `result.json`.** Trace shows **3×** `no_patch_control_hint` events.
 
-**Conclusion:** One-task gate **not completed** — no SWE-bench evaluation artifact; inconclusive for merge/Pareto claims.
+**Conclusion:** One-task gate **not completed** — no SWE-bench evaluation artifact; rejected for merge/Pareto claims.
 
 ## Metrics
 
@@ -75,7 +75,7 @@ Cannot assess — evaluation never finalized.
 ## Search node (MCTS)
 
 - **Parent state**: no-patch / control-hint cluster under H0007 correlation round.
-- **Rollout depth**: `one-task` **attempted**, inconclusive (two partial traces; no evaluation).
+- **Rollout depth**: `one-task` **attempted**, rejected (two partial traces; no evaluation).
 - **Value summary**: Hypothesis mechanism emits trace-visible `no_patch_control_hint` under empty tracked diff; **no end-to-end benchmark value** due to infrastructure/session failures.
 - **Revisit queue**: rerun one-task gate when API/runtime stable; compare `invalid_action` vs baseline on completed runs only.
 

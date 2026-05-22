@@ -1,6 +1,6 @@
 # H0011 Hard Finalization Diff Gate
 
-Status: inconclusive
+Status: rejected
 
 Branch: `hyp/H0011-hard-finalization-diff-gate`
 
@@ -72,7 +72,7 @@ No completed candidate artifact was available, so no Pareto comparison could be 
 
 ## Decision
 
-inconclusive
+rejected
 
 ## Search node (MCTS)
 

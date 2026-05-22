@@ -32,7 +32,7 @@ Apply these rules in order:
 ### 1. Eligibility filter
 
 - Include only `queued` or `idea` unless the snapshot explicitly allows another status.
-- Exclude `running`, `merged`, `rejected`, `inconclusive`, `analyzed` (unless snapshot explicitly allows).
+- Exclude `running`, `merged`, `rejected`, `rejected`, `analyzed` (unless snapshot explicitly allows).
 - Exclude rows missing `hypothesis_id` or required fields for execution.
 
 ### 2. MCTS-style priority (information gain)

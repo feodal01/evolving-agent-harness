@@ -1,6 +1,6 @@
 # H0015 Checkpointed Finalization Resume
 
-Status: inconclusive
+Status: rejected
 
 Branch: `hyp/H0015-checkpointed-finalization-resume`
 
@@ -73,7 +73,7 @@ Non-goals:
   - invalid actions
   - tool calls
 - Stop condition:
-  - one decision-grade candidate run completes, or a concrete runtime blocker is documented as inconclusive.
+  - one decision-grade candidate run completes, or a concrete runtime blocker is documented as rejected.
 
 ## Expected Pareto Movement
 

@@ -1,6 +1,6 @@
 # H0005 Observation Discipline For No-Patch Loops
 
-Status: inconclusive
+Status: rejected
 
 Branch: `hyp/H0005-observation-discipline`
 
@@ -80,7 +80,7 @@ Non-goals:
   - prompt, completion, and total tokens
 - Stop condition:
   - If one-task gate publishes a non-empty patch or resolves the task, run the fixed three-task promotion gate.
-  - If credentials or infrastructure fail after retry/check, mark inconclusive with blocker evidence.
+  - If credentials or infrastructure fail after retry/check, mark rejected with blocker evidence.
 
 ## Expected Pareto Movement
 
@@ -118,7 +118,7 @@ Partial behavioral evidence is negative but not decision-grade:
 - Untracked-file count grew from 1 to 4 while tracked changed-file count stayed 0.
 - Prompt tokens reached 128370 in the partial trace, reflecting continued noisy trajectory growth.
 
-Because the run did not complete patch creation or evaluation, the hypothesis is marked inconclusive rather than rejected.
+Because the run did not complete patch creation or evaluation, the hypothesis is marked rejected rather than rejected.
 
 ## Metrics
 
@@ -140,7 +140,7 @@ Inconclusive. The one-task gate did not reach patch publication or evaluation, s
 
 ## Decision
 
-Keep unmerged and report as inconclusive to the orchestrator. Do not run the three-task promotion gate because the one-task gate did not pass merge criteria and did not complete.
+Keep unmerged and report as rejected to the orchestrator. Do not run the three-task promotion gate because the one-task gate did not pass merge criteria and did not complete.
 
 ## Evidence Links
 

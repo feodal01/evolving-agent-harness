@@ -1,6 +1,6 @@
 # H0013 Forced Source-Edit Checkpoint
 
-Status: inconclusive
+Status: rejected
 
 Branch: `hyp/H0013-forced-source-edit-checkpoint`
 

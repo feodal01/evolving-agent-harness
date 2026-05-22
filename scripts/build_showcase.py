@@ -113,17 +113,16 @@ def esc(value: Any) -> str:
 FUNNEL = {
     "idea": ("backlog", "Backlog"),
     "running": ("testing", "Testing now"),
-    "inconclusive": ("tested", "Tested"),
     "rejected": ("dropped", "Dropped"),
+    "superseded": ("dropped", "Dropped"),
     "merged": ("shipped", "Shipped"),
     "baseline": ("reference", "Reference"),
 }
 
-FUNNEL_ORDER = ["backlog", "testing", "tested", "dropped", "shipped"]
+FUNNEL_ORDER = ["backlog", "testing", "dropped", "shipped"]
 FUNNEL_LABELS = {
     "backlog": "Backlog",
     "testing": "Testing now",
-    "tested": "Tested",
     "dropped": "Dropped",
     "shipped": "Shipped",
 }

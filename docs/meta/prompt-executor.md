@@ -14,7 +14,7 @@ Work through the checklist without stopping for routine approval. Ask the user o
 
 Full SWE-bench Verified requires **explicit user approval** every time. One-task and three-task gates run autonomously.
 
-If a blocker occurs after code changes: finish as `inconclusive` in the dossier, commit and push if possible, append `executor.finished` with `ok: false`.
+If a blocker occurs after code changes: finish as `rejected` in the dossier, commit and push if possible, append `executor.finished` with `ok: false`.
 
 ---
 
@@ -22,7 +22,7 @@ If a blocker occurs after code changes: finish as `inconclusive` in the dossier,
 
 - `main` contains the mainstream agent. Every hypothesis branches from current `main`: `hyp/HXXXX-<short-hypothesis>`.
 - In orchestrated runs, use the assigned worktree/branch/hypothesis id. In standalone, create your branch from `main`.
-- Push every hypothesis branch to `origin`, whether confirmed, rejected, or inconclusive. Never delete failed branches.
+- Push every hypothesis branch to `origin`, whether confirmed, rejected, or rejected. Never delete failed branches.
 - Do not merge to `main` until analysis (Phase 4) confirms improvement per `prompt-unified.md` §Phase 5.
 - Failed branches must end with a commit recording the hypothesis, run ids, metrics, failure class, and decision in the dossier.
 - Do not branch from an unconfirmed hypothesis branch. Start from `main` unless the dossier records a dependency.
@@ -81,7 +81,7 @@ max_iterations: 100
 evaluation_timeout: 1800
 ```
 
-`max_iterations` is an emergency guardrail, not a work budget. Caps of 4/8/16/32 are smoke checks only, not decision runs. If a candidate reaches the cap before publishing a patch, increase it or classify the run as inconclusive unless the trace proves repeated non-progress.
+`max_iterations` is an emergency guardrail, not a work budget. Caps of 4/8/16/32 are smoke checks only, not decision runs. If a candidate reaches the cap before publishing a patch, increase it or classify the run as rejected unless the trace proves repeated non-progress.
 
 `agent_max_tokens` controls per-call reasoning budget. Leave unset for normal decision runs; set only when testing completion-budget hypotheses, and keep fixed across baseline and candidate.
 
@@ -150,4 +150,4 @@ If a run fails before writing `trace.jsonl`, fix observability before optimizing
 
 - Every completed hypothesis must be pushed to `origin` (code + dossier). Never leave a hypothesis only locally.
 - Merge to `main` only after Phase 4 analysis confirms per `prompt-unified.md` §Phase 5; otherwise registry-only.
-- If credentials or runtime dependencies are missing: push the branch if code changed, mark `inconclusive`, document the blocker in the dossier, append executor events.
+- If credentials or runtime dependencies are missing: push the branch if code changed, mark `rejected`, document the blocker in the dossier, append executor events.

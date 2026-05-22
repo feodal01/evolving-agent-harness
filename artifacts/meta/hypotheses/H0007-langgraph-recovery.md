@@ -1,6 +1,6 @@
 # H0007 LangGraph-Style Empty Response Recovery
 
-Status: inconclusive
+Status: rejected
 
 Branch: `hyp/H0007-langgraph-recovery`
 
@@ -74,7 +74,7 @@ Non-goals:
   - wall seconds
   - prompt, completion, and total tokens
 - Stop condition:
-  - one decision-grade candidate run, or an exact infrastructure blocker documented as inconclusive.
+  - one decision-grade candidate run, or an exact infrastructure blocker documented as rejected.
 
 ## Expected Pareto Movement
 
@@ -104,7 +104,7 @@ set -a; source ../evolve2/.env; set +a; uv run evolve2 run-task --instance-id as
 
 Candidate run `20260509-082534-astropy__astropy-12907` did not complete. The process exited with code 143 after iteration 17 and wrote no `result.json`, `patch.diff`, prediction, or evaluation logs. The trace is still useful as partial evidence: the empty-response recovery fired at iteration 13. The retry produced a non-empty `read_file` action targeting `astropy/modeling/separable.py`, but it used `max_lines=500`, which violates the current `ReadFileArgs.max_lines <= 400` schema. The action was therefore still recorded as `invalid_action`.
 
-Because the decision-grade gate did not finish and no patch/evaluation result exists, this hypothesis is inconclusive rather than confirmed or rejected by benchmark outcome.
+Because the decision-grade gate did not finish and no patch/evaluation result exists, this hypothesis is rejected rather than confirmed or rejected by benchmark outcome.
 
 ## Metrics
 
@@ -128,7 +128,7 @@ Diagnostic evidence suggests the mechanism is too weak as implemented: an empty-
 
 ## Decision
 
-Keep unmerged. Do not promote to the three-task gate. Mark H0007 inconclusive because the decision-grade one-task gate terminated before result generation.
+Keep unmerged. Do not promote to the three-task gate. Mark H0007 rejected because the decision-grade one-task gate terminated before result generation.
 
 ## Evidence Links
 

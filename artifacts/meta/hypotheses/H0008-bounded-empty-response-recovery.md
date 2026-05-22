@@ -1,6 +1,6 @@
 # H0008 Bounded Empty Response Recovery
 
-Status: inconclusive (one-task gate infra failure)
+Status: rejected (one-task gate infra failure)
 
 Branch: `hyp/H0008-bounded-empty-response-recovery`
 
@@ -90,11 +90,11 @@ Cannot assess Pareto vs baseline: **no** `resolved`/patch/`patch_published` evid
 
 ## Decision
 
-**`inconclusive`.** Retry one-task gate when OpenRouter/streaming gateway returns stable JSON, or rerun with deterministic logging of raw HTTP payloads for attribution. Deferred merge / promotion.
+**`rejected`.** Retry one-task gate when OpenRouter/streaming gateway returns stable JSON, or rerun with deterministic logging of raw HTTP payloads for attribution. Deferred merge / promotion.
 
 ## Search node (MCTS)
 
-- **Parent state**: branched from `main`; parent hypothesis context H0007 (inconclusive empty recovery + invalid `max_lines`).
+- **Parent state**: branched from `main`; parent hypothesis context H0007 (rejected empty recovery + invalid `max_lines`).
 - **State fingerprint**: empty LLM content → single retry → schema-invalid `read_file` over 400 lines.
 - **Children considered**: A expanded (this run); B/C deferred/abandoned per table.
 - **Rollout depth**: `one-task` attempted; baseline run ids cited above; principal candidate run `20260517-130952-astropy__astropy-12907` (stopped before evaluation).

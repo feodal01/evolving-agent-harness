@@ -1,6 +1,6 @@
 # H0016 Third Iteration Source-Edit Checkpoint
 
-Status: inconclusive
+Status: rejected
 
 Branch: `hyp/H0016-third-iteration-source-edit-checkpoint`
 
@@ -83,11 +83,11 @@ The rerun, `20260521-100931-astropy__astropy-12907`, progressed through the agen
 
 ## Pareto Assessment
 
-No completed candidate comparison is available yet. The run is inconclusive because the benchmark session did not hand back a finished patch/eval artifact during this turn.
+No completed candidate comparison is available yet. The run is rejected because the benchmark session did not hand back a finished patch/eval artifact during this turn.
 
 ## Decision
 
-inconclusive
+rejected
 
 ## Search node (MCTS)
 

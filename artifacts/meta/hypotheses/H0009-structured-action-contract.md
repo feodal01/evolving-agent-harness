@@ -1,6 +1,6 @@
 # H0009 Structured Action Contract for Tool Args
 
-Status: inconclusive
+Status: rejected
 
 Branch: `hyp/H0009-structured-action-contract`
 
@@ -17,7 +17,7 @@ Prior parser-focused hypotheses (H0003/H0004) failed merge criteria but pointed 
 
 ## Baseline Evidence
 
-- Parent context: H0007 inconclusive; dominant failure classes remain `invalid_action_protocol` / `no_patch` on the gate task.
+- Parent context: H0007 rejected; dominant failure classes remain `invalid_action_protocol` / `no_patch` on the gate task.
 - Baseline run id for this gate: **not recorded** in this executor session (parent `main` @ `1df90f1f759c8bf6b7fcb682da422271fd4c6fcc` per board); compare future runs against an explicit baseline at the same profile.
 
 ## Proposed Change

@@ -1,6 +1,6 @@
 # H0006 Source Edit Finalization
 
-Status: inconclusive
+Status: rejected
 
 Branch: `hyp/H0006-source-edit-finalization`
 
@@ -77,7 +77,7 @@ Non-goals:
   - invalid actions
   - tool calls
 - Stop condition:
-  - candidate one-task run completes, or document credential/runtime blocker as inconclusive.
+  - candidate one-task run completes, or document credential/runtime blocker as rejected.
 
 ## Expected Pareto Movement
 
@@ -99,7 +99,7 @@ Validation passed:
 - `uv run python -m compileall -q src scripts`;
 - `uv run evolve2 model-check` returned `model-ok`.
 
-The documented one-task gate started as run `20260509-082701-astropy__astropy-12907` after loading credentials from `/Users/user/Documents/repos/evolve2/.env`, because this worktree did not contain its own `.env`. The run wrote a trace through iteration 2, then stalled with no trace growth for several minutes while waiting for the next provider/runtime step. I terminated the stalled process and classify the benchmark gate as inconclusive.
+The documented one-task gate started as run `20260509-082701-astropy__astropy-12907` after loading credentials from `/Users/user/Documents/repos/evolve2/.env`, because this worktree did not contain its own `.env`. The run wrote a trace through iteration 2, then stalled with no trace growth for several minutes while waiting for the next provider/runtime step. I terminated the stalled process and classify the benchmark gate as rejected.
 
 Partial trace evidence:
 

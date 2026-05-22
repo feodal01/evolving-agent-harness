@@ -56,7 +56,7 @@ Read: `docs/meta/prompt-proposer.md` (full document, especially §§ Generating 
 **Inputs to review before generating candidates:**
 
 1. **Latest traces**: Read `result.json` and `trace-view` for recent comparable runs; inspect MLflow spans for failure patterns.
-2. **Existing dossiers**: Read recent dossiers (especially rejected/inconclusive) to avoid repeating failed mechanisms.
+2. **Existing dossiers**: Read recent dossiers (especially rejected/rejected) to avoid repeating failed mechanisms.
 3. **Research scan**: Follow `prompt-proposer.md` §Research scan — reference agents, LangChain/LangGraph curated docs, research literature, GitHub search. If last 3+ hypotheses were narrow exploit-only, ensure at least one Explore candidate.
 
 **Generate exactly three candidates** with exploit/explore/bridge roles, trace anchors, and T-shirt scores per `prompt-proposer.md`.
@@ -114,7 +114,7 @@ Read: `docs/meta/prompt-analyzer.md` (full document).
 
 **Hypothesis testing** — apply after Phase 4 analysis:
 - **Merge to `main`** only if evidence supports it: equal or better `patch_published`, Pareto improvement or trace-targeted wins per `prompt-analyzer.md`, no unacceptable regression on the completed gate.
-- **Registry only** for rejected/inconclusive: push dossier + index entry on `main`, do not merge code.
+- **Registry only** for rejected/rejected: push dossier + index entry on `main`, do not merge code.
 - **Trace-targeted:** do not reject solely because `resolved` is flat if named trace metrics improved and `patch_published` did not regress (see `prompt-analyzer.md` §Trace-targeted).
 - **Full SWE-bench Verified:** never start without user approval, even after a three-task pass.
 
@@ -145,7 +145,7 @@ Otherwise: return to Phase 1 for the next round.
 - Work through all phases without stopping for routine approval.
 - Ask the user only for: hard blockers, full SWE-bench Verified approval, ambiguous merge decisions.
 - Load credentials from `.env`; never print or commit secrets.
-- Push every hypothesis branch to `origin`, whether confirmed, rejected, or inconclusive.
+- Push every hypothesis branch to `origin`, whether confirmed, rejected, or rejected.
 - Never delete failed hypothesis branches.
 
 ---
