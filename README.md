@@ -42,7 +42,7 @@ This project is a small laboratory for pushing harness engineering as far as pos
 - `docs/references/langchain/`: offline LangChain and LangGraph documentation.
 - `docs/references/research/agent-evolution-literature.md`: research frame for generating hypothesis families.
 - `artifacts/runs/<run_id>/`: local run traces and benchmark outputs (git-ignored).
-- `artifacts/mlruns/`: MLflow trace store (git-ignored).
+- `artifacts/mlflow.db`: default local MLflow tracking store (git-ignored).
 
 ## Setup
 
@@ -82,7 +82,7 @@ MLflow tracing is **auto-enabled** for every run. Disable with `--no-mlflow` or 
 
 Each run writes a directory under `artifacts/runs/<run_id>/` containing:
 
-- `trace.jsonl`: canonical unified timeline.
+- `trace.jsonl`: local unified timeline export mirrored into MLflow.
 - `task.json`: public SWE-bench instance fields given to the agent.
 - `agent_events.jsonl`: high-level agent decisions.
 - `llm_calls.jsonl`: model-specific slice of the unified trace.
@@ -105,10 +105,10 @@ View full span hierarchies for every LLM call, tool invocation, and evaluation:
 ```bash
 uv run evolve2 mlflow-ui
 # prints the command to launch MLflow UI
-# then open http://localhost:5000
+# then open http://localhost:5050
 ```
 
-MLflow traces are stored locally in `artifacts/mlruns/`. Each benchmark run creates an MLflow run with nested spans showing the agent session, individual iterations, tool calls, and evaluation.
+MLflow is the primary observability surface. Each benchmark run creates an MLflow run with nested spans showing the benchmark rollout, agent session, individual LLM iterations, tool calls, evaluation, and mirrored `trace.jsonl` events.
 
 ## Meta-Agent Workflow
 
@@ -120,7 +120,7 @@ The meta-optimization loop:
 2. **Research scan**: Review reference agents (SWE-agent, Aider, OpenHands, Moatless), LangChain/LangGraph docs, research literature.
 3. **Hypothesis generation**: Generate three candidates (exploit/explore/bridge), classify as `mechanical` or `hypothesis`, select one.
 4. **Execution**: Branch, implement, validate according to fix type.
-5. **Analysis**: Pareto comparison using JSONL traces + MLflow span analysis.
+5. **Analysis**: Pareto comparison starting from MLflow span analysis, with JSONL exports for scripted summaries and durable evidence paths.
 6. **Decision**: Merge / reject / keep, publish to registry.
 
 ### Fix Types

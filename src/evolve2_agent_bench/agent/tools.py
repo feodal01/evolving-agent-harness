@@ -3,12 +3,14 @@ from __future__ import annotations
 import re
 import subprocess
 import time
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 
 from langchain.tools import tool
 from pydantic import Field
 
+from evolve2_agent_bench.mlflow_tracing import mlflow_span, truncate_for_span
 from evolve2_agent_bench.trace import RunTraces
 
 MAX_TOOL_OUTPUT = 12_000
@@ -78,6 +80,23 @@ def _is_tracked(root: Path, rel_path: str) -> bool:
         return True
 
 
+@contextmanager
+def _tool_span(tool_name: str, tool_input: dict[str, Any]):
+    with mlflow_span(
+        f"tool.{tool_name}",
+        "TOOL",
+        attributes={"tool_name": tool_name},
+    ) as span:
+        if span is not None:
+            span.set_inputs(truncate_for_span(tool_input))
+        yield span
+
+
+def _set_tool_span_output(span: Any, payload: dict[str, Any]) -> None:
+    if span is not None:
+        span.set_outputs(truncate_for_span(payload))
+
+
 def _detect_untracked_write_target(root: Path, command: str) -> str | None:
     for m in _REDIRECT_RE.finditer(command):
         path = m.group(1) or m.group(2)
@@ -117,87 +136,86 @@ def make_workspace_tools(root: Path, traces: RunTraces) -> list:
         """Execute a shell command in the repository workspace. Use for searching code (rg, grep),
         applying edits (sed -i, patch), and git operations. Do NOT use for creating new files —
         only edit existing tracked source files. Prefer sed -i for targeted edits."""
-        untracked_target = _detect_untracked_write_target(root, command)
-        if untracked_target is not None:
-            output = f"BLOCKED: Cannot write to untracked file {untracked_target}." + _SCRATCH_WRITE_BLOCKED
-            traces.append(
-                "tool_call",
-                {"stream": "tool", "tool_name": "shell", "tool_input": {"command": command, "timeout_seconds": timeout_seconds}},
-            )
-            traces.append_shell(
-                "shell_command_blocked",
-                {
+        tool_input = {"command": command, "timeout_seconds": timeout_seconds}
+        with _tool_span("shell", tool_input) as span:
+            untracked_target = _detect_untracked_write_target(root, command)
+            if untracked_target is not None:
+                output = f"BLOCKED: Cannot write to untracked file {untracked_target}." + _SCRATCH_WRITE_BLOCKED
+                traces.append(
+                    "tool_call",
+                    {"stream": "tool", "tool_name": "shell", "tool_input": tool_input},
+                )
+                payload = {
                     "command": command,
-                    "tool_input": {"command": command, "timeout_seconds": timeout_seconds},
+                    "tool_input": tool_input,
                     "tool_output": output,
                     "block_reason": "untracked_write",
                     "blocked_path": untracked_target,
                     "output": output,
+                }
+                traces.append_shell("shell_command_blocked", payload)
+                _set_tool_span_output(span, {"ok": False, **payload})
+                return output
+
+            cmd_history.record(command)
+            traces.append(
+                "tool_call",
+                {
+                    "stream": "tool",
+                    "tool_name": "shell",
+                    "tool_input": tool_input,
                 },
             )
-            return output
-
-        cmd_history.record(command)
-        traces.append(
-            "tool_call",
-            {
-                "stream": "tool",
-                "tool_name": "shell",
-                "tool_input": {"command": command, "timeout_seconds": timeout_seconds},
-            },
-        )
-        started = time.monotonic()
-        try:
-            proc = subprocess.run(
-                command,
-                cwd=root,
-                shell=True,
-                text=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                timeout=timeout_seconds,
-            )
-        except subprocess.TimeoutExpired as exc:
-            output = f"$ {command}\n\nCommand timed out after {timeout_seconds} seconds."
-            traces.append_shell(
-                "shell_command_timeout",
-                {
+            started = time.monotonic()
+            try:
+                proc = subprocess.run(
+                    command,
+                    cwd=root,
+                    shell=True,
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    timeout=timeout_seconds,
+                )
+            except subprocess.TimeoutExpired as exc:
+                output = f"$ {command}\n\nCommand timed out after {timeout_seconds} seconds."
+                payload = {
                     "command": command,
-                    "tool_input": {"command": command, "timeout_seconds": timeout_seconds},
+                    "tool_input": tool_input,
                     "tool_output": output,
                     "timeout_seconds": timeout_seconds,
                     "stdout": exc.stdout or "",
                     "stderr": exc.stderr or "",
                     "output": output,
-                },
-            )
-            return output
+                }
+                traces.append_shell("shell_command_timeout", payload)
+                _set_tool_span_output(span, {"ok": False, **payload})
+                return output
 
-        elapsed = time.monotonic() - started
-        output = f"$ {command}\n\nSTDOUT:\n{proc.stdout}\n\nSTDERR:\n{proc.stderr}"
-        if "pytest" in command and (
-            "No module named pytest" in output
-            or "pytest: command not found" in output
-            or "command not found" in (proc.stderr or "")
-        ):
-            output += _PYTEST_UNAVAILABLE
-        if cmd_history.is_repeated():
-            output += _REPEATED_COMMAND_BREAK
-        truncated = _truncate(output)
-        traces.append_shell(
-            "shell_command",
-            {
+            elapsed = time.monotonic() - started
+            output = f"$ {command}\n\nSTDOUT:\n{proc.stdout}\n\nSTDERR:\n{proc.stderr}"
+            if "pytest" in command and (
+                "No module named pytest" in output
+                or "pytest: command not found" in output
+                or "command not found" in (proc.stderr or "")
+            ):
+                output += _PYTEST_UNAVAILABLE
+            if cmd_history.is_repeated():
+                output += _REPEATED_COMMAND_BREAK
+            truncated = _truncate(output)
+            payload = {
                 "command": command,
-                "tool_input": {"command": command, "timeout_seconds": timeout_seconds},
+                "tool_input": tool_input,
                 "tool_output": truncated,
                 "returncode": proc.returncode,
                 "elapsed_seconds": round(elapsed, 3),
                 "stdout_bytes": len(proc.stdout.encode("utf-8")),
                 "stderr_bytes": len(proc.stderr.encode("utf-8")),
                 "output": truncated,
-            },
-        )
-        return truncated
+            }
+            traces.append_shell("shell_command", payload)
+            _set_tool_span_output(span, {"ok": proc.returncode == 0, **payload})
+            return truncated
 
     @tool
     def read_file(
@@ -212,43 +230,42 @@ def make_workspace_tools(root: Path, traces: RunTraces) -> list:
         """Read a file from the repository. Returns numbered lines for precise reference.
         Use start_line and max_lines to read specific sections of large files."""
         tool_input = {"path": path, "start_line": start_line, "max_lines": max_lines}
-        traces.append(
-            "tool_call",
-            {"stream": "tool", "tool_name": "read_file", "tool_input": tool_input},
-        )
-        target = _resolve_inside(root, path)
-        if not target.is_file():
-            output = f"File not found: {path}"
+        with _tool_span("read_file", tool_input) as span:
             traces.append(
-                "tool_result",
-                {
+                "tool_call",
+                {"stream": "tool", "tool_name": "read_file", "tool_input": tool_input},
+            )
+            target = _resolve_inside(root, path)
+            if not target.is_file():
+                output = f"File not found: {path}"
+                payload = {
                     "stream": "tool",
                     "tool_name": "read_file",
                     "ok": False,
                     "tool_input": tool_input,
                     "tool_output": output,
-                },
-            )
-            return output
+                }
+                traces.append("tool_result", payload)
+                _set_tool_span_output(span, payload)
+                return output
 
-        lines = target.read_text(encoding="utf-8", errors="replace").splitlines()
-        start = start_line - 1
-        selected = lines[start : start + max_lines]
-        rendered = "\n".join(
-            f"{line_no}: {line}" for line_no, line in enumerate(selected, start=start_line)
-        )
-        output = _truncate(rendered)
-        traces.append(
-            "tool_result",
-            {
+            lines = target.read_text(encoding="utf-8", errors="replace").splitlines()
+            start = start_line - 1
+            selected = lines[start : start + max_lines]
+            rendered = "\n".join(
+                f"{line_no}: {line}" for line_no, line in enumerate(selected, start=start_line)
+            )
+            output = _truncate(rendered)
+            payload = {
                 "stream": "tool",
                 "tool_name": "read_file",
                 "ok": True,
                 "tool_input": tool_input,
                 "tool_output": output,
-            },
-        )
-        return output
+            }
+            traces.append("tool_result", payload)
+            _set_tool_span_output(span, payload)
+            return output
 
     @tool
     def write_file(
@@ -263,37 +280,36 @@ def make_workspace_tools(root: Path, traces: RunTraces) -> list:
             "content_bytes": len(content.encode("utf-8")),
             "content_preview": content[:MAX_TOOL_OUTPUT],
         }
-        traces.append(
-            "tool_call",
-            {"stream": "tool", "tool_name": "write_file", "tool_input": tool_input},
-        )
-        target = _resolve_inside(root, path)
-        if not _is_tracked(root, path):
-            output = f"BLOCKED: {path} is not a tracked file." + _SCRATCH_WRITE_BLOCKED
+        with _tool_span("write_file", tool_input) as span:
             traces.append(
-                "tool_result",
-                {
+                "tool_call",
+                {"stream": "tool", "tool_name": "write_file", "tool_input": tool_input},
+            )
+            target = _resolve_inside(root, path)
+            if not _is_tracked(root, path):
+                output = f"BLOCKED: {path} is not a tracked file." + _SCRATCH_WRITE_BLOCKED
+                payload = {
                     "stream": "tool",
                     "tool_name": "write_file",
                     "ok": False,
                     "tool_input": tool_input,
                     "tool_output": output,
-                },
-            )
-            return output
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(content, encoding="utf-8")
-        output = f"Wrote {path} ({len(content.encode('utf-8'))} bytes)"
-        traces.append(
-            "tool_result",
-            {
+                }
+                traces.append("tool_result", payload)
+                _set_tool_span_output(span, payload)
+                return output
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(content, encoding="utf-8")
+            output = f"Wrote {path} ({len(content.encode('utf-8'))} bytes)"
+            payload = {
                 "stream": "tool",
                 "tool_name": "write_file",
                 "ok": True,
                 "tool_input": tool_input,
                 "tool_output": output,
-            },
-        )
-        return output
+            }
+            traces.append("tool_result", payload)
+            _set_tool_span_output(span, payload)
+            return output
 
     return [run_shell, read_file, write_file]

@@ -33,7 +33,7 @@ Schemas and dossier template: [artifacts-schema.md](artifacts-schema.md).
 
 1. **Single agent**: One agent reads the relevant prompt section at each phase.
 2. **ReAct coding agent**: LangGraph ReAct agent with native tool calling (shell, read_file, write_file).
-3. **MLflow required**: Tracing is auto-enabled for every run. View with `uv run evolve2 mlflow-ui`.
+3. **MLflow required**: Tracing is auto-enabled for every run and is the primary observability surface. JSONL files are local exports for scripts and evidence paths.
 4. **Offline SWE-bench**: Dataset must be materialized locally. No HuggingFace Hub fallback.
 5. **Fix types**: `mechanical` (cheap, one-task validation) or `hypothesis` (full validation ladder).
 6. **Broader research**: Mandatory external research scan before hypothesis generation.

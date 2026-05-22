@@ -15,6 +15,7 @@ Environment:
 from __future__ import annotations
 
 import logging
+import json
 import os
 import threading
 from contextlib import contextmanager
@@ -30,6 +31,7 @@ _initialized = False
 _obs_enabled: ContextVar[bool] = ContextVar("evolve2_mlflow_obs_enabled", default=False)
 
 MAX_SPAN_CHARS = 24_000
+MAX_EVENT_ATTRIBUTE_CHARS = 8_000
 
 
 def _default_tracking_uri(project_root: Path | None = None) -> str:
@@ -72,6 +74,36 @@ def truncate_for_span(value: Any, max_chars: int = MAX_SPAN_CHARS) -> Any:
             out.append(f"… [{len(value) - cap} more items]")
         return out
     return value
+
+
+def _span_attribute_value(value: Any) -> str | bool | int | float:
+    if isinstance(value, (bool, int, float, str)):
+        if isinstance(value, str) and len(value) > MAX_EVENT_ATTRIBUTE_CHARS:
+            return value[:MAX_EVENT_ATTRIBUTE_CHARS] + f"\n… [{len(value) - MAX_EVENT_ATTRIBUTE_CHARS} more chars]"
+        return value
+    encoded = json.dumps(value, ensure_ascii=False, sort_keys=True, default=str)
+    if len(encoded) <= MAX_EVENT_ATTRIBUTE_CHARS:
+        return encoded
+    return encoded[:MAX_EVENT_ATTRIBUTE_CHARS] + f"\n… [{len(encoded) - MAX_EVENT_ATTRIBUTE_CHARS} more chars]"
+
+
+def mlflow_trace_event(record: dict[str, Any]) -> None:
+    """Attach a JSONL trace record to the current MLflow span as a searchable event."""
+    if not observability_enabled():
+        return
+    import mlflow
+    from mlflow.entities import SpanEvent
+
+    span = mlflow.get_current_active_span()
+    if span is None:
+        return
+    event = str(record.get("event", "trace_event"))
+    attributes = {
+        key: _span_attribute_value(value)
+        for key, value in record.items()
+        if key not in {"event"}
+    }
+    span.add_event(SpanEvent(name=event, attributes=attributes))
 
 
 def ensure_initialized(project_root: Path | None = None) -> None:

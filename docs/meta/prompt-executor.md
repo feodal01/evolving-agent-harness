@@ -53,7 +53,7 @@ uv run evolve2 run-task --instance-id astropy__astropy-12907 --max-iterations 10
 Useful inspection commands:
 
 ```bash
-uv run evolve2 mlflow-ui                    # then open http://localhost:5000
+uv run evolve2 mlflow-ui                    # then open http://localhost:5050
 uv run python scripts/summarize_trace.py <run_id>
 jq -r '[.event,.stream,.iteration,.tool_name] | @tsv' artifacts/runs/<run_id>/trace.jsonl
 jq 'select(.stream == "llm")' artifacts/runs/<run_id>/trace.jsonl
@@ -65,7 +65,7 @@ uv run python -m compileall -q src scripts   # validate syntax
 
 ## Run artifacts
 
-Each run writes `artifacts/runs/<run_id>/`. See `prompt-analyzer.md` §Run artifacts for the full file listing and `trace.jsonl` event names.
+Each run creates a primary MLflow trace and writes `artifacts/runs/<run_id>/`. Inspect MLflow first for span hierarchy and step details; use JSONL files for scripted summaries and durable evidence paths. See `prompt-analyzer.md` §Run artifacts for the full listing and mirrored event names.
 
 ---
 
@@ -91,7 +91,7 @@ evaluation_timeout: 1800
 
 ### Mechanical fixes (`fix_type: mechanical`)
 
-1. Work iteratively: implement, compile, run one-task gate, read trace if error persists, fix, repeat.
+1. Work iteratively: implement, compile, run one-task gate, inspect MLflow trace if error persists, use JSONL summaries only as support, fix, repeat.
 2. No baseline comparison needed — the fix is objectively correct or not.
 3. Merge immediately on success.
 4. If the problem resists multiple iterations, reclassify to `hypothesis`.
@@ -142,7 +142,7 @@ Rules:
 12. Append `meta-events` lines for executor start/finish with `run_id` and `commit_sha`.
 13. Record execution summary: branch, push status, run ids, metrics, decision draft.
 
-If a run fails before writing `trace.jsonl`, fix observability before optimizing agent behavior.
+If a run fails before creating MLflow spans or the JSONL export, fix observability before optimizing agent behavior.
 
 ---
 

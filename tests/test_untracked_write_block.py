@@ -1,7 +1,7 @@
 """Tests for untracked file write blocking in tools."""
 
 import subprocess
-import textwrap
+from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
@@ -75,3 +75,41 @@ class TestPytestUnavailable:
         result = run_shell.invoke({"command": "pytest --version"})
         if "command not found" in result or "No module named" in result:
             assert "pytest is unavailable" in result
+
+
+class TestToolMlflowSpans:
+    def test_read_file_records_tool_span_inputs_and_outputs(
+        self, git_workspace: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        class FakeSpan:
+            def __init__(self) -> None:
+                self.inputs = None
+                self.outputs = None
+
+            def set_inputs(self, value) -> None:
+                self.inputs = value
+
+            def set_outputs(self, value) -> None:
+                self.outputs = value
+
+        spans: list[FakeSpan] = []
+
+        @contextmanager
+        def fake_mlflow_span(name, span_type, *, attributes=None):
+            span = FakeSpan()
+            spans.append(span)
+            yield span
+
+        monkeypatch.setattr("evolve2_agent_bench.agent.tools.mlflow_span", fake_mlflow_span)
+
+        traces = RunTraces.create(tmp_path / "traces")
+        tools = make_workspace_tools(root=git_workspace, traces=traces)
+        read_file = next(t for t in tools if t.name == "read_file")
+        result = read_file.invoke({"path": "tracked.py", "start_line": 1, "max_lines": 1})
+
+        assert "1: x = 1" in result
+        assert len(spans) == 1
+        assert spans[0].inputs == {"path": "tracked.py", "start_line": 1, "max_lines": 1}
+        assert spans[0].outputs["ok"] is True
+        assert spans[0].outputs["tool_name"] == "read_file"
+        assert "1: x = 1" in spans[0].outputs["tool_output"]

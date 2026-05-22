@@ -10,9 +10,9 @@ This document is your operating manual. Role prompts (`prompt-proposer.md`, `pro
 
 - **Evolving agent**: `src/evolve2_agent_bench/agent/` — a LangGraph ReAct agent with shell, read_file, write_file tools.
 - **Benchmark harness**: `src/evolve2_agent_bench/bench/` — offline SWE-bench Verified runner.
-- **Run artifacts**: `artifacts/runs/<run_id>/` — trace.jsonl, result.json, patch.diff, etc.
+- **Run artifacts**: `artifacts/runs/<run_id>/` — local JSONL trace export, result.json, patch.diff, etc.
 - **Meta artifacts**: `artifacts/meta/` — hypotheses-board.json, hypothesis-index.jsonl, meta-events.jsonl, dossiers, analyses.
-- **MLflow traces**: `artifacts/mlruns/` — auto-enabled for every run; view with `uv run evolve2 mlflow-ui`.
+- **MLflow traces**: auto-enabled for every run; view with `uv run evolve2 mlflow-ui`.
 - **Reference docs**: `docs/references/` — LangChain/LangGraph curated docs, research literature.
 
 ---
@@ -23,8 +23,8 @@ Every action, decision, and outcome must be recorded:
 
 ### Coding agent observability (automatic)
 
-- **JSONL traces**: `artifacts/runs/<run_id>/trace.jsonl` + stream-specific files. See `prompt-analyzer.md` §Run artifacts for full listing.
-- **MLflow traces**: Auto-created spans for agent session, LLM calls, tool invocations, evaluation. View: `uv run evolve2 mlflow-ui` → http://localhost:5000, experiment `evolve2-agent-bench`.
+- **MLflow traces are primary**: Auto-created spans for benchmark rollout, agent session, each LLM iteration, each tool invocation, evaluation, and mirrored JSONL trace events. View: `uv run evolve2 mlflow-ui` → http://localhost:5050, experiment `evolve2-agent-bench`.
+- **JSONL traces are an export**: `artifacts/runs/<run_id>/trace.jsonl` + stream-specific files remain for scripts, grep, compact summaries, and dossier path references. They must mirror MLflow events; do not treat JSONL as the only source of truth.
 - **Result artifacts**: `result.json`, `patch.diff`, `prediction.jsonl`, evaluation logs.
 
 ### Meta-agent observability (your responsibility)
@@ -33,7 +33,7 @@ Every action, decision, and outcome must be recorded:
 - **Hypothesis dossiers**: Create before coding, fill after benchmarking. Template: `artifacts-schema.md` Appendix B.
 - **Hypothesis index**: Update `hypothesis-index.jsonl` on your branch after each hypothesis.
 - **Board updates**: Update `hypotheses-board.json` status transitions.
-- **MLflow for meta-analysis**: Use MLflow comparison view for span hierarchies, token usage, tool call sequences.
+- **MLflow for meta-analysis**: Start analysis in MLflow. Use span hierarchy, token usage, tool call inputs/outputs, and mirrored trace events before falling back to JSONL-only commands.
 
 ---
 
@@ -55,7 +55,7 @@ Read: `docs/meta/prompt-proposer.md` (full document, especially §§ Generating 
 
 **Inputs to review before generating candidates:**
 
-1. **Latest traces**: Read `result.json` and `trace-view` for recent comparable runs; inspect MLflow spans for failure patterns.
+1. **Latest traces**: Inspect MLflow spans for recent comparable runs first; then use `result.json` and `trace-view`/JSONL for scripted summaries or line-level evidence.
 2. **Existing dossiers**: Read recent dossiers (especially rejected/inconclusive) to avoid repeating failed mechanisms.
 3. **Research scan**: Follow `prompt-proposer.md` §Research scan — reference agents, LangChain/LangGraph curated docs, research literature, GitHub search. If last 3+ hypotheses were narrow exploit-only, ensure at least one Explore candidate.
 

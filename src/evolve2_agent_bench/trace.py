@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from evolve2_agent_bench.mlflow_tracing import mlflow_trace_event
+
 
 def utc_ms() -> int:
     return int(time.time() * 1000)
@@ -14,12 +16,15 @@ def utc_ms() -> int:
 @dataclass(frozen=True)
 class JsonlTrace:
     path: Path
+    mirror_to_mlflow: bool = True
 
     def append(self, event: str, payload: dict[str, Any]) -> dict[str, Any]:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         record = {"ts_ms": utc_ms(), "event": event, **payload}
         with self.path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n")
+        if self.mirror_to_mlflow:
+            mlflow_trace_event(record)
         return record
 
 
@@ -37,9 +42,9 @@ class RunTraces:
         return cls(
             run_dir=run_dir,
             timeline=JsonlTrace(run_dir / "trace.jsonl"),
-            agent=JsonlTrace(run_dir / "agent_events.jsonl"),
-            llm=JsonlTrace(run_dir / "llm_calls.jsonl"),
-            shell=JsonlTrace(run_dir / "shell_events.jsonl"),
+            agent=JsonlTrace(run_dir / "agent_events.jsonl", mirror_to_mlflow=False),
+            llm=JsonlTrace(run_dir / "llm_calls.jsonl", mirror_to_mlflow=False),
+            shell=JsonlTrace(run_dir / "shell_events.jsonl", mirror_to_mlflow=False),
         )
 
     def append(self, event: str, payload: dict[str, Any]) -> dict[str, Any]:
