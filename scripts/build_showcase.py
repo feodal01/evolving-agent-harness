@@ -14,6 +14,9 @@ ROOT = Path(__file__).resolve().parents[1]
 META = ROOT / "artifacts" / "meta"
 OUT = ROOT / "docs" / "show" / "index.html"
 
+DATASET_DIR = ROOT / "datasets" / "SWE-bench_Verified" / "test"
+RUNS_DIR = ROOT / "artifacts" / "runs"
+
 ASCII_REPLACEMENTS = str.maketrans(
     {
         "–": "-",
@@ -171,6 +174,91 @@ def find_breakthrough(events: list[dict[str, Any]], hypotheses: list[dict[str, A
     return None
 
 
+def load_benchmark_instance_ids() -> list[str]:
+    if not DATASET_DIR.exists():
+        return []
+    try:
+        from datasets import load_from_disk
+        ds = load_from_disk(str(DATASET_DIR))
+        return [str(row["instance_id"]) for row in ds]
+    except Exception:
+        return []
+
+
+def collect_run_results() -> dict[str, dict[str, Any]]:
+    results: dict[str, dict[str, Any]] = {}
+    if not RUNS_DIR.exists():
+        return results
+    for run_dir in sorted(RUNS_DIR.iterdir()):
+        result_file = run_dir / "result.json"
+        if not result_file.exists():
+            continue
+        try:
+            data = json.loads(result_file.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            continue
+        iid = data.get("instance_id", "")
+        if not iid:
+            continue
+        report = data.get("evaluation", {}).get("report", {})
+        resolved = iid in report.get("resolved_ids", [])
+        patch_bytes = int(data.get("patch_bytes", 0) or 0)
+        existing = results.get(iid)
+        if existing is None or (resolved and not existing["resolved"]):
+            results[iid] = {"resolved": resolved, "patch_bytes": patch_bytes}
+    return results
+
+
+def render_benchmark_bar(instance_ids: list[str], run_results: dict[str, dict[str, Any]]) -> str:
+    if not instance_ids:
+        return ""
+
+    resolved_count = 0
+    attempted_unresolved = 0
+    not_attempted = 0
+    ticks: list[str] = []
+
+    for iid in instance_ids:
+        result = run_results.get(iid)
+        if result is None:
+            not_attempted += 1
+            ticks.append('<span class="tick unattempted" title=""></span>')
+        elif result["resolved"]:
+            resolved_count += 1
+            ticks.append(f'<span class="tick resolved" title="{esc(iid)}"></span>')
+        else:
+            attempted_unresolved += 1
+            ticks.append(f'<span class="tick unresolved" title="{esc(iid)}"></span>')
+
+    total = len(instance_ids)
+    pct = (resolved_count / total * 100) if total else 0
+    attempted = resolved_count + attempted_unresolved
+
+    ticks_html = "\n".join(ticks)
+    return f"""
+    <section class="benchmark">
+      <p class="eyebrow">Benchmark</p>
+      <h2>SWE-bench Verified</h2>
+      <p class="bench-desc">500 real GitHub issues from 12 Python repositories. Each instance requires generating a patch that passes the project's test suite.</p>
+      <div class="bench-stats">
+        <div class="stat"><span>{resolved_count}<span class="stat-total">/{total}</span></span><label>Resolved</label></div>
+        <div class="stat"><span>{attempted_unresolved}<span class="stat-total">/{attempted}</span></span><label>Attempted, unresolved</label></div>
+        <div class="stat"><span>{not_attempted}</span><label>Not attempted</label></div>
+        <div class="stat resolved-pct"><span>{pct:.1f}%</span><label>Resolve rate</label></div>
+      </div>
+      <div class="bar-container">
+        <div class="bar">
+          {ticks_html}
+        </div>
+      </div>
+      <div class="legend">
+        <span class="legend-item"><span class="tick resolved"></span> Resolved</span>
+        <span class="legend-item"><span class="tick unresolved"></span> Attempted, unresolved</span>
+        <span class="legend-item"><span class="tick unattempted"></span> Not attempted</span>
+      </div>
+    </section>"""
+
+
 def public_hypotheses(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return [row for row in rows if funnel_state(row)[0] != "reference"]
 
@@ -257,6 +345,10 @@ def build_html() -> str:
     breakthrough = find_breakthrough(events, hypotheses)
     updated = latest_timestamp(events)
     repo_url = github_repo_url()
+
+    benchmark_ids = load_benchmark_instance_ids()
+    run_results = collect_run_results()
+    benchmark_html = render_benchmark_bar(benchmark_ids, run_results)
 
     breakthrough_html = ""
     if breakthrough:
@@ -380,6 +472,25 @@ def build_html() -> str:
     .feed strong {{ display: inline-block; margin-right: 8px; }}
     .feed p {{ margin: 6px 0 0; color: #2f3a42; }}
     .muted {{ color: var(--muted); }}
+
+    /* Benchmark bar */
+    .benchmark {{ background: var(--panel); border: 1px solid var(--line); padding: 28px; }}
+    .bench-desc {{ color: var(--muted); font-size: 15px; max-width: 720px; margin-bottom: 18px; }}
+    .bench-stats {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 22px; }}
+    .stat-total {{ font-size: 18px; font-weight: 400; color: var(--muted); }}
+    .resolved-pct span {{ color: var(--green); }}
+    .bar-container {{ overflow-x: auto; padding: 4px 0; }}
+    .bar {{ display: flex; flex-wrap: wrap; gap: 2px; min-width: 0; }}
+    .tick {{
+      width: 10px; height: 22px; border-radius: 2px; display: inline-block; flex-shrink: 0;
+    }}
+    .tick.resolved {{ background: var(--green); }}
+    .tick.unresolved {{ background: var(--red); }}
+    .tick.unattempted {{ background: #d7dde2; }}
+    .tick[title]:hover {{ outline: 2px solid var(--ink); outline-offset: 1px; position: relative; z-index: 1; }}
+    .legend {{ display: flex; gap: 20px; margin-top: 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted); align-items: center; }}
+    .legend-item {{ display: flex; align-items: center; gap: 6px; }}
+    .legend .tick {{ width: 14px; height: 14px; }}
     footer {{ margin-top: 48px; color: var(--muted); font-size: 14px; }}
     @media (max-width: 760px) {{
       header {{ min-height: 40vh; }}
@@ -407,6 +518,8 @@ def build_html() -> str:
     </section>
 
     {breakthrough_html}
+
+    {benchmark_html}
 
     <section>
       <p class="eyebrow">Hypothesis funnel</p>
