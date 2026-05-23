@@ -271,6 +271,24 @@
         "H0023-C"
       ],
       "updated_at": "2026-05-23"
+    },
+    {
+      "hypothesis_id": "H0024",
+      "title": "Auto-indent preservation in edit_file",
+      "summary": "When edit_file replaces lines that have leading whitespace but the replacement text doesn't, automatically inherit the original indentation to prevent accidental dedent.",
+      "status": "merged",
+      "fix_type": "mechanical",
+      "branch": "hyp/H0024-edit-file-indent",
+      "parent_hypothesis_id": "H0023",
+      "parent_commit": "a4d3992",
+      "correlation_id": "round-20260523-edit-indent",
+      "baseline_run_id": "20260523-124526-astropy__astropy-14309",
+      "candidate_run_id": "20260523-131813-astropy__astropy-14309",
+      "value_headline": "Fixed indentation stripping bug in edit_file: H0023 produced wrong-indent patch (resolved=false) on astropy-14309; H0024 auto-inherits original indentation → resolved=true. Three-task gate: 3/3 resolved after fix.",
+      "revisit_refs": [
+        "artifacts/meta/hypotheses/H0023-edit-file-tool.md"
+      ],
+      "updated_at": "2026-05-23"
     }
   ]
 }
