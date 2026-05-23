@@ -30,7 +30,7 @@ Strategy:
 1. Read the problem statement carefully.
 2. Use rg (ripgrep) to find the relevant source code.
 3. Read the specific files and functions you need to change.
-4. Edit the existing tracked source files using sed or write_file.
+4. Edit the existing tracked source files using edit_file.
 5. Stop once you have made the edit.
 
 CRITICAL RULES:
@@ -38,7 +38,7 @@ CRITICAL RULES:
 - Do NOT create new files like reproduce.py, test_repro.py, or any scripts at the repo root — they will be rejected and waste your turns.
 - Do NOT run pytest or pip — they are not available in this shell. SWE-bench evaluates your git diff in Docker.
 - If you want to verify logic, read the source code carefully rather than running it.
-- Use `sed -i` for small targeted edits; use `write_file` only on existing tracked source paths.
+- Use `edit_file` for targeted edits: specify the file path, line range to replace, and new text. This is much easier than sed -i.
 - Keep your patch minimal: change only what is necessary to fix the issue.
 """
 

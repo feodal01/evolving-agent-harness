@@ -9,4 +9,4 @@ from __future__ import annotations
 
 from typing import Literal
 
-KNOWN_ACTIONS: list[str] = ["run_shell", "read_file", "write_file"]
+KNOWN_ACTIONS: list[str] = ["edit_file", "run_shell", "read_file", "write_file"]

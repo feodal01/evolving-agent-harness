@@ -108,6 +108,79 @@ def make_workspace_tools(root: Path, traces: RunTraces) -> list:
     cmd_history = _CommandHistory()
 
     @tool
+    def edit_file(
+        path: Annotated[str, Field(description="Relative file path from the repo root.")],
+        start_line: Annotated[int, Field(description="1-based starting line number to replace.")],
+        end_line: Annotated[int, Field(description="1-based ending line number to replace (inclusive).")],
+        replacement: Annotated[str, Field(description="New text to replace lines start_line through end_line.")],
+    ) -> str:
+        """Edit an existing tracked file by replacing a range of lines. This is the
+        preferred way to make targeted edits — much easier than sed -i. Specify the
+        1-based line range to replace and the new text. Use read_file first to find
+        the exact line numbers. Only works on files tracked by git."""
+        tool_input = {
+            "path": path,
+            "start_line": start_line,
+            "end_line": end_line,
+            "replacement_bytes": len(replacement.encode("utf-8")),
+            "replacement_preview": replacement[:MAX_TOOL_OUTPUT],
+        }
+        traces.append(
+            "tool_call",
+            {"stream": "tool", "tool_name": "edit_file", "tool_input": tool_input},
+        )
+        target = _resolve_inside(root, path)
+        if not target.is_file():
+            output = f"File not found: {path}"
+            traces.append(
+                "tool_result",
+                {"stream": "tool", "tool_name": "edit_file", "ok": False, "tool_input": tool_input, "tool_output": output},
+            )
+            return output
+        if not _is_tracked(root, path):
+            output = f"BLOCKED: {path} is not a tracked file." + _SCRATCH_WRITE_BLOCKED
+            traces.append(
+                "tool_result",
+                {"stream": "tool", "tool_name": "edit_file", "ok": False, "tool_input": tool_input, "tool_output": output},
+            )
+            return output
+
+        lines = target.read_text(encoding="utf-8", errors="replace").splitlines(keepends=True)
+        total = len(lines)
+        if start_line < 1 or start_line > total:
+            output = f"Invalid start_line {start_line}: file has {total} lines."
+            traces.append(
+                "tool_result",
+                {"stream": "tool", "tool_name": "edit_file", "ok": False, "tool_input": tool_input, "tool_output": output},
+            )
+            return output
+        if end_line < start_line or end_line > total:
+            output = f"Invalid end_line {end_line}: must be >= start_line ({start_line}) and <= {total}."
+            traces.append(
+                "tool_result",
+                {"stream": "tool", "tool_name": "edit_file", "ok": False, "tool_input": tool_input, "tool_output": output},
+            )
+            return output
+
+        new_text = replacement
+        if not new_text.endswith("\n"):
+            new_text += "\n"
+        new_lines = new_text.splitlines(keepends=True)
+
+        before = lines[: start_line - 1]
+        after = lines[end_line:]
+        result_lines = before + new_lines + after
+        target.write_text("".join(result_lines), encoding="utf-8")
+
+        replaced_count = end_line - start_line + 1
+        output = f"Edited {path}: replaced lines {start_line}-{end_line} ({replaced_count} lines) with {len(new_lines)} lines"
+        traces.append(
+            "tool_result",
+            {"stream": "tool", "tool_name": "edit_file", "ok": True, "tool_input": tool_input, "tool_output": output},
+        )
+        return output
+
+    @tool
     def run_shell(
         command: Annotated[str, Field(description="Shell command to execute in the repo workspace.")],
         timeout_seconds: Annotated[
@@ -296,4 +369,4 @@ def make_workspace_tools(root: Path, traces: RunTraces) -> list:
         )
         return output
 
-    return [run_shell, read_file, write_file]
+    return [edit_file, run_shell, read_file, write_file]
