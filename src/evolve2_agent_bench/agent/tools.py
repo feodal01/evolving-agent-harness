@@ -167,6 +167,22 @@ def make_workspace_tools(root: Path, traces: RunTraces) -> list:
             new_text += "\n"
         new_lines = new_text.splitlines(keepends=True)
 
+        # Auto-detect indentation: if the replaced lines had leading whitespace
+        # but the replacement doesn't, inherit the indentation from the first
+        # replaced line to prevent accidental dedent.
+        original_first = lines[start_line - 1]
+        original_indent = ""
+        for ch in original_first:
+            if ch in (" ", "\t"):
+                original_indent += ch
+            else:
+                break
+        if original_indent and new_lines:
+            first_new = new_lines[0]
+            first_new_stripped = first_new.lstrip(" \t")
+            if first_new_stripped and not first_new.startswith((" ", "\t")):
+                new_lines[0] = original_indent + first_new
+
         before = lines[: start_line - 1]
         after = lines[end_line:]
         result_lines = before + new_lines + after
