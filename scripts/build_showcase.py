@@ -175,17 +175,27 @@ def find_breakthrough(events: list[dict[str, Any]], hypotheses: list[dict[str, A
 
 
 def load_benchmark_instance_ids() -> list[str]:
+    cache = META / "benchmark-instances.json"
+    if cache.exists():
+        data = json.loads(cache.read_text(encoding="utf-8"))
+        return data.get("instance_ids", [])
     if not DATASET_DIR.exists():
         return []
     try:
         from datasets import load_from_disk
         ds = load_from_disk(str(DATASET_DIR))
-        return [str(row["instance_id"]) for row in ds]
+        ids = [str(row["instance_id"]) for row in ds]
+        cache.write_text(json.dumps({"instance_ids": ids, "total": len(ids)}, indent=2), encoding="utf-8")
+        return ids
     except Exception:
         return []
 
 
 def collect_run_results() -> dict[str, dict[str, Any]]:
+    cache = META / "benchmark-results.json"
+    if cache.exists():
+        data = json.loads(cache.read_text(encoding="utf-8"))
+        return {k: v for k, v in data.items() if isinstance(v, dict)}
     results: dict[str, dict[str, Any]] = {}
     if not RUNS_DIR.exists():
         return results
@@ -206,6 +216,8 @@ def collect_run_results() -> dict[str, dict[str, Any]]:
         existing = results.get(iid)
         if existing is None or (resolved and not existing["resolved"]):
             results[iid] = {"resolved": resolved, "patch_bytes": patch_bytes}
+    if results:
+        cache.write_text(json.dumps(results, indent=2), encoding="utf-8")
     return results
 
 
