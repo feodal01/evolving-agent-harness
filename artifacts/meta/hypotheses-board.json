@@ -289,6 +289,25 @@
         "artifacts/meta/hypotheses/H0023-edit-file-tool.md"
       ],
       "updated_at": "2026-05-23"
+    },
+    {
+      "hypothesis_id": "H0025",
+      "title": "Workspace context in user message to eliminate /repo path assumption",
+      "summary": "Add workspace_root and current_directory to the user message so the agent knows its working directory from iteration 1, eliminating 2-3 wasted iterations on path discovery.",
+      "status": "merged",
+      "fix_type": "mechanical",
+      "branch": "hyp/H0025-workspace-context-in-prompt",
+      "parent_hypothesis_id": "H0024",
+      "parent_commit": "c227842",
+      "correlation_id": "round-20260524-batch0-gate",
+      "baseline_run_id": null,
+      "candidate_run_id": "20260524-202347-astropy__astropy-13033",
+      "value_headline": "Eliminate 2-3 wasted iterations per run by adding workspace_root and CWD to user message. Agent goes straight to rg/read_file instead of cd /repo. 40% iteration reduction on astropy-13033 (40→24 iters).",
+      "revisit_refs": [
+        "H0025-B",
+        "H0025-C"
+      ],
+      "updated_at": "2026-05-24"
     }
   ]
 }

@@ -92,6 +92,9 @@ class ReActCodingAgent:
             f"SWE-bench task:\n"
             f"instance_id: {task['instance_id']}\n"
             f"repo: {task['repo']}\n"
+            f"workspace_root: {workspace}\n"
+            f"current_directory: {workspace}\n"
+            f"You are already in the repository root directory. Use relative paths from here (e.g., rg, read_file, edit_file with paths like 'src/module.py'). Do NOT try cd /repo or cd /django.\n"
             f"problem_statement:\n{task['problem_statement']}"
         )
 
