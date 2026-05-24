@@ -191,6 +191,13 @@ def load_benchmark_instance_ids() -> list[str]:
         return []
 
 
+def load_validation_sets() -> dict[str, Any] | None:
+    path = META / "validation-sets.json"
+    if not path.exists():
+        return None
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 def collect_run_results() -> dict[str, dict[str, Any]]:
     cache = META / "benchmark-results.json"
     if cache.exists():
@@ -225,6 +232,13 @@ def render_benchmark_bar(instance_ids: list[str], run_results: dict[str, dict[st
     if not instance_ids:
         return ""
 
+    validation_sets = load_validation_sets()
+    if validation_sets is None:
+        return _render_flat_bar(instance_ids, run_results)
+    return _render_batched_bar(instance_ids, run_results, validation_sets)
+
+
+def _render_flat_bar(instance_ids: list[str], run_results: dict[str, dict[str, Any]]) -> str:
     resolved_count = 0
     attempted_unresolved = 0
     not_attempted = 0
@@ -267,6 +281,111 @@ def render_benchmark_bar(instance_ids: list[str], run_results: dict[str, dict[st
         <span class="legend-item"><span class="tick resolved"></span> Resolved</span>
         <span class="legend-item"><span class="tick unresolved"></span> Attempted, unresolved</span>
         <span class="legend-item"><span class="tick unattempted"></span> Not attempted</span>
+      </div>
+    </section>"""
+
+
+def _render_batched_bar(
+    instance_ids: list[str],
+    run_results: dict[str, dict[str, Any]],
+    vs: dict[str, Any],
+) -> str:
+    evo_set = vs.get("evolution_set", [])
+    test_set = vs.get("test_set", [])
+    batches = vs.get("batches", [])
+    batch_size = vs.get("batch_size", 6)
+    no_imp = vs.get("no_improvement_count", 0)
+    no_imp_thresh = vs.get("no_improvement_threshold", 20)
+
+    # Build instance -> (batch_index, batch_status) lookup
+    iid_to_batch: dict[str, tuple[int, str]] = {}
+    for batch in batches:
+        idx = batch["batch_index"]
+        status = batch.get("status", "locked")
+        for iid in batch["instance_ids"]:
+            iid_to_batch[iid] = (idx, status)
+
+    # Count resolved in evolution set
+    evo_resolved = 0
+    evo_attempted_unresolved = 0
+    for iid in evo_set:
+        result = run_results.get(iid)
+        if result and result["resolved"]:
+            evo_resolved += 1
+        elif result and not result["resolved"]:
+            evo_attempted_unresolved += 1
+
+    evo_total = len(evo_set)
+    evo_pct = (evo_resolved / evo_total * 100) if evo_total else 0
+
+    # Count batches resolved
+    batches_resolved = sum(1 for b in batches if b.get("status") == "resolved")
+    total_batches = len(batches)
+
+    # Find active batch info
+    active_batch = next((b for b in batches if b.get("status") in ("active", "expanded")), None)
+    active_info = ""
+    if active_batch:
+        ab_ids = active_batch["instance_ids"]
+        ab_resolved = sum(1 for iid in ab_ids if run_results.get(iid, {}).get("resolved"))
+        active_info = f'<div class="stat"><span>{ab_resolved}<span class="stat-total">/{len(ab_ids)}</span></span><label>Active batch ({active_batch["batch_index"]})</label></div>'
+
+    # Render evolution-set batches
+    batch_groups: list[str] = []
+    for batch in batches:
+        idx = batch["batch_index"]
+        status = batch.get("status", "locked")
+        ticks_html = ""
+        for iid in batch["instance_ids"]:
+            result = run_results.get(iid)
+            if result is None:
+                ticks_html += f'<span class="tick unattempted" title="{esc(iid)}"></span>'
+            elif result["resolved"]:
+                ticks_html += f'<span class="tick resolved" title="{esc(iid)}"></span>'
+            else:
+                ticks_html += f'<span class="tick unresolved" title="{esc(iid)}"></span>'
+        batch_groups.append(
+            f'<div class="batch-group {esc(status)}" title="Batch {idx} ({esc(status)})">{ticks_html}</div>'
+        )
+
+    # Render test-set ticks
+    test_ticks: list[str] = []
+    for iid in test_set:
+        test_ticks.append(f'<span class="tick test-locked" title="{esc(iid)}"></span>')
+
+    evo_html = "\n".join(batch_groups)
+    test_html = "\n".join(test_ticks)
+
+    return f"""
+    <section class="benchmark">
+      <p class="eyebrow">Benchmark</p>
+      <h2>SWE-bench Verified</h2>
+      <p class="bench-desc">500 real GitHub issues from 12 Python repositories. Validation policy: <a href="https://github.com/feodal01/evolving-agent-harness/blob/main/docs/VALIDATION_POLICY.md">2/3 evolution + 1/3 held-out test</a>. Each instance requires generating a patch that passes the project's test suite.</p>
+      <div class="bench-stats">
+        <div class="stat"><span>{evo_resolved}<span class="stat-total">/{evo_total}</span></span><label>Resolved (evolution)</label></div>
+        {active_info}
+        <div class="stat"><span>{batches_resolved}<span class="stat-total">/{total_batches}</span></span><label>Batches resolved</label></div>
+        <div class="stat"><span>{no_imp}<span class="stat-total">/{no_imp_thresh}</span></span><label>No-improvement streak</label></div>
+        <div class="stat resolved-pct"><span>{evo_pct:.1f}%</span><label>Evolution resolve rate</label></div>
+      </div>
+      <div class="bar-container">
+        <div class="bar">
+          {evo_html}
+        </div>
+        <div class="batch-separator">Test set (locked until evolution complete)</div>
+        <div class="bar">
+          {test_html}
+        </div>
+      </div>
+      <div class="legend">
+        <span class="legend-item"><span class="tick resolved"></span> Resolved</span>
+        <span class="legend-item"><span class="tick unresolved"></span> Attempted, unresolved</span>
+        <span class="legend-item"><span class="tick unattempted"></span> Not attempted</span>
+        <span class="legend-item"><span class="tick test-locked"></span> Test set (locked)</span>
+        <span class="legend-item"><span class="batch-legend resolved"></span> Batch resolved</span>
+        <span class="legend-item"><span class="batch-legend active"></span> Batch active</span>
+        <span class="legend-item"><span class="batch-legend expanded"></span> Batch expanded (plateau)</span>
+        <span class="legend-item"><span class="batch-legend locked"></span> Batch locked</span>
       </div>
     </section>"""
 
@@ -499,7 +618,20 @@ def build_html() -> str:
     .tick.resolved {{ background: var(--green); }}
     .tick.unresolved {{ background: var(--red); }}
     .tick.unattempted {{ background: #d7dde2; }}
+    .tick.test-locked {{ background: #c8bfd6; opacity: 0.6; }}
     .tick[title]:hover {{ outline: 2px solid var(--ink); outline-offset: 1px; position: relative; z-index: 1; }}
+    .batch-group {{ display: inline-flex; gap: 1px; margin-right: 3px; padding: 1px 2px; border-radius: 3px; border-left: 3px solid #d7dde2; }}
+    .batch-group.resolved {{ border-left-color: var(--green); background: rgba(31, 122, 77, 0.05); }}
+    .batch-group.active {{ border-left-color: var(--blue); background: rgba(37, 99, 168, 0.08); }}
+    .batch-group.expanded {{ border-left-color: var(--amber); background: rgba(138, 101, 0, 0.06); }}
+    .batch-group.locked {{ border-left-color: #d7dde2; }}
+    .batch-separator {{ display: flex; align-items: center; gap: 8px; margin: 10px 0 6px; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }}
+    .batch-separator::before, .batch-separator::after {{ content: ''; flex: 1; border-top: 1px dashed var(--line); }}
+    .batch-legend {{ display: inline-block; width: 28px; height: 14px; border-radius: 2px; border-left: 3px solid #d7dde2; }}
+    .batch-legend.resolved {{ border-left-color: var(--green); background: rgba(31, 122, 77, 0.05); }}
+    .batch-legend.active {{ border-left-color: var(--blue); background: rgba(37, 99, 168, 0.08); }}
+    .batch-legend.expanded {{ border-left-color: var(--amber); background: rgba(138, 101, 0, 0.06); }}
+    .batch-legend.locked {{ border-left-color: #d7dde2; }}
     .legend {{ display: flex; gap: 20px; margin-top: 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted); align-items: center; }}
     .legend-item {{ display: flex; align-items: center; gap: 6px; }}
     .legend .tick {{ width: 14px; height: 14px; }}

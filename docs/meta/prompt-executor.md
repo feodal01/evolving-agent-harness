@@ -12,7 +12,7 @@ Dossier template and index shape: `artifacts-schema.md` Appendices A and B.
 
 Work through the checklist without stopping for routine approval. Ask the user only for **hard blockers** (model down, missing `.env`, broken Docker/SWE-bench, conflicting local edits, unreadable artifacts).
 
-Full SWE-bench Verified requires **explicit user approval** every time. One-task and three-task gates run autonomously.
+Full evolution set and test set runs require **explicit user approval**. One-task and batch gates run autonomously. The test set is **ABSOLUTELY FORBIDDEN** without human consent — see `docs/VALIDATION_POLICY.md`.
 
 If a blocker occurs after code changes: finish as `rejected` in the dossier, commit and push if possible, append `executor.finished` with `ok: false`.
 
@@ -89,6 +89,8 @@ evaluation_timeout: 1800
 
 ## Validation scale (you run these gates)
 
+Read `artifacts/meta/validation-sets.json` at the start of each validation round. The **active batch** is the lowest-numbered batch whose status is `active` or `expanded`. Use instance IDs from the active batch for all gates.
+
 ### Mechanical fixes (`fix_type: mechanical`)
 
 1. Work iteratively: implement, compile, run one-task gate, read trace if error persists, fix, repeat.
@@ -98,31 +100,26 @@ evaluation_timeout: 1800
 
 ### Hypothesis testing (`fix_type: hypothesis`)
 
-1. **One-task gate** — cheap falsification with baseline comparison.
-2. **Three-task promotion gate** — only if one-task justifies it; rerun baseline and candidate on all three tasks.
-3. **Full SWE-bench Verified** — stop and ask user; never start without explicit approval.
+1. **One-task gate** — cheap falsification with baseline comparison. Choose the first unresolved instance from the active batch.
+2. **Batch gate** — only if one-task justifies it; rerun baseline and candidate on ALL instances in the active batch (read from `validation-sets.json`).
+3. **Full evolution set** — stop and ask user; never start without explicit approval.
+4. **Test set** — **ABSOLUTELY FORBIDDEN** without human consent AND only after the evolution set is fully resolved or a confirmed plateau. See `docs/VALIDATION_POLICY.md`.
 
-**Primary comparison task (one-task gate):**
-
-```text
-astropy__astropy-12907
-```
-
-**Three-task promotion set:**
+**Reading the active batch:**
 
 ```text
-astropy__astropy-12907
-django__django-11099
-sympy__sympy-20590
+Read artifacts/meta/validation-sets.json → find lowest batch with status "active" or "expanded"
 ```
 
 Rules:
 
 - Same task ids, model, iteration cap, token policy, and timeout for baseline and candidate at each gate.
-- Record in the dossier which gate you completed.
-- If one-task improves but three-task regresses, set decision to `keep unmerged`, `rerun`, or `expand task set`.
+- Record in the dossier which gate you completed and which batch.
+- If one-task improves but batch gate regresses, set decision to `keep unmerged`, `rerun`, or `expand task set`.
 - **Trace-targeted** hypotheses: regression means worse `patch_published` or worse **named** trace metrics — not flat `resolved` alone when trace targets improved and patch publication held.
 - Low iteration caps (4, 8, 16, 32) are smoke checks only.
+- **NEVER** run or inspect instances from the test set. The test set is off-limits until the evolution set is fully resolved.
+- After each hypothesis attempt that produces **no Pareto improvement** on the active batch, increment `no_improvement_count` in `validation-sets.json`. Reset to 0 on any improvement. When `no_improvement_count` reaches 20, activate the next locked batch (set its status to `expanded`) and reset the counter.
 
 ---
 
@@ -135,7 +132,7 @@ Rules:
 5. Implement the assigned change (narrow).
 6. `uv run python -m compileall -q src scripts`
 7. Load `.env`, run one-task gate with stable profile.
-8. If one-task passes, run three-task promotion. If three-task passes, stop and ask user.
+8. If one-task passes, run batch gate. If batch gate passes, stop and ask user.
 9. Fill dossier result sections including **Search node (MCTS)**; update `hypothesis-index.jsonl` on branch.
 10. Commit with exhaustive evidence in message.
 11. Push branch to `origin`.

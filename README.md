@@ -76,3 +76,7 @@ The generated page is `docs/show/index.html`. The GitHub Pages workflow runs the
 ## Status
 
 Evolve2 is intentionally unfinished. The goal is to make the improvement process legible enough that people can follow the arc: backlog ideas, live tests, discarded paths, shipped mechanics, and the next bet.
+
+## Validation Protocol
+
+Evolve2 uses a **2/3 evolution + 1/3 held-out test** split of the 500 SWE-bench Verified instances. The evolution set (336 instances, 56 batches of 6) is the training ground; the test set (164 instances) is locked until the evolution set is complete or a 20-attempt plateau is confirmed. Batches expand one at a time — a new batch activates only when the current one is fully resolved or after 20 consecutive no-improvement attempts. Full policy: [`docs/VALIDATION_POLICY.md`](docs/VALIDATION_POLICY.md). Visual progress is on the [show page](https://feodal01.github.io/evolving-agent-harness/).

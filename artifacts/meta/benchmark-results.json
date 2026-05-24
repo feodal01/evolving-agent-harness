@@ -10,5 +10,13 @@
   "django__django-10097": {
     "resolved": true,
     "patch_bytes": 596
+  },
+  "astropy__astropy-13033": {
+    "resolved": false,
+    "patch_bytes": 5012
+  },
+  "astropy__astropy-13236": {
+    "resolved": false,
+    "patch_bytes": 722
   }
 }

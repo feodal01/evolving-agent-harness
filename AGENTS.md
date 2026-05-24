@@ -46,8 +46,17 @@ Meta-optimization is **MCTS-style**: dossiers record search nodes with sampled r
 - **Research scan**: Before proposing hypotheses, review reference agents (SWE-agent, Aider, OpenHands, Moatless), LangChain/LangGraph docs, and research literature. Narrow trace-only hypotheses without external grounding are a sign of insufficient research.
 - Use `main` for the mainstream agent and `hyp/HXXXX-<slug>` branches for individual hypotheses.
 - Push every completed hypothesis branch. Merge only confirmed hypotheses into `main` per Pareto rules in [`docs/meta/prompt-analyzer.md`](docs/meta/prompt-analyzer.md).
-- Validate in stages: one-task gate → three-task gate → (user approval) → full SWE-bench Verified.
+- Validate in stages: one-task gate → batch gate → (user approval) → full evolution set → (user approval) → test set.
 - Ask only for hard blockers (unavailable models, missing credentials, broken infrastructure) and full-benchmark approval.
+
+### Validation protocol
+
+- The 500 SWE-bench Verified instances are split into a 336-instance **evolution set** and a 164-instance **test set** (2/3 + 1/3 stratified by project). See [`docs/VALIDATION_POLICY.md`](docs/VALIDATION_POLICY.md).
+- Instance assignments are in [`artifacts/meta/validation-sets.json`](artifacts/meta/validation-sets.json). Read this file to find the active batch.
+- **NEVER** run or inspect test-set instances during evolution. The test set is unlocked only with human consent after the evolution set is fully resolved or a 20-attempt plateau is confirmed.
+- The evolution set is organized into 56 batches of 6. Batch 0 contains 3 resolved + 3 new instances (status: active). The agent works through one batch at a time.
+- Batch expansion: when the active batch is fully resolved, or after 20 consecutive no-improvement attempts, the next locked batch becomes active.
+- `no_improvement_count` in `validation-sets.json` tracks consecutive no-improvement attempts and resets on any Pareto improvement.
 
 ### Observability
 

@@ -120,7 +120,20 @@
     .tick.resolved { background: var(--green); }
     .tick.unresolved { background: var(--red); }
     .tick.unattempted { background: #d7dde2; }
+    .tick.test-locked { background: #c8bfd6; opacity: 0.6; }
     .tick[title]:hover { outline: 2px solid var(--ink); outline-offset: 1px; position: relative; z-index: 1; }
+    .batch-group { display: inline-flex; gap: 1px; margin-right: 3px; padding: 1px 2px; border-radius: 3px; border-left: 3px solid #d7dde2; }
+    .batch-group.resolved { border-left-color: var(--green); background: rgba(31, 122, 77, 0.05); }
+    .batch-group.active { border-left-color: var(--blue); background: rgba(37, 99, 168, 0.08); }
+    .batch-group.expanded { border-left-color: var(--amber); background: rgba(138, 101, 0, 0.06); }
+    .batch-group.locked { border-left-color: #d7dde2; }
+    .batch-separator { display: flex; align-items: center; gap: 8px; margin: 10px 0 6px; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .batch-separator::before, .batch-separator::after { content: ''; flex: 1; border-top: 1px dashed var(--line); }
+    .batch-legend { display: inline-block; width: 28px; height: 14px; border-radius: 2px; border-left: 3px solid #d7dde2; }
+    .batch-legend.resolved { border-left-color: var(--green); background: rgba(31, 122, 77, 0.05); }
+    .batch-legend.active { border-left-color: var(--blue); background: rgba(37, 99, 168, 0.08); }
+    .batch-legend.expanded { border-left-color: var(--amber); background: rgba(138, 101, 0, 0.06); }
+    .batch-legend.locked { border-left-color: #d7dde2; }
     .legend { display: flex; gap: 20px; margin-top: 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted); align-items: center; }
     .legend-item { display: flex; align-items: center; gap: 6px; }
     .legend .tick { width: 14px; height: 14px; }
@@ -168,521 +181,250 @@
     <section class="benchmark">
       <p class="eyebrow">Benchmark</p>
       <h2>SWE-bench Verified</h2>
-      <p class="bench-desc">500 real GitHub issues from 12 Python repositories. Each instance requires generating a patch that passes the project's test suite.</p>
+      <p class="bench-desc">500 real GitHub issues from 12 Python repositories. Validation policy: <a href="https://github.com/feodal01/evolving-agent-harness/blob/main/docs/VALIDATION_POLICY.md">2/3 evolution + 1/3 held-out test</a>. Each instance requires generating a patch that passes the project's test suite.</p>
       <div class="bench-stats">
-        <div class="stat"><span>3<span class="stat-total">/500</span></span><label>Resolved</label></div>
-        <div class="stat"><span>0<span class="stat-total">/3</span></span><label>Attempted, unresolved</label></div>
-        <div class="stat"><span>497</span><label>Not attempted</label></div>
-        <div class="stat resolved-pct"><span>0.6%</span><label>Resolve rate</label></div>
+        <div class="stat"><span>3<span class="stat-total">/336</span></span><label>Resolved (evolution)</label></div>
+        <div class="stat"><span>3<span class="stat-total">/6</span></span><label>Active batch (0)</label></div>
+        <div class="stat"><span>0<span class="stat-total">/56</span></span><label>Batches resolved</label></div>
+        <div class="stat"><span>0<span class="stat-total">/20</span></span><label>No-improvement streak</label></div>
+        <div class="stat resolved-pct"><span>0.9%</span><label>Evolution resolve rate</label></div>
       </div>
       <div class="bar-container">
         <div class="bar">
-          <span class="tick resolved" title="astropy__astropy-12907"></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick resolved" title="astropy__astropy-14309"></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick resolved" title="django__django-10097"></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
-<span class="tick unattempted" title=""></span>
+          <div class="batch-group active" title="Batch 0 (active)"><span class="tick resolved" title="astropy__astropy-12907"></span><span class="tick resolved" title="astropy__astropy-14309"></span><span class="tick resolved" title="django__django-10097"></span><span class="tick unresolved" title="astropy__astropy-13033"></span><span class="tick unresolved" title="astropy__astropy-13236"></span><span class="tick unattempted" title="astropy__astropy-13398"></span></div>
+<div class="batch-group locked" title="Batch 1 (locked)"><span class="tick unattempted" title="astropy__astropy-13453"></span><span class="tick unattempted" title="astropy__astropy-13579"></span><span class="tick unattempted" title="astropy__astropy-13977"></span><span class="tick unattempted" title="astropy__astropy-14096"></span><span class="tick unattempted" title="astropy__astropy-14182"></span><span class="tick unattempted" title="astropy__astropy-14365"></span></div>
+<div class="batch-group locked" title="Batch 2 (locked)"><span class="tick unattempted" title="astropy__astropy-14369"></span><span class="tick unattempted" title="astropy__astropy-14508"></span><span class="tick unattempted" title="astropy__astropy-14539"></span><span class="tick unattempted" title="astropy__astropy-14598"></span><span class="tick unattempted" title="django__django-10554"></span><span class="tick unattempted" title="django__django-10880"></span></div>
+<div class="batch-group locked" title="Batch 3 (locked)"><span class="tick unattempted" title="django__django-10914"></span><span class="tick unattempted" title="django__django-10973"></span><span class="tick unattempted" title="django__django-10999"></span><span class="tick unattempted" title="django__django-11066"></span><span class="tick unattempted" title="django__django-11087"></span><span class="tick unattempted" title="django__django-11095"></span></div>
+<div class="batch-group locked" title="Batch 4 (locked)"><span class="tick unattempted" title="django__django-11099"></span><span class="tick unattempted" title="django__django-11119"></span><span class="tick unattempted" title="django__django-11133"></span><span class="tick unattempted" title="django__django-11138"></span><span class="tick unattempted" title="django__django-11141"></span><span class="tick unattempted" title="django__django-11149"></span></div>
+<div class="batch-group locked" title="Batch 5 (locked)"><span class="tick unattempted" title="django__django-11163"></span><span class="tick unattempted" title="django__django-11179"></span><span class="tick unattempted" title="django__django-11206"></span><span class="tick unattempted" title="django__django-11211"></span><span class="tick unattempted" title="django__django-11239"></span><span class="tick unattempted" title="django__django-11265"></span></div>
+<div class="batch-group locked" title="Batch 6 (locked)"><span class="tick unattempted" title="django__django-11276"></span><span class="tick unattempted" title="django__django-11292"></span><span class="tick unattempted" title="django__django-11299"></span><span class="tick unattempted" title="django__django-11333"></span><span class="tick unattempted" title="django__django-11400"></span><span class="tick unattempted" title="django__django-11433"></span></div>
+<div class="batch-group locked" title="Batch 7 (locked)"><span class="tick unattempted" title="django__django-11451"></span><span class="tick unattempted" title="django__django-11477"></span><span class="tick unattempted" title="django__django-11490"></span><span class="tick unattempted" title="django__django-11532"></span><span class="tick unattempted" title="django__django-11551"></span><span class="tick unattempted" title="django__django-11555"></span></div>
+<div class="batch-group locked" title="Batch 8 (locked)"><span class="tick unattempted" title="django__django-11603"></span><span class="tick unattempted" title="django__django-11728"></span><span class="tick unattempted" title="django__django-11734"></span><span class="tick unattempted" title="django__django-11740"></span><span class="tick unattempted" title="django__django-11749"></span><span class="tick unattempted" title="django__django-11790"></span></div>
+<div class="batch-group locked" title="Batch 9 (locked)"><span class="tick unattempted" title="django__django-11815"></span><span class="tick unattempted" title="django__django-11820"></span><span class="tick unattempted" title="django__django-11848"></span><span class="tick unattempted" title="django__django-11880"></span><span class="tick unattempted" title="django__django-11885"></span><span class="tick unattempted" title="django__django-11951"></span></div>
+<div class="batch-group locked" title="Batch 10 (locked)"><span class="tick unattempted" title="django__django-11964"></span><span class="tick unattempted" title="django__django-11999"></span><span class="tick unattempted" title="django__django-12039"></span><span class="tick unattempted" title="django__django-12050"></span><span class="tick unattempted" title="django__django-12125"></span><span class="tick unattempted" title="django__django-12143"></span></div>
+<div class="batch-group locked" title="Batch 11 (locked)"><span class="tick unattempted" title="django__django-12155"></span><span class="tick unattempted" title="django__django-12193"></span><span class="tick unattempted" title="django__django-12209"></span><span class="tick unattempted" title="django__django-12262"></span><span class="tick unattempted" title="django__django-12273"></span><span class="tick unattempted" title="django__django-12276"></span></div>
+<div class="batch-group locked" title="Batch 12 (locked)"><span class="tick unattempted" title="django__django-12304"></span><span class="tick unattempted" title="django__django-12308"></span><span class="tick unattempted" title="django__django-12325"></span><span class="tick unattempted" title="django__django-12406"></span><span class="tick unattempted" title="django__django-12419"></span><span class="tick unattempted" title="django__django-12663"></span></div>
+<div class="batch-group locked" title="Batch 13 (locked)"><span class="tick unattempted" title="django__django-12708"></span><span class="tick unattempted" title="django__django-12713"></span><span class="tick unattempted" title="django__django-12741"></span><span class="tick unattempted" title="django__django-12754"></span><span class="tick unattempted" title="django__django-12774"></span><span class="tick unattempted" title="django__django-12858"></span></div>
+<div class="batch-group locked" title="Batch 14 (locked)"><span class="tick unattempted" title="django__django-12965"></span><span class="tick unattempted" title="django__django-13012"></span><span class="tick unattempted" title="django__django-13023"></span><span class="tick unattempted" title="django__django-13028"></span><span class="tick unattempted" title="django__django-13033"></span><span class="tick unattempted" title="django__django-13089"></span></div>
+<div class="batch-group locked" title="Batch 15 (locked)"><span class="tick unattempted" title="django__django-13109"></span><span class="tick unattempted" title="django__django-13112"></span><span class="tick unattempted" title="django__django-13121"></span><span class="tick unattempted" title="django__django-13128"></span><span class="tick unattempted" title="django__django-13158"></span><span class="tick unattempted" title="django__django-13195"></span></div>
+<div class="batch-group locked" title="Batch 16 (locked)"><span class="tick unattempted" title="django__django-13212"></span><span class="tick unattempted" title="django__django-13279"></span><span class="tick unattempted" title="django__django-13297"></span><span class="tick unattempted" title="django__django-13315"></span><span class="tick unattempted" title="django__django-13343"></span><span class="tick unattempted" title="django__django-13344"></span></div>
+<div class="batch-group locked" title="Batch 17 (locked)"><span class="tick unattempted" title="django__django-13346"></span><span class="tick unattempted" title="django__django-13363"></span><span class="tick unattempted" title="django__django-13401"></span><span class="tick unattempted" title="django__django-13406"></span><span class="tick unattempted" title="django__django-13410"></span><span class="tick unattempted" title="django__django-13417"></span></div>
+<div class="batch-group locked" title="Batch 18 (locked)"><span class="tick unattempted" title="django__django-13449"></span><span class="tick unattempted" title="django__django-13512"></span><span class="tick unattempted" title="django__django-13513"></span><span class="tick unattempted" title="django__django-13516"></span><span class="tick unattempted" title="django__django-13551"></span><span class="tick unattempted" title="django__django-13568"></span></div>
+<div class="batch-group locked" title="Batch 19 (locked)"><span class="tick unattempted" title="django__django-13569"></span><span class="tick unattempted" title="django__django-13590"></span><span class="tick unattempted" title="django__django-13658"></span><span class="tick unattempted" title="django__django-13670"></span><span class="tick unattempted" title="django__django-13741"></span><span class="tick unattempted" title="django__django-13786"></span></div>
+<div class="batch-group locked" title="Batch 20 (locked)"><span class="tick unattempted" title="django__django-13794"></span><span class="tick unattempted" title="django__django-13807"></span><span class="tick unattempted" title="django__django-13809"></span><span class="tick unattempted" title="django__django-13810"></span><span class="tick unattempted" title="django__django-13820"></span><span class="tick unattempted" title="django__django-13821"></span></div>
+<div class="batch-group locked" title="Batch 21 (locked)"><span class="tick unattempted" title="django__django-13837"></span><span class="tick unattempted" title="django__django-13925"></span><span class="tick unattempted" title="django__django-13933"></span><span class="tick unattempted" title="django__django-13964"></span><span class="tick unattempted" title="django__django-14007"></span><span class="tick unattempted" title="django__django-14011"></span></div>
+<div class="batch-group locked" title="Batch 22 (locked)"><span class="tick unattempted" title="django__django-14017"></span><span class="tick unattempted" title="django__django-14034"></span><span class="tick unattempted" title="django__django-14053"></span><span class="tick unattempted" title="django__django-14089"></span><span class="tick unattempted" title="django__django-14122"></span><span class="tick unattempted" title="django__django-14140"></span></div>
+<div class="batch-group locked" title="Batch 23 (locked)"><span class="tick unattempted" title="django__django-14155"></span><span class="tick unattempted" title="django__django-14170"></span><span class="tick unattempted" title="django__django-14238"></span><span class="tick unattempted" title="django__django-14311"></span><span class="tick unattempted" title="django__django-14315"></span><span class="tick unattempted" title="django__django-14349"></span></div>
+<div class="batch-group locked" title="Batch 24 (locked)"><span class="tick unattempted" title="django__django-14351"></span><span class="tick unattempted" title="django__django-14373"></span><span class="tick unattempted" title="django__django-14376"></span><span class="tick unattempted" title="django__django-14404"></span><span class="tick unattempted" title="django__django-14434"></span><span class="tick unattempted" title="django__django-14493"></span></div>
+<div class="batch-group locked" title="Batch 25 (locked)"><span class="tick unattempted" title="django__django-14500"></span><span class="tick unattempted" title="django__django-14534"></span><span class="tick unattempted" title="django__django-14539"></span><span class="tick unattempted" title="django__django-14559"></span><span class="tick unattempted" title="django__django-14580"></span><span class="tick unattempted" title="django__django-14608"></span></div>
+<div class="batch-group locked" title="Batch 26 (locked)"><span class="tick unattempted" title="django__django-14631"></span><span class="tick unattempted" title="django__django-14672"></span><span class="tick unattempted" title="django__django-14725"></span><span class="tick unattempted" title="django__django-14752"></span><span class="tick unattempted" title="django__django-14765"></span><span class="tick unattempted" title="django__django-14771"></span></div>
+<div class="batch-group locked" title="Batch 27 (locked)"><span class="tick unattempted" title="django__django-14787"></span><span class="tick unattempted" title="django__django-14792"></span><span class="tick unattempted" title="django__django-14855"></span><span class="tick unattempted" title="django__django-14915"></span><span class="tick unattempted" title="django__django-14999"></span><span class="tick unattempted" title="django__django-15022"></span></div>
+<div class="batch-group locked" title="Batch 28 (locked)"><span class="tick unattempted" title="django__django-15037"></span><span class="tick unattempted" title="django__django-15098"></span><span class="tick unattempted" title="matplotlib__matplotlib-13989"></span><span class="tick unattempted" title="matplotlib__matplotlib-14623"></span><span class="tick unattempted" title="matplotlib__matplotlib-20488"></span><span class="tick unattempted" title="matplotlib__matplotlib-20676"></span></div>
+<div class="batch-group locked" title="Batch 29 (locked)"><span class="tick unattempted" title="matplotlib__matplotlib-20826"></span><span class="tick unattempted" title="matplotlib__matplotlib-20859"></span><span class="tick unattempted" title="matplotlib__matplotlib-21568"></span><span class="tick unattempted" title="matplotlib__matplotlib-22719"></span><span class="tick unattempted" title="matplotlib__matplotlib-22865"></span><span class="tick unattempted" title="matplotlib__matplotlib-22871"></span></div>
+<div class="batch-group locked" title="Batch 30 (locked)"><span class="tick unattempted" title="matplotlib__matplotlib-23299"></span><span class="tick unattempted" title="matplotlib__matplotlib-23314"></span><span class="tick unattempted" title="matplotlib__matplotlib-23412"></span><span class="tick unattempted" title="matplotlib__matplotlib-23476"></span><span class="tick unattempted" title="matplotlib__matplotlib-24026"></span><span class="tick unattempted" title="matplotlib__matplotlib-24149"></span></div>
+<div class="batch-group locked" title="Batch 31 (locked)"><span class="tick unattempted" title="matplotlib__matplotlib-24177"></span><span class="tick unattempted" title="matplotlib__matplotlib-24570"></span><span class="tick unattempted" title="matplotlib__matplotlib-24627"></span><span class="tick unattempted" title="matplotlib__matplotlib-24637"></span><span class="tick unattempted" title="matplotlib__matplotlib-24870"></span><span class="tick unattempted" title="matplotlib__matplotlib-24970"></span></div>
+<div class="batch-group locked" title="Batch 32 (locked)"><span class="tick unattempted" title="matplotlib__matplotlib-25122"></span><span class="tick unattempted" title="mwaskom__seaborn-3069"></span><span class="tick unattempted" title="psf__requests-1142"></span><span class="tick unattempted" title="psf__requests-1724"></span><span class="tick unattempted" title="psf__requests-1766"></span><span class="tick unattempted" title="psf__requests-1921"></span></div>
+<div class="batch-group locked" title="Batch 33 (locked)"><span class="tick unattempted" title="psf__requests-2317"></span><span class="tick unattempted" title="pydata__xarray-2905"></span><span class="tick unattempted" title="pydata__xarray-3095"></span><span class="tick unattempted" title="pydata__xarray-3151"></span><span class="tick unattempted" title="pydata__xarray-3305"></span><span class="tick unattempted" title="pydata__xarray-3677"></span></div>
+<div class="batch-group locked" title="Batch 34 (locked)"><span class="tick unattempted" title="pydata__xarray-3993"></span><span class="tick unattempted" title="pydata__xarray-4075"></span><span class="tick unattempted" title="pydata__xarray-4094"></span><span class="tick unattempted" title="pydata__xarray-4356"></span><span class="tick unattempted" title="pydata__xarray-4629"></span><span class="tick unattempted" title="pydata__xarray-4687"></span></div>
+<div class="batch-group locked" title="Batch 35 (locked)"><span class="tick unattempted" title="pydata__xarray-4695"></span><span class="tick unattempted" title="pydata__xarray-4966"></span><span class="tick unattempted" title="pydata__xarray-6461"></span><span class="tick unattempted" title="pydata__xarray-6599"></span><span class="tick unattempted" title="pylint-dev__pylint-4551"></span><span class="tick unattempted" title="pylint-dev__pylint-4604"></span></div>
+<div class="batch-group locked" title="Batch 36 (locked)"><span class="tick unattempted" title="pylint-dev__pylint-4661"></span><span class="tick unattempted" title="pylint-dev__pylint-4970"></span><span class="tick unattempted" title="pylint-dev__pylint-6386"></span><span class="tick unattempted" title="pylint-dev__pylint-6528"></span><span class="tick unattempted" title="pytest-dev__pytest-10051"></span><span class="tick unattempted" title="pytest-dev__pytest-10081"></span></div>
+<div class="batch-group locked" title="Batch 37 (locked)"><span class="tick unattempted" title="pytest-dev__pytest-10356"></span><span class="tick unattempted" title="pytest-dev__pytest-5262"></span><span class="tick unattempted" title="pytest-dev__pytest-5631"></span><span class="tick unattempted" title="pytest-dev__pytest-5787"></span><span class="tick unattempted" title="pytest-dev__pytest-5809"></span><span class="tick unattempted" title="pytest-dev__pytest-5840"></span></div>
+<div class="batch-group locked" title="Batch 38 (locked)"><span class="tick unattempted" title="pytest-dev__pytest-6197"></span><span class="tick unattempted" title="pytest-dev__pytest-6202"></span><span class="tick unattempted" title="pytest-dev__pytest-7205"></span><span class="tick unattempted" title="pytest-dev__pytest-7236"></span><span class="tick unattempted" title="pytest-dev__pytest-7324"></span><span class="tick unattempted" title="scikit-learn__scikit-learn-10297"></span></div>
+<div class="batch-group locked" title="Batch 39 (locked)"><span class="tick unattempted" title="scikit-learn__scikit-learn-10844"></span><span class="tick unattempted" title="scikit-learn__scikit-learn-10908"></span><span class="tick unattempted" title="scikit-learn__scikit-learn-11310"></span><span class="tick unattempted" title="scikit-learn__scikit-learn-11578"></span><span class="tick unattempted" title="scikit-learn__scikit-learn-12585"></span><span class="tick unattempted" title="scikit-learn__scikit-learn-12682"></span></div>
+<div class="batch-group locked" title="Batch 40 (locked)"><span class="tick unattempted" title="scikit-learn__scikit-learn-12973"></span><span class="tick unattempted" title="scikit-learn__scikit-learn-13124"></span><span class="tick unattempted" title="scikit-learn__scikit-learn-13135"></span><span class="tick unattempted" title="scikit-learn__scikit-learn-13142"></span><span class="tick unattempted" title="scikit-learn__scikit-learn-13328"></span><span class="tick unattempted" title="scikit-learn__scikit-learn-13439"></span></div>
+<div class="batch-group locked" title="Batch 41 (locked)"><span class="tick unattempted" title="scikit-learn__scikit-learn-13496"></span><span class="tick unattempted" title="scikit-learn__scikit-learn-13779"></span><span class="tick unattempted" title="scikit-learn__scikit-learn-14053"></span><span class="tick unattempted" title="scikit-learn__scikit-learn-14087"></span><span class="tick unattempted" title="scikit-learn__scikit-learn-14141"></span><span class="tick unattempted" title="scikit-learn__scikit-learn-14496"></span></div>
+<div class="batch-group locked" title="Batch 42 (locked)"><span class="tick unattempted" title="scikit-learn__scikit-learn-14629"></span><span class="tick unattempted" title="scikit-learn__scikit-learn-14710"></span><span class="tick unattempted" title="scikit-learn__scikit-learn-14894"></span><span class="tick unattempted" title="sphinx-doc__sphinx-10323"></span><span class="tick unattempted" title="sphinx-doc__sphinx-10435"></span><span class="tick unattempted" title="sphinx-doc__sphinx-10449"></span></div>
+<div class="batch-group locked" title="Batch 43 (locked)"><span class="tick unattempted" title="sphinx-doc__sphinx-10466"></span><span class="tick unattempted" title="sphinx-doc__sphinx-10614"></span><span class="tick unattempted" title="sphinx-doc__sphinx-10673"></span><span class="tick unattempted" title="sphinx-doc__sphinx-11445"></span><span class="tick unattempted" title="sphinx-doc__sphinx-11510"></span><span class="tick unattempted" title="sphinx-doc__sphinx-7440"></span></div>
+<div class="batch-group locked" title="Batch 44 (locked)"><span class="tick unattempted" title="sphinx-doc__sphinx-7454"></span><span class="tick unattempted" title="sphinx-doc__sphinx-7462"></span><span class="tick unattempted" title="sphinx-doc__sphinx-7590"></span><span class="tick unattempted" title="sphinx-doc__sphinx-7748"></span><span class="tick unattempted" title="sphinx-doc__sphinx-7757"></span><span class="tick unattempted" title="sphinx-doc__sphinx-7889"></span></div>
+<div class="batch-group locked" title="Batch 45 (locked)"><span class="tick unattempted" title="sphinx-doc__sphinx-7910"></span><span class="tick unattempted" title="sphinx-doc__sphinx-7985"></span><span class="tick unattempted" title="sphinx-doc__sphinx-8035"></span><span class="tick unattempted" title="sphinx-doc__sphinx-8056"></span><span class="tick unattempted" title="sphinx-doc__sphinx-8120"></span><span class="tick unattempted" title="sphinx-doc__sphinx-8265"></span></div>
+<div class="batch-group locked" title="Batch 46 (locked)"><span class="tick unattempted" title="sphinx-doc__sphinx-8269"></span><span class="tick unattempted" title="sphinx-doc__sphinx-8459"></span><span class="tick unattempted" title="sphinx-doc__sphinx-8475"></span><span class="tick unattempted" title="sphinx-doc__sphinx-8548"></span><span class="tick unattempted" title="sphinx-doc__sphinx-8551"></span><span class="tick unattempted" title="sphinx-doc__sphinx-8593"></span></div>
+<div class="batch-group locked" title="Batch 47 (locked)"><span class="tick unattempted" title="sphinx-doc__sphinx-8595"></span><span class="tick unattempted" title="sphinx-doc__sphinx-8621"></span><span class="tick unattempted" title="sphinx-doc__sphinx-8638"></span><span class="tick unattempted" title="sympy__sympy-11618"></span><span class="tick unattempted" title="sympy__sympy-12096"></span><span class="tick unattempted" title="sympy__sympy-12419"></span></div>
+<div class="batch-group locked" title="Batch 48 (locked)"><span class="tick unattempted" title="sympy__sympy-12481"></span><span class="tick unattempted" title="sympy__sympy-12489"></span><span class="tick unattempted" title="sympy__sympy-13031"></span><span class="tick unattempted" title="sympy__sympy-13091"></span><span class="tick unattempted" title="sympy__sympy-13372"></span><span class="tick unattempted" title="sympy__sympy-13480"></span></div>
+<div class="batch-group locked" title="Batch 49 (locked)"><span class="tick unattempted" title="sympy__sympy-13551"></span><span class="tick unattempted" title="sympy__sympy-13615"></span><span class="tick unattempted" title="sympy__sympy-13647"></span><span class="tick unattempted" title="sympy__sympy-13757"></span><span class="tick unattempted" title="sympy__sympy-13798"></span><span class="tick unattempted" title="sympy__sympy-13852"></span></div>
+<div class="batch-group locked" title="Batch 50 (locked)"><span class="tick unattempted" title="sympy__sympy-13877"></span><span class="tick unattempted" title="sympy__sympy-13878"></span><span class="tick unattempted" title="sympy__sympy-13974"></span><span class="tick unattempted" title="sympy__sympy-14248"></span><span class="tick unattempted" title="sympy__sympy-14531"></span><span class="tick unattempted" title="sympy__sympy-14711"></span></div>
+<div class="batch-group locked" title="Batch 51 (locked)"><span class="tick unattempted" title="sympy__sympy-14976"></span><span class="tick unattempted" title="sympy__sympy-15017"></span><span class="tick unattempted" title="sympy__sympy-15345"></span><span class="tick unattempted" title="sympy__sympy-15349"></span><span class="tick unattempted" title="sympy__sympy-15599"></span><span class="tick unattempted" title="sympy__sympy-15809"></span></div>
+<div class="batch-group locked" title="Batch 52 (locked)"><span class="tick unattempted" title="sympy__sympy-15875"></span><span class="tick unattempted" title="sympy__sympy-15976"></span><span class="tick unattempted" title="sympy__sympy-16450"></span><span class="tick unattempted" title="sympy__sympy-16597"></span><span class="tick unattempted" title="sympy__sympy-16766"></span><span class="tick unattempted" title="sympy__sympy-16792"></span></div>
+<div class="batch-group locked" title="Batch 53 (locked)"><span class="tick unattempted" title="sympy__sympy-16886"></span><span class="tick unattempted" title="sympy__sympy-17139"></span><span class="tick unattempted" title="sympy__sympy-17318"></span><span class="tick unattempted" title="sympy__sympy-17630"></span><span class="tick unattempted" title="sympy__sympy-17655"></span><span class="tick unattempted" title="sympy__sympy-18189"></span></div>
+<div class="batch-group locked" title="Batch 54 (locked)"><span class="tick unattempted" title="sympy__sympy-18199"></span><span class="tick unattempted" title="sympy__sympy-18211"></span><span class="tick unattempted" title="sympy__sympy-18698"></span><span class="tick unattempted" title="sympy__sympy-18763"></span><span class="tick unattempted" title="sympy__sympy-19040"></span><span class="tick unattempted" title="sympy__sympy-19346"></span></div>
+<div class="batch-group locked" title="Batch 55 (locked)"><span class="tick unattempted" title="sympy__sympy-19495"></span><span class="tick unattempted" title="sympy__sympy-19637"></span><span class="tick unattempted" title="sympy__sympy-19783"></span><span class="tick unattempted" title="sympy__sympy-19954"></span><span class="tick unattempted" title="sympy__sympy-20154"></span><span class="tick unattempted" title="sympy__sympy-20428"></span></div>
+        </div>
+        <div class="batch-separator">Test set (locked until evolution complete)</div>
+        <div class="bar">
+          <span class="tick test-locked" title="astropy__astropy-14995"></span>
+<span class="tick test-locked" title="astropy__astropy-7166"></span>
+<span class="tick test-locked" title="astropy__astropy-7336"></span>
+<span class="tick test-locked" title="astropy__astropy-7606"></span>
+<span class="tick test-locked" title="astropy__astropy-7671"></span>
+<span class="tick test-locked" title="astropy__astropy-8707"></span>
+<span class="tick test-locked" title="astropy__astropy-8872"></span>
+<span class="tick test-locked" title="django__django-15103"></span>
+<span class="tick test-locked" title="django__django-15104"></span>
+<span class="tick test-locked" title="django__django-15127"></span>
+<span class="tick test-locked" title="django__django-15128"></span>
+<span class="tick test-locked" title="django__django-15161"></span>
+<span class="tick test-locked" title="django__django-15252"></span>
+<span class="tick test-locked" title="django__django-15268"></span>
+<span class="tick test-locked" title="django__django-15277"></span>
+<span class="tick test-locked" title="django__django-15278"></span>
+<span class="tick test-locked" title="django__django-15280"></span>
+<span class="tick test-locked" title="django__django-15315"></span>
+<span class="tick test-locked" title="django__django-15368"></span>
+<span class="tick test-locked" title="django__django-15375"></span>
+<span class="tick test-locked" title="django__django-15380"></span>
+<span class="tick test-locked" title="django__django-15382"></span>
+<span class="tick test-locked" title="django__django-15467"></span>
+<span class="tick test-locked" title="django__django-15499"></span>
+<span class="tick test-locked" title="django__django-15503"></span>
+<span class="tick test-locked" title="django__django-15525"></span>
+<span class="tick test-locked" title="django__django-15554"></span>
+<span class="tick test-locked" title="django__django-15561"></span>
+<span class="tick test-locked" title="django__django-15563"></span>
+<span class="tick test-locked" title="django__django-15569"></span>
+<span class="tick test-locked" title="django__django-15572"></span>
+<span class="tick test-locked" title="django__django-15629"></span>
+<span class="tick test-locked" title="django__django-15695"></span>
+<span class="tick test-locked" title="django__django-15731"></span>
+<span class="tick test-locked" title="django__django-15732"></span>
+<span class="tick test-locked" title="django__django-15741"></span>
+<span class="tick test-locked" title="django__django-15814"></span>
+<span class="tick test-locked" title="django__django-15851"></span>
+<span class="tick test-locked" title="django__django-15863"></span>
+<span class="tick test-locked" title="django__django-15916"></span>
+<span class="tick test-locked" title="django__django-15930"></span>
+<span class="tick test-locked" title="django__django-15957"></span>
+<span class="tick test-locked" title="django__django-15973"></span>
+<span class="tick test-locked" title="django__django-15987"></span>
+<span class="tick test-locked" title="django__django-16032"></span>
+<span class="tick test-locked" title="django__django-16082"></span>
+<span class="tick test-locked" title="django__django-16100"></span>
+<span class="tick test-locked" title="django__django-16116"></span>
+<span class="tick test-locked" title="django__django-16136"></span>
+<span class="tick test-locked" title="django__django-16139"></span>
+<span class="tick test-locked" title="django__django-16145"></span>
+<span class="tick test-locked" title="django__django-16255"></span>
+<span class="tick test-locked" title="django__django-16256"></span>
+<span class="tick test-locked" title="django__django-16263"></span>
+<span class="tick test-locked" title="django__django-16315"></span>
+<span class="tick test-locked" title="django__django-16333"></span>
+<span class="tick test-locked" title="django__django-16429"></span>
+<span class="tick test-locked" title="django__django-16454"></span>
+<span class="tick test-locked" title="django__django-16485"></span>
+<span class="tick test-locked" title="django__django-16493"></span>
+<span class="tick test-locked" title="django__django-16502"></span>
+<span class="tick test-locked" title="django__django-16527"></span>
+<span class="tick test-locked" title="django__django-16560"></span>
+<span class="tick test-locked" title="django__django-16569"></span>
+<span class="tick test-locked" title="django__django-16595"></span>
+<span class="tick test-locked" title="django__django-16612"></span>
+<span class="tick test-locked" title="django__django-16631"></span>
+<span class="tick test-locked" title="django__django-16642"></span>
+<span class="tick test-locked" title="django__django-16661"></span>
+<span class="tick test-locked" title="django__django-16662"></span>
+<span class="tick test-locked" title="django__django-16667"></span>
+<span class="tick test-locked" title="django__django-16801"></span>
+<span class="tick test-locked" title="django__django-16819"></span>
+<span class="tick test-locked" title="django__django-16877"></span>
+<span class="tick test-locked" title="django__django-16899"></span>
+<span class="tick test-locked" title="django__django-16901"></span>
+<span class="tick test-locked" title="django__django-16938"></span>
+<span class="tick test-locked" title="django__django-16950"></span>
+<span class="tick test-locked" title="django__django-17029"></span>
+<span class="tick test-locked" title="django__django-17084"></span>
+<span class="tick test-locked" title="django__django-17087"></span>
+<span class="tick test-locked" title="django__django-7530"></span>
+<span class="tick test-locked" title="django__django-9296"></span>
+<span class="tick test-locked" title="matplotlib__matplotlib-25287"></span>
+<span class="tick test-locked" title="matplotlib__matplotlib-25311"></span>
+<span class="tick test-locked" title="matplotlib__matplotlib-25332"></span>
+<span class="tick test-locked" title="matplotlib__matplotlib-25479"></span>
+<span class="tick test-locked" title="matplotlib__matplotlib-25775"></span>
+<span class="tick test-locked" title="matplotlib__matplotlib-25960"></span>
+<span class="tick test-locked" title="matplotlib__matplotlib-26113"></span>
+<span class="tick test-locked" title="matplotlib__matplotlib-26208"></span>
+<span class="tick test-locked" title="matplotlib__matplotlib-26291"></span>
+<span class="tick test-locked" title="matplotlib__matplotlib-26342"></span>
+<span class="tick test-locked" title="matplotlib__matplotlib-26466"></span>
+<span class="tick test-locked" title="mwaskom__seaborn-3187"></span>
+<span class="tick test-locked" title="pallets__flask-5014"></span>
+<span class="tick test-locked" title="psf__requests-2931"></span>
+<span class="tick test-locked" title="psf__requests-5414"></span>
+<span class="tick test-locked" title="psf__requests-6028"></span>
+<span class="tick test-locked" title="pydata__xarray-6721"></span>
+<span class="tick test-locked" title="pydata__xarray-6744"></span>
+<span class="tick test-locked" title="pydata__xarray-6938"></span>
+<span class="tick test-locked" title="pydata__xarray-6992"></span>
+<span class="tick test-locked" title="pydata__xarray-7229"></span>
+<span class="tick test-locked" title="pydata__xarray-7233"></span>
+<span class="tick test-locked" title="pydata__xarray-7393"></span>
+<span class="tick test-locked" title="pylint-dev__pylint-6903"></span>
+<span class="tick test-locked" title="pylint-dev__pylint-7080"></span>
+<span class="tick test-locked" title="pylint-dev__pylint-7277"></span>
+<span class="tick test-locked" title="pylint-dev__pylint-8898"></span>
+<span class="tick test-locked" title="pytest-dev__pytest-7432"></span>
+<span class="tick test-locked" title="pytest-dev__pytest-7490"></span>
+<span class="tick test-locked" title="pytest-dev__pytest-7521"></span>
+<span class="tick test-locked" title="pytest-dev__pytest-7571"></span>
+<span class="tick test-locked" title="pytest-dev__pytest-7982"></span>
+<span class="tick test-locked" title="pytest-dev__pytest-8399"></span>
+<span class="tick test-locked" title="scikit-learn__scikit-learn-14983"></span>
+<span class="tick test-locked" title="scikit-learn__scikit-learn-15100"></span>
+<span class="tick test-locked" title="scikit-learn__scikit-learn-25102"></span>
+<span class="tick test-locked" title="scikit-learn__scikit-learn-25232"></span>
+<span class="tick test-locked" title="scikit-learn__scikit-learn-25747"></span>
+<span class="tick test-locked" title="scikit-learn__scikit-learn-25931"></span>
+<span class="tick test-locked" title="scikit-learn__scikit-learn-25973"></span>
+<span class="tick test-locked" title="scikit-learn__scikit-learn-26194"></span>
+<span class="tick test-locked" title="scikit-learn__scikit-learn-26323"></span>
+<span class="tick test-locked" title="scikit-learn__scikit-learn-9288"></span>
+<span class="tick test-locked" title="sphinx-doc__sphinx-8721"></span>
+<span class="tick test-locked" title="sphinx-doc__sphinx-9229"></span>
+<span class="tick test-locked" title="sphinx-doc__sphinx-9230"></span>
+<span class="tick test-locked" title="sphinx-doc__sphinx-9258"></span>
+<span class="tick test-locked" title="sphinx-doc__sphinx-9281"></span>
+<span class="tick test-locked" title="sphinx-doc__sphinx-9320"></span>
+<span class="tick test-locked" title="sphinx-doc__sphinx-9367"></span>
+<span class="tick test-locked" title="sphinx-doc__sphinx-9461"></span>
+<span class="tick test-locked" title="sphinx-doc__sphinx-9591"></span>
+<span class="tick test-locked" title="sphinx-doc__sphinx-9602"></span>
+<span class="tick test-locked" title="sphinx-doc__sphinx-9658"></span>
+<span class="tick test-locked" title="sphinx-doc__sphinx-9673"></span>
+<span class="tick test-locked" title="sphinx-doc__sphinx-9698"></span>
+<span class="tick test-locked" title="sphinx-doc__sphinx-9711"></span>
+<span class="tick test-locked" title="sympy__sympy-20438"></span>
+<span class="tick test-locked" title="sympy__sympy-20590"></span>
+<span class="tick test-locked" title="sympy__sympy-20801"></span>
+<span class="tick test-locked" title="sympy__sympy-20916"></span>
+<span class="tick test-locked" title="sympy__sympy-21379"></span>
+<span class="tick test-locked" title="sympy__sympy-21596"></span>
+<span class="tick test-locked" title="sympy__sympy-21612"></span>
+<span class="tick test-locked" title="sympy__sympy-21847"></span>
+<span class="tick test-locked" title="sympy__sympy-21930"></span>
+<span class="tick test-locked" title="sympy__sympy-22080"></span>
+<span class="tick test-locked" title="sympy__sympy-22456"></span>
+<span class="tick test-locked" title="sympy__sympy-22714"></span>
+<span class="tick test-locked" title="sympy__sympy-22914"></span>
+<span class="tick test-locked" title="sympy__sympy-23262"></span>
+<span class="tick test-locked" title="sympy__sympy-23413"></span>
+<span class="tick test-locked" title="sympy__sympy-23534"></span>
+<span class="tick test-locked" title="sympy__sympy-23824"></span>
+<span class="tick test-locked" title="sympy__sympy-23950"></span>
+<span class="tick test-locked" title="sympy__sympy-24066"></span>
+<span class="tick test-locked" title="sympy__sympy-24213"></span>
+<span class="tick test-locked" title="sympy__sympy-24443"></span>
+<span class="tick test-locked" title="sympy__sympy-24539"></span>
+<span class="tick test-locked" title="sympy__sympy-24562"></span>
+<span class="tick test-locked" title="sympy__sympy-24661"></span>
         </div>
       </div>
       <div class="legend">
         <span class="legend-item"><span class="tick resolved"></span> Resolved</span>
         <span class="legend-item"><span class="tick unresolved"></span> Attempted, unresolved</span>
         <span class="legend-item"><span class="tick unattempted"></span> Not attempted</span>
+        <span class="legend-item"><span class="tick test-locked"></span> Test set (locked)</span>
+        <span class="legend-item"><span class="batch-legend resolved"></span> Batch resolved</span>
+        <span class="legend-item"><span class="batch-legend active"></span> Batch active</span>
+        <span class="legend-item"><span class="batch-legend expanded"></span> Batch expanded (plateau)</span>
+        <span class="legend-item"><span class="batch-legend locked"></span> Batch locked</span>
       </div>
     </section>
 

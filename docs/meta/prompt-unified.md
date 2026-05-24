@@ -48,6 +48,7 @@ Every action, decision, and outcome must be recorded:
 5. Read `artifacts/meta/hypotheses-board.json` and tail of `artifacts/meta/meta-events.jsonl`.
 6. Generate `correlation_id` for this round.
 7. Append `round.opened` to `meta-events.jsonl`.
+8. Read `artifacts/meta/validation-sets.json`. Identify the active batch (lowest batch with status `active` or `expanded`). Check `no_improvement_count`.
 
 ### Phase 2: Hypothesis generation
 
@@ -87,11 +88,12 @@ Read: `docs/meta/prompt-executor.md` (full document, especially §§ Git workflo
 - Merge immediately on success.
 
 **For hypothesis testing (`fix_type: hypothesis`):**
-- Run one-task gate with baseline comparison.
-- If one-task passes: promote to three-task gate.
-- Three-task gate requires baseline AND candidate runs on all three tasks.
+- Run one-task gate with baseline comparison. Choose the first unresolved instance from the active batch in `artifacts/meta/validation-sets.json`.
+- If one-task passes: promote to batch gate (all instances in the active batch).
+- Batch gate requires baseline AND candidate runs on all batch instances.
 - Total expected cost: 2–8 runs.
-- Never run full SWE-bench Verified without user approval.
+- Never run full evolution set without user approval.
+- **NEVER** run test set instances. The test set is ABSOLUTELY FORBIDDEN without human consent — see `docs/VALIDATION_POLICY.md`.
 
 6. Fill dossier result sections including Search node (MCTS).
 7. Update `hypothesis-index.jsonl` on the branch.
@@ -116,7 +118,7 @@ Read: `docs/meta/prompt-analyzer.md` (full document).
 - **Merge to `main`** only if evidence supports it: equal or better `patch_published`, Pareto improvement or trace-targeted wins per `prompt-analyzer.md`, no unacceptable regression on the completed gate.
 - **Registry only** for rejected/rejected: push dossier + index entry on `main`, do not merge code.
 - **Trace-targeted:** do not reject solely because `resolved` is flat if named trace metrics improved and `patch_published` did not regress (see `prompt-analyzer.md` §Trace-targeted).
-- **Full SWE-bench Verified:** never start without user approval, even after a three-task pass.
+- **Full evolution set or test set:** never start without user approval. Test set requires evolution set completion or confirmed plateau plus human consent.
 
 Hypothesis merge commit must include: hypothesis id, branch, `main_sha`, baseline/candidate run ids, tasks, metrics delta, value headline, deferred child actions from dossier **Search node (MCTS)**.
 
@@ -132,7 +134,7 @@ Hypothesis merge commit must include: hypothesis id, branch, `main_sha`, baselin
 
 **Stop when:**
 1. A hypothesis passes validation and is merged to `main`.
-2. Three-task gate passes and you must ask the user before full SWE-bench Verified.
+2. Batch gate passes and you must ask the user before full evolution set run.
 3. Hard blocker (credentials, broken Docker/SWE-bench, corrupt artifacts).
 4. Budget exhausted.
 
@@ -143,7 +145,7 @@ Otherwise: return to Phase 1 for the next round.
 ## Autonomy rules
 
 - Work through all phases without stopping for routine approval.
-- Ask the user only for: hard blockers, full SWE-bench Verified approval, ambiguous merge decisions.
+- Ask the user only for: hard blockers, full evolution set or test set approval, ambiguous merge decisions.
 - Load credentials from `.env`; never print or commit secrets.
 - Push every hypothesis branch to `origin`, whether confirmed, rejected, or rejected.
 - Never delete failed hypothesis branches.
