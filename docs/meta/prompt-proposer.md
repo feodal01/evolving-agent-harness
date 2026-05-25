@@ -53,8 +53,15 @@ Score each candidate:
 
 **Fix type classification:**
 
-- `mechanical`: Parser fix, retry logic, error handling, infrastructure. One-task gate, no baseline. ~1 run.
-- `hypothesis`: Quality improvement theory. Full validation ladder with baseline. 2-8 runs.
+- `mechanical`: **Infrastructure only** — parser bugs, retry logic, error handling paths, broken imports, missing files, typos in non-prompt code, configuration errors. The fix must be objectively correct with no judgment call. Does NOT change agent behavior — only fixes broken mechanics. One-task gate, no baseline. ~1 run.
+- `hypothesis`: **Any change that affects agent behavior** — this includes ALL prompt changes, tool improvements, new tools, reminder text changes, system prompt edits, context additions, and any modification that could change what the agent does or how it responds. Also covers quality improvement theories. Full validation ladder with baseline. 2-8 runs.
+
+**Explicitly NOT mechanical (must be classified as `hypothesis`):**
+- Changes to prompt text, reminder messages, or system instructions
+- Changes to tool descriptions or tool behavior
+- Adding, removing, or modifying tools available to the agent
+- Changes to intervention message content or timing thresholds
+- Any modification where "correctness" is subjective or requires measuring agent behavior
 
 Payload table (mirrors dossier section):
 

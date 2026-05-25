@@ -87,21 +87,57 @@ evaluation_timeout: 1800
 
 ---
 
-## Validation scale (you run these gates)
+## Validation protocol
 
-Read `artifacts/meta/validation-sets.json` at the start of each validation round. The **active batch** is the lowest-numbered batch whose status is `active` or `expanded`. Use instance IDs from the active batch for all gates.
+### What "run validation" means
+
+**Validation = sequential execution of all 6 instances in the active batch.** Not one instance. Not cherry-picked instances. Not a single "looks good" run.
+
+A single run on one instance proves nothing — LLM outputs are non-deterministic. A "fix" that works on one instance may regress on others in the same batch. The batch gate exists precisely to catch this. Running one instance and declaring success is an **anti-pattern**.
+
+### How to run validation
+
+There are two modes:
+
+**1. Exploratory runs (during implementation, before reporting)**
+
+While implementing a hypothesis, you may run individual instances to verify your code works (syntax, tool calls, no crashes). This is for development debugging only. These runs do NOT count as validation results and MUST NOT be reported as evidence in the dossier.
+
+**2. Validation runs (for reporting and decisions)**
+
+For all validation runs that produce evidence for the dossier, use the validation batch script:
+
+```bash
+uv run python scripts/run_validation_batch.py --fix-type <mechanical|hypothesis> [--baseline]
+```
+
+The script reads `artifacts/meta/validation-sets.json` to find the active batch and runs all 6 instances sequentially. This ensures:
+- You cannot cherry-pick favorable instances
+- The full batch is always executed
+- Results are recorded consistently
+- Load is managed by running sequentially, not in parallel
 
 ### Mechanical fixes (`fix_type: mechanical`)
 
-1. Work iteratively: implement, compile, run one-task gate, read trace if error persists, fix, repeat.
-2. No baseline comparison needed — the fix is objectively correct or not.
-3. Merge immediately on success.
-4. If the problem resists multiple iterations, reclassify to `hypothesis`.
+1. Work iteratively: implement, compile, run exploratory instances, read trace if error persists, fix, repeat.
+2. When code is ready, run validation via the batch script: `uv run python scripts/run_validation_batch.py --fix-type mechanical`
+3. No baseline comparison needed — the fix is objectively correct or not.
+4. Merge only after the full batch passes (all 6 instances complete without regressions on previously-resolved cases).
+5. If the problem resists multiple iterations, reclassify to `hypothesis`.
 
 ### Hypothesis testing (`fix_type: hypothesis`)
 
-1. **One-task gate** — cheap falsification with baseline comparison. Choose the first unresolved instance from the active batch.
-2. **Batch gate** — only if one-task justifies it; rerun baseline and candidate on ALL instances in the active batch (read from `validation-sets.json`).
+1. **One-task gate** — cheap falsification with baseline comparison. Choose the first unresolved instance from the active batch. Run both baseline (on `main`) and candidate (on your branch).
+2. **Batch gate** — only if one-task justifies it. Run via the validation script:
+   ```bash
+   # Baseline runs (on main)
+   git stash && git checkout main
+   uv run python scripts/run_validation_batch.py --fix-type hypothesis --baseline
+   git checkout <your-branch> && git stash pop
+
+   # Candidate runs (on your branch)
+   uv run python scripts/run_validation_batch.py --fix-type hypothesis
+   ```
 3. **Full evolution set** — stop and ask user; never start without explicit approval.
 4. **Test set** — **ABSOLUTELY FORBIDDEN** without human consent AND only after the evolution set is fully resolved or a confirmed plateau. See `docs/VALIDATION_POLICY.md`.
 
@@ -120,6 +156,7 @@ Rules:
 - Low iteration caps (4, 8, 16, 32) are smoke checks only.
 - **NEVER** run or inspect instances from the test set. The test set is off-limits until the evolution set is fully resolved.
 - After each hypothesis attempt that produces **no Pareto improvement** on the active batch, increment `no_improvement_count` in `validation-sets.json`. Reset to 0 on any improvement. When `no_improvement_count` reaches 20, activate the next locked batch (set its status to `expanded`) and reset the counter.
+- **One-instance success is not validation.** The batch gate is the minimum evidence threshold for any merge decision.
 
 ---
 

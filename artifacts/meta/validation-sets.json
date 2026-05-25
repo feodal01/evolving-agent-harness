@@ -523,7 +523,8 @@
         "astropy__astropy-13236",
         "astropy__astropy-13398"
       ],
-      "status": "active"
+      "status": "active",
+      "no_improvement_count": 1
     },
     {
       "batch_index": 1,

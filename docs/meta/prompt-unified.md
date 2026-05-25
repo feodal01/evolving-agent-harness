@@ -68,8 +68,10 @@ Read: `docs/meta/prompt-proposer.md` (full document, especially §§ Generating 
 
 **Classify each candidate's fix type:**
 
-- `mechanical`: Fixes a parser bug, retry logic, error handling path, or infrastructure issue. Expected to be cheap to validate (one-task gate often sufficient). Does NOT require full benchmark comparison.
-- `hypothesis`: Tests a quality improvement theory. Requires proper baseline comparison and the full validation ladder.
+- `mechanical`: **Infrastructure only** — parser bugs, retry logic, error handling paths, broken imports, missing files, typos in non-prompt code, configuration errors. Does NOT change agent behavior. The fix is objectively correct or not. Examples: fixing a crash in a tool handler, correcting a broken import, fixing a regex that never matches.
+- `hypothesis`: **Any change that affects agent behavior** — including ALL prompt changes, reminder message changes, tool description changes, new tools, tool improvements, context additions, intervention timing changes, and quality improvement theories. Requires proper baseline comparison and the full validation ladder.
+
+**Rule of thumb:** If the change touches any string that the agent reads (prompt, reminder, tool description, system message), it is a `hypothesis`, not `mechanical`.
 
 Select one candidate per the selection rules. Record the other two as deferred children in the dossier's Search node (MCTS).
 
@@ -79,17 +81,18 @@ Read: `docs/meta/prompt-executor.md` (full document, especially §§ Git workflo
 
 1. Create branch `hyp/HXXXX-<slug>` from `main`.
 2. Create hypothesis dossier before coding.
-3. Implement the narrowest possible change.
+3. Implement the narrowest possible change. **No hypothesis drift** — implement exactly what the dossier's Proposed Change says, nothing more. If you discover a related improvement during implementation, record it in the dossier's "Insights and findings" section but do NOT implement it under this hypothesis. New findings become seeds for future hypotheses in the MCTS Search node.
 4. `uv run python -m compileall -q src scripts` — fix any syntax errors.
 5. Run the validation ladder:
 
 **For mechanical fixes (`fix_type: mechanical`):**
 - Work iteratively until the fix is correct — treat it like a normal SWE task, not a hypothesis experiment.
-- Implement → compile → run one-task gate → if the error persists, read the trace, fix the code, repeat.
+- Implement → compile → run exploratory instances → if the error persists, read the trace, fix the code, repeat.
+- When ready, run full batch validation via `uv run python scripts/run_validation_batch.py --fix-type mechanical`.
 - Do not reject and re-propose on failure. Stay on the same branch and iterate until the mechanical issue is resolved or you determine the root cause is deeper than expected (reclassify to `hypothesis`).
 - No baseline comparison needed — the fix is objectively correct or not.
-- No dossier ceremony beyond a brief record of what was fixed and the passing run_id.
-- Merge immediately on success.
+- No dossier ceremony beyond a brief record of what was fixed and the passing run_ids.
+- Merge after full batch passes.
 
 **For hypothesis testing (`fix_type: hypothesis`):**
 - Run one-task gate with baseline comparison. Choose the first unresolved instance from the active batch in `artifacts/meta/validation-sets.json`.
@@ -116,7 +119,7 @@ Read: `docs/meta/prompt-analyzer.md` (full document).
 
 **Merge decision** (two paths by `fix_type`):
 
-**Mechanical fixes** — skip Phase 4 entirely. Merge to `main` immediately when the fix is verified correct on the one-task gate. No baseline, no Pareto. If the fix resists multiple iterations, reclassify to `hypothesis`.
+**Mechanical fixes** — skip Phase 4 entirely. Merge to `main` after the full batch passes via the validation script (all 6 instances complete without regressions on previously-resolved cases). No baseline, no Pareto. If the fix resists multiple iterations, reclassify to `hypothesis`.
 
 **Hypothesis testing** — apply after Phase 4 analysis:
 - **Merge to `main`** only if evidence supports it: equal or better `patch_published`, Pareto improvement or trace-targeted wins per `prompt-analyzer.md`, no unacceptable regression on the completed gate.
