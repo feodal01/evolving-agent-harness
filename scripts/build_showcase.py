@@ -206,11 +206,12 @@ def collect_run_results() -> dict[str, dict[str, Any]]:
             iid = row.get("instance_id", "")
             if not iid:
                 continue
-            resolved = bool(row.get("resolved"))
-            patch_bytes = int(row.get("patch_bytes", 0) or 0)
-            existing = results.get(iid)
-            if existing is None or (resolved and not existing["resolved"]):
-                results[iid] = {"resolved": resolved, "patch_bytes": patch_bytes, "run_id": row.get("run_id", ""), "merge_sha": row.get("merge_sha", "")}
+            results[iid] = {
+                "resolved": bool(row.get("resolved")),
+                "patch_bytes": int(row.get("patch_bytes", 0) or 0),
+                "run_id": row.get("run_id", ""),
+                "merge_sha": row.get("merge_sha", ""),
+            }
         return results
     results = {}
     if not RUNS_DIR.exists():
