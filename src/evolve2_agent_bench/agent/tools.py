@@ -16,24 +16,24 @@ MAX_TOOL_OUTPUT = 12_000
 _SCRATCH_WRITE_BLOCKED = (
     "\n\nBLOCKED: Writing to untracked files is not allowed. "
     "SWE-bench evaluates your git diff — only edits to existing tracked source files count. "
-    "Use `sed -i` to edit an existing tracked file, or write_file on a tracked path. "
+    "Use `edit_file` to edit an existing tracked file. "
     "Run `git ls-files` to see tracked files."
 )
 
 _PYTEST_UNAVAILABLE = (
     "\n\npytest is unavailable in this agent shell. Do not retry pytest or pip. "
-    "Apply the fix directly with sed -i or write_file on the source file you already read."
+    "Apply the fix directly with edit_file on the source file you already read."
 )
 
 _NO_EDIT_REMINDER = (
     "\n\nREMINDER: You have read the source code but not edited anything yet. "
-    "You MUST apply a fix now using `sed -i` or `write_file`. "
+    "You MUST apply a fix now using `edit_file`. "
     "Do not write reproduction scripts or run tests — edit the tracked source file."
 )
 
 _REPEATED_COMMAND_BREAK = (
     "\n\nSTOP: You have run the same command multiple times without progress. "
-    "You are stuck in a loop. Break out by editing the source file now with `sed -i`."
+    "You are stuck in a loop. Break out by editing the source file now with `edit_file`."
 )
 
 _REDIRECT_RE = re.compile(
@@ -227,8 +227,8 @@ def make_workspace_tools(root: Path, traces: RunTraces) -> list:
         ] = 120,
     ) -> str:
         """Execute a shell command in the repository workspace. Use for searching code (rg, grep),
-        applying edits (sed -i, patch), and git operations. Do NOT use for creating new files —
-        only edit existing tracked source files. Prefer sed -i for targeted edits."""
+        git operations, and one-off shell tasks. Do NOT use for editing source files —
+        prefer edit_file for targeted edits instead of sed -i."""
         untracked_target = _detect_untracked_write_target(root, command)
         if untracked_target is not None:
             output = f"BLOCKED: Cannot write to untracked file {untracked_target}." + _SCRATCH_WRITE_BLOCKED
