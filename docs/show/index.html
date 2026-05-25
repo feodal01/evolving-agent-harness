@@ -153,15 +153,15 @@
       <p class="eyebrow">Evolve2 live agent lab</p>
       <h1>A coding agent trying to improve itself.</h1>
       <p class="lead">Follow the experiment as a live series: each hypothesis is an episode, every branch is evidence, and every benchmark run moves the story forward or teaches the next move.</p>
-      <p class="meta">Last ledger event: 2026-05-23T13:24:00Z</p>
+      <p class="meta">Last ledger event: 2026-05-24T21:20:00Z</p>
     </header>
 
     <section>
       <div class="grid stats">
-        <div class="stat"><span>21</span><label>Total ideas</label></div>
+        <div class="stat"><span>22</span><label>Total ideas</label></div>
         <div class="stat backlog"><span>3</span><label>Backlog</label></div>
 <div class="stat dropped"><span>15</span><label>Dropped</label></div>
-<div class="stat shipped"><span>3</span><label>Shipped</label></div>
+<div class="stat shipped"><span>4</span><label>Shipped</label></div>
       </div>
     </section>
 
@@ -191,7 +191,7 @@
       </div>
       <div class="bar-container">
         <div class="bar">
-          <div class="batch-group active" title="Batch 0 (active)"><span class="tick resolved" title="astropy__astropy-12907"></span><span class="tick resolved" title="astropy__astropy-14309"></span><span class="tick resolved" title="django__django-10097"></span><span class="tick unresolved" title="astropy__astropy-13033"></span><span class="tick unresolved" title="astropy__astropy-13236"></span><span class="tick unattempted" title="astropy__astropy-13398"></span></div>
+          <div class="batch-group active" title="Batch 0 (active)"><span class="tick resolved" title="astropy__astropy-12907"></span><span class="tick resolved" title="astropy__astropy-14309"></span><span class="tick resolved" title="django__django-10097"></span><span class="tick unresolved" title="astropy__astropy-13033"></span><span class="tick unresolved" title="astropy__astropy-13236"></span><span class="tick unresolved" title="astropy__astropy-13398"></span></div>
 <div class="batch-group locked" title="Batch 1 (locked)"><span class="tick unattempted" title="astropy__astropy-13453"></span><span class="tick unattempted" title="astropy__astropy-13579"></span><span class="tick unattempted" title="astropy__astropy-13977"></span><span class="tick unattempted" title="astropy__astropy-14096"></span><span class="tick unattempted" title="astropy__astropy-14182"></span><span class="tick unattempted" title="astropy__astropy-14365"></span></div>
 <div class="batch-group locked" title="Batch 2 (locked)"><span class="tick unattempted" title="astropy__astropy-14369"></span><span class="tick unattempted" title="astropy__astropy-14508"></span><span class="tick unattempted" title="astropy__astropy-14539"></span><span class="tick unattempted" title="astropy__astropy-14598"></span><span class="tick unattempted" title="django__django-10554"></span><span class="tick unattempted" title="django__django-10880"></span></div>
 <div class="batch-group locked" title="Batch 3 (locked)"><span class="tick unattempted" title="django__django-10914"></span><span class="tick unattempted" title="django__django-10973"></span><span class="tick unattempted" title="django__django-10999"></span><span class="tick unattempted" title="django__django-11066"></span><span class="tick unattempted" title="django__django-11087"></span><span class="tick unattempted" title="django__django-11095"></span></div>
@@ -621,10 +621,19 @@
 
       <div class="funnel-col">
         <div class="funnel-header" style="border-top: 4px solid var(--green)">
-          <h2>Shipped <span class="funnel-count">3</span></h2>
+          <h2>Shipped <span class="funnel-count">4</span></h2>
         </div>
         <div class="funnel-cards">
           
+            <article class="card shipped">
+              <div class="card-top">
+                <a class="hid" href="https://github.com/feodal01/evolving-agent-harness">H0025</a>
+                <span class="pill shipped">Shipped</span>
+              </div>
+              <h3>Workspace context in user message to eliminate /repo path assumption</h3>
+              <p>Add workspace_root and current_directory to the user message so the agent knows its working directory from iteration 1, eliminating 2-3 wasted iterations on path discovery.</p>
+            </article>
+
             <article class="card shipped">
               <div class="card-top">
                 <a class="hid" href="https://github.com/feodal01/evolving-agent-harness">H0024</a>
@@ -660,6 +669,46 @@
       <p class="eyebrow">Production log</p>
       <ul class="feed">
         
+            <li>
+              <time>2026-05-24T21:20:00Z</time>
+              <strong>executor.finished</strong>
+              <span>round</span>
+              <p>3 unresolved instances completed with H0025 agent: astropy-13033 (7 iters, 1393 bytes, resolved=false), astropy-13236 (14 iters, 758 bytes, resolved=false), astropy-13398 (40 iters, 5675 bytes, resolved=false). Very low iteration counts suggest severe API rate limiting when running 3 concurrent tasks.</p>
+            </li>
+            
+
+            <li>
+              <time>2026-05-24T20:40:00Z</time>
+              <strong>round.opened</strong>
+              <span>round</span>
+              <p>Batch 0 baseline: run all 6 batch-0 instances with H0025 agent (workspace context fix). 3/6 previously resolved; running 3 unresolved instances (13033, 13236, 13398) to complete baseline.</p>
+            </li>
+            
+
+            <li>
+              <time>2026-05-24T20:36:00Z</time>
+              <strong>round.closed</strong>
+              <span>H0025 - Workspace context in user message to eliminate /repo path assumption</span>
+              <p>H0025 merged: workspace_root and current_directory added to user message. Agent goes straight to rg/read_file from iteration 1 instead of wasting 2-3 iterations on cd /repo. Iteration count on astropy-13033: 40→24 (-40%). Patch size: 5012→1442 (-71%). Deferred: H0025-B (source-only prompt rule), H0025-C (repo map context).</p>
+            </li>
+            
+
+            <li>
+              <time>2026-05-24T20:35:00Z</time>
+              <strong>merge.decided</strong>
+              <span>H0025 - Workspace context in user message to eliminate /repo path assumption</span>
+              <p>Mechanical fix verified: agent no longer wastes 2-3 iterations on path discovery. Iteration 1 goes straight to rg instead of cd /repo. 40% iteration reduction on astropy-13033 (40→24).</p>
+            </li>
+            
+
+            <li>
+              <time>2026-05-24T19:00:00Z</time>
+              <strong>round.opened</strong>
+              <span>round</span>
+              <p>new round: batch 0 gate - need baseline runs on all 6 batch-0 instances. Previous resolved runs exist for 3/6 (12907, 14309, 10097). Need runs for 13033, 13236, 13398 + re-evaluation of Docker-failed runs.</p>
+            </li>
+            
+
             <li>
               <time>2026-05-23T13:24:00Z</time>
               <strong>executor.finished</strong>
@@ -713,46 +762,6 @@
               <strong>executor.finished</strong>
               <span>H0023 - Add edit_file tool with line-range editing</span>
               <p>Agent used edit_file 3x to make surgical source edits. Patch: changed `= 1` to `= right` in _cstack function. First-ever resolved=true in project history. Baseline H0022: patch_bytes=1591, resolved=false (appended tests). H0023: patch_bytes=500, resolved=true (correct source fix).</p>
-            </li>
-            
-
-            <li>
-              <time>2026-05-23T10:02:00Z</time>
-              <strong>executor.started</strong>
-              <span>H0023 - Add edit_file tool with line-range editing</span>
-              <p></p>
-            </li>
-            
-
-            <li>
-              <time>2026-05-23T10:01:00Z</time>
-              <strong>sample.selected</strong>
-              <span>H0023 - Add edit_file tool with line-range editing</span>
-              <p>Strong trace anchor: H0022 run shows agent used cat &gt;&gt; to append tests instead of sed -i on source. edit_file directly addresses this by making source edits the easiest path. H0022-B deferred child.</p>
-            </li>
-            
-
-            <li>
-              <time>2026-05-23T10:01:00Z</time>
-              <strong>proposal.accepted</strong>
-              <span>H0023 - Add edit_file tool with line-range editing</span>
-              <p>Replace sed/cat editing with structured edit_file tool to make source editing the path of least resistance</p>
-            </li>
-            
-
-            <li>
-              <time>2026-05-23T10:00:00Z</time>
-              <strong>round.opened</strong>
-              <span>round</span>
-              <p>new round: H0023 edit_file tool to fix bad_patch failure class (agent writes tests instead of editing source)</p>
-            </li>
-            
-
-            <li>
-              <time>2026-05-22T10:00:00Z</time>
-              <strong>status.override</strong>
-              <span>H0017 - Patch-confirmed finalization latch</span>
-              <p>H0017 had 6 executor.started events with no executor.finished; execution stalled over 24h ago. H0022 (merged) addressed the same no-patch failure class with a different mechanism.</p>
             </li>
             
       </ul>

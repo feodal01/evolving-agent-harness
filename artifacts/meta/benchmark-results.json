@@ -18,5 +18,9 @@
   "astropy__astropy-13236": {
     "resolved": false,
     "patch_bytes": 722
+  },
+  "astropy__astropy-13398": {
+    "resolved": false,
+    "patch_bytes": 5675
   }
 }
