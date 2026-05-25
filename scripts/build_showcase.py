@@ -199,11 +199,20 @@ def load_validation_sets() -> dict[str, Any] | None:
 
 
 def collect_run_results() -> dict[str, dict[str, Any]]:
-    cache = META / "benchmark-results.json"
-    if cache.exists():
-        data = json.loads(cache.read_text(encoding="utf-8"))
-        return {k: v for k, v in data.items() if isinstance(v, dict)}
-    results: dict[str, dict[str, Any]] = {}
+    merged_path = META / "merged-results.jsonl"
+    if merged_path.exists():
+        results: dict[str, dict[str, Any]] = {}
+        for row in read_jsonl(merged_path):
+            iid = row.get("instance_id", "")
+            if not iid:
+                continue
+            resolved = bool(row.get("resolved"))
+            patch_bytes = int(row.get("patch_bytes", 0) or 0)
+            existing = results.get(iid)
+            if existing is None or (resolved and not existing["resolved"]):
+                results[iid] = {"resolved": resolved, "patch_bytes": patch_bytes, "run_id": row.get("run_id", ""), "merge_sha": row.get("merge_sha", "")}
+        return results
+    results = {}
     if not RUNS_DIR.exists():
         return results
     for run_dir in sorted(RUNS_DIR.iterdir()):
@@ -223,8 +232,6 @@ def collect_run_results() -> dict[str, dict[str, Any]]:
         existing = results.get(iid)
         if existing is None or (resolved and not existing["resolved"]):
             results[iid] = {"resolved": resolved, "patch_bytes": patch_bytes}
-    if results:
-        cache.write_text(json.dumps(results, indent=2), encoding="utf-8")
     return results
 
 

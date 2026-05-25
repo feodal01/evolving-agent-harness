@@ -129,8 +129,10 @@ Hypothesis merge commit must include: hypothesis id, branch, `main_sha`, baselin
 **Publication steps:**
 
 1. Update `hypotheses-board.json` with final status.
-2. Append `merge.decided` to `meta-events.jsonl`.
-3. Append `round.closed` with summary.
+2. **Update `artifacts/meta/merged-results.jsonl`**: append one line per instance in the active batch that was run during this round. Each line: `{"instance_id": ..., "resolved": ..., "patch_bytes": ..., "run_id": ..., "merge_sha": <new main sha>}`. If a previous entry for the same instance exists with `resolved: true`, keep the resolved entry (do not overwrite with unresolved). This file is the single source of truth for the showcase — it only reflects results from merged agent code.
+3. Rebuild the showcase: `rm -f artifacts/meta/benchmark-results.json && uv run python scripts/build_showcase.py`.
+4. Append `merge.decided` to `meta-events.jsonl`.
+5. Append `round.closed` with summary.
 
 **Final report** (emit every round): stop reason or "continuing", round number, `correlation_id`, `main_sha`, hypothesis id/branch/commit/run ids/validation stage/board status/merged, registry updated, blockers, MCTS tree update (value headline + deferred actions).
 
