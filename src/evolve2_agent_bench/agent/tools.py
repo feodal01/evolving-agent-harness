@@ -103,9 +103,31 @@ class _CommandHistory:
         return len(set(last)) == 1
 
 
+class _EditTracker:
+    """Tracks consecutive read/search actions without any edit, to break read-search loops."""
+
+    def __init__(self, threshold: int = 5) -> None:
+        self._consecutive_reads = 0
+        self._threshold = threshold
+        self._last_reminded_at = 0
+
+    def record_read(self) -> None:
+        self._consecutive_reads += 1
+
+    def record_edit(self) -> None:
+        self._consecutive_reads = 0
+
+    def should_remind(self) -> bool:
+        if self._consecutive_reads >= self._threshold and self._consecutive_reads >= self._last_reminded_at + self._threshold:
+            self._last_reminded_at = self._consecutive_reads
+            return True
+        return False
+
+
 def make_workspace_tools(root: Path, traces: RunTraces) -> list:
     """Build LangChain tool instances bound to a workspace root and trace sink."""
     cmd_history = _CommandHistory()
+    edit_tracker = _EditTracker(threshold=5)
 
     @tool
     def edit_file(
@@ -190,6 +212,7 @@ def make_workspace_tools(root: Path, traces: RunTraces) -> list:
 
         replaced_count = end_line - start_line + 1
         output = f"Edited {path}: replaced lines {start_line}-{end_line} ({replaced_count} lines) with {len(new_lines)} lines"
+        edit_tracker.record_edit()
         traces.append(
             "tool_result",
             {"stream": "tool", "tool_name": "edit_file", "ok": True, "tool_input": tool_input, "tool_output": output},
@@ -272,6 +295,9 @@ def make_workspace_tools(root: Path, traces: RunTraces) -> list:
             output += _PYTEST_UNAVAILABLE
         if cmd_history.is_repeated():
             output += _REPEATED_COMMAND_BREAK
+        edit_tracker.record_read()
+        if edit_tracker.should_remind():
+            output += _NO_EDIT_REMINDER
         truncated = _truncate(output)
         traces.append_shell(
             "shell_command",
@@ -327,6 +353,9 @@ def make_workspace_tools(root: Path, traces: RunTraces) -> list:
             f"{line_no}: {line}" for line_no, line in enumerate(selected, start=start_line)
         )
         output = _truncate(rendered)
+        edit_tracker.record_read()
+        if edit_tracker.should_remind():
+            output += _NO_EDIT_REMINDER
         traces.append(
             "tool_result",
             {
@@ -373,6 +402,7 @@ def make_workspace_tools(root: Path, traces: RunTraces) -> list:
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(content, encoding="utf-8")
         output = f"Wrote {path} ({len(content.encode('utf-8'))} bytes)"
+        edit_tracker.record_edit()
         traces.append(
             "tool_result",
             {
