@@ -327,6 +327,22 @@
         "H0026-C"
       ],
       "updated_at": "2026-05-25"
+    },
+    {
+      "hypothesis_id": "H0027",
+      "title": "Strategy prompt refinement for better edit quality",
+      "summary": "Refine system prompt to encourage multi-edit fixes and edit verification. REJECTED: caused regression on astropy-13033 (resolved=true→false). Minimal edit strategy works better with this model.",
+      "status": "rejected",
+      "fix_type": "hypothesis",
+      "branch": "hyp/H0027-strategy-prompt-refinement",
+      "parent_hypothesis_id": "H0026",
+      "parent_commit": "eee1ef9",
+      "correlation_id": "round-20260525-batch0-gate",
+      "baseline_run_id": "20260525-132812-astropy__astropy-13033",
+      "candidate_run_id": "20260525-170658-astropy__astropy-13033",
+      "value_headline": "REGRESSION: 'identify ALL locations' instruction causes over-editing. astropy-13033 resolved=true→false. Minimal edit strategy produces better patches with this model.",
+      "revisit_refs": [],
+      "updated_at": "2026-05-25"
     }
   ]
 }
