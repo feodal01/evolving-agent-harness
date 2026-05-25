@@ -308,6 +308,25 @@
         "H0025-C"
       ],
       "updated_at": "2026-05-24"
+    },
+    {
+      "hypothesis_id": "H0026",
+      "title": "Read-search loop detection and intervention",
+      "summary": "Track consecutive read/search actions without any edit. After 5 consecutive reads, append a reminder to tool output prompting the agent to edit files. Breaks read-search loops that waste iteration budget.",
+      "status": "merged",
+      "fix_type": "mechanical",
+      "branch": "hyp/H0026-read-search-loop-detection",
+      "parent_hypothesis_id": "H0025",
+      "parent_commit": "34b41b4",
+      "correlation_id": "round-20260525-batch0-gate",
+      "baseline_run_id": null,
+      "candidate_run_id": "20260525-132812-astropy__astropy-13033",
+      "value_headline": "Edit tracker breaks read-search loops: astropy-13033 UNRESOLVED→RESOLVED, astropy-13398 100→57 iters (no GraphRecursionError crash), astropy-13236 14→8 iters.",
+      "revisit_refs": [
+        "H0026-B",
+        "H0026-C"
+      ],
+      "updated_at": "2026-05-25"
     }
   ]
 }

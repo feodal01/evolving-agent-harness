@@ -1,6 +1,6 @@
 {"instance_id": "astropy__astropy-12907", "resolved": true, "patch_bytes": 500, "run_id": "20260524-212054-astropy__astropy-12907", "merge_sha": "a2c4314"}
 {"instance_id": "astropy__astropy-14309", "resolved": true, "patch_bytes": 552, "run_id": "20260524-212055-astropy__astropy-14309", "merge_sha": "a2c4314"}
 {"instance_id": "django__django-10097", "resolved": true, "patch_bytes": 596, "run_id": "20260523-124527-django__django-10097", "merge_sha": "a2c4314"}
-{"instance_id": "astropy__astropy-13033", "resolved": false, "patch_bytes": 5012, "run_id": "20260524-192302-astropy__astropy-13033", "merge_sha": "a2c4314"}
-{"instance_id": "astropy__astropy-13236", "resolved": false, "patch_bytes": 722, "run_id": "20260524-192303-astropy__astropy-13236", "merge_sha": "a2c4314"}
-{"instance_id": "astropy__astropy-13398", "resolved": false, "patch_bytes": 5675, "run_id": "20260524-204401-astropy__astropy-13398", "merge_sha": "a2c4314"}
+{"instance_id": "astropy__astropy-13033", "resolved": true, "patch_bytes": 1307, "run_id": "20260525-132812-astropy__astropy-13033", "merge_sha": "c021697"}
+{"instance_id": "astropy__astropy-13236", "resolved": false, "patch_bytes": 787, "run_id": "20260525-153213-astropy__astropy-13236", "merge_sha": "c021697"}
+{"instance_id": "astropy__astropy-13398", "resolved": false, "patch_bytes": 6223, "run_id": "20260525-134234-astropy__astropy-13398", "merge_sha": "c021697"}
