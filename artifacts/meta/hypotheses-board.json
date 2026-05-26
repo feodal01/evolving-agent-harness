@@ -343,6 +343,33 @@
       "value_headline": "REGRESSION: 'identify ALL locations' instruction causes over-editing. astropy-13033 resolved=true→false. Minimal edit strategy produces better patches with this model.",
       "revisit_refs": [],
       "updated_at": "2026-05-25"
+    },
+    {
+      "hypothesis_id": "H0028",
+      "title": "Fix reminder messages to reference edit_file instead of sed -i",
+      "branch": "hyp/H0028-reminder-text-fix",
+      "status": "rejected",
+      "fix_type": "hypothesis",
+      "parent_hypothesis_id": "H0026",
+      "created_at": "2026-05-25",
+      "updated_at": "2026-05-26",
+      "value_headline": "Fix contradictory tool references in reminder messages",
+      "decision": "No Pareto improvement — resolved flat at 3/6, mixed trace health",
+      "candidates": [
+        {
+          "label": "A",
+          "role": "exploit",
+          "mechanism": "Update reminders to reference edit_file",
+          "status": "rejected"
+        },
+        {
+          "label": "B",
+          "role": "explore",
+          "mechanism": "Add edit_file examples to reminders",
+          "status": "deferred",
+          "deferred_child": "H0028-B"
+        }
+      ]
     }
   ]
 }

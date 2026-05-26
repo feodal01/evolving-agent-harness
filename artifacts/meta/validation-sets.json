@@ -6,7 +6,7 @@
   "test_set_size": 164,
   "batch_size": 6,
   "total_batches": 56,
-  "no_improvement_count": 1,
+  "no_improvement_count": 2,
   "no_improvement_threshold": 20,
   "evolution_set": [
     "astropy__astropy-12907",
@@ -524,7 +524,7 @@
         "astropy__astropy-13398"
       ],
       "status": "active",
-      "no_improvement_count": 1
+      "no_improvement_count": 2
     },
     {
       "batch_index": 1,
