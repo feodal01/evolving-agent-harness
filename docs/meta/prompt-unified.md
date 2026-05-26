@@ -132,10 +132,9 @@ Hypothesis merge commit must include: hypothesis id, branch, `main_sha`, baselin
 **Publication steps:**
 
 1. Update `hypotheses-board.json` with final status.
-2. **Update `artifacts/meta/merged-results.jsonl`**: append one line per instance in the active batch that was run during this round. Each line: `{"instance_id": ..., "resolved": ..., "patch_bytes": ..., "run_id": ..., "merge_sha": <new main sha>}`. Remove any previous entry for the same instance — the file must reflect the **current** merged agent's results, not historical bests. Regressions must be visible. This file is the single source of truth for the showcase — it only reflects results from merged agent code.
-3. Rebuild the showcase: `rm -f artifacts/meta/benchmark-results.json && uv run python scripts/build_showcase.py`.
-4. Append `merge.decided` to `meta-events.jsonl`.
-5. Append `round.closed` with summary.
+2. **Recompute artifacts**: `uv run python scripts/update_artifacts.py`. This regenerates `merged-results.jsonl` from baseline run results, computes `no_improvement_count` from the hypothesis board, updates `validation-sets.json`, and rebuilds the showcase. Run with `--dry-run` first to preview changes. Use `--steps merged,nic,validation,showcase` to run specific steps.
+3. Append `merge.decided` to `meta-events.jsonl`.
+4. Append `round.closed` with summary.
 
 **Final report** (emit every round): stop reason or "continuing", round number, `correlation_id`, `main_sha`, hypothesis id/branch/commit/run ids/validation stage/board status/merged, registry updated, blockers, MCTS tree update (value headline + deferred actions).
 

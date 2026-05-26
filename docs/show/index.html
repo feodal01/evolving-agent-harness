@@ -158,9 +158,9 @@
 
     <section>
       <div class="grid stats">
-        <div class="stat"><span>23</span><label>Total ideas</label></div>
+        <div class="stat"><span>24</span><label>Total ideas</label></div>
         <div class="stat backlog"><span>3</span><label>Backlog</label></div>
-<div class="stat dropped"><span>15</span><label>Dropped</label></div>
+<div class="stat dropped"><span>16</span><label>Dropped</label></div>
 <div class="stat shipped"><span>5</span><label>Shipped</label></div>
       </div>
     </section>
@@ -183,15 +183,15 @@
       <h2>SWE-bench Verified</h2>
       <p class="bench-desc">500 real GitHub issues from 12 Python repositories. Validation policy: <a href="https://github.com/feodal01/evolving-agent-harness/blob/main/docs/VALIDATION_POLICY.md">2/3 evolution + 1/3 held-out test</a>. Each instance requires generating a patch that passes the project's test suite.</p>
       <div class="bench-stats">
-        <div class="stat"><span>4<span class="stat-total">/336</span></span><label>Resolved (evolution)</label></div>
-        <div class="stat"><span>4<span class="stat-total">/6</span></span><label>Active batch (0)</label></div>
+        <div class="stat"><span>3<span class="stat-total">/336</span></span><label>Resolved (evolution)</label></div>
+        <div class="stat"><span>3<span class="stat-total">/6</span></span><label>Active batch (0)</label></div>
         <div class="stat"><span>0<span class="stat-total">/56</span></span><label>Batches resolved</label></div>
-        <div class="stat"><span>0<span class="stat-total">/20</span></span><label>No-improvement streak</label></div>
-        <div class="stat resolved-pct"><span>1.2%</span><label>Evolution resolve rate</label></div>
+        <div class="stat"><span>1<span class="stat-total">/20</span></span><label>No-improvement streak</label></div>
+        <div class="stat resolved-pct"><span>0.9%</span><label>Evolution resolve rate</label></div>
       </div>
       <div class="bar-container">
         <div class="bar">
-          <div class="batch-group active" title="Batch 0 (active)"><span class="tick resolved" title="astropy__astropy-12907"></span><span class="tick resolved" title="astropy__astropy-14309"></span><span class="tick resolved" title="django__django-10097"></span><span class="tick resolved" title="astropy__astropy-13033"></span><span class="tick unresolved" title="astropy__astropy-13236"></span><span class="tick unresolved" title="astropy__astropy-13398"></span></div>
+          <div class="batch-group active" title="Batch 0 (active)"><span class="tick resolved" title="astropy__astropy-12907"></span><span class="tick resolved" title="astropy__astropy-14309"></span><span class="tick resolved" title="django__django-10097"></span><span class="tick unresolved" title="astropy__astropy-13033"></span><span class="tick unresolved" title="astropy__astropy-13236"></span><span class="tick unresolved" title="astropy__astropy-13398"></span></div>
 <div class="batch-group locked" title="Batch 1 (locked)"><span class="tick unattempted" title="astropy__astropy-13453"></span><span class="tick unattempted" title="astropy__astropy-13579"></span><span class="tick unattempted" title="astropy__astropy-13977"></span><span class="tick unattempted" title="astropy__astropy-14096"></span><span class="tick unattempted" title="astropy__astropy-14182"></span><span class="tick unattempted" title="astropy__astropy-14365"></span></div>
 <div class="batch-group locked" title="Batch 2 (locked)"><span class="tick unattempted" title="astropy__astropy-14369"></span><span class="tick unattempted" title="astropy__astropy-14508"></span><span class="tick unattempted" title="astropy__astropy-14539"></span><span class="tick unattempted" title="astropy__astropy-14598"></span><span class="tick unattempted" title="django__django-10554"></span><span class="tick unattempted" title="django__django-10880"></span></div>
 <div class="batch-group locked" title="Batch 3 (locked)"><span class="tick unattempted" title="django__django-10914"></span><span class="tick unattempted" title="django__django-10973"></span><span class="tick unattempted" title="django__django-10999"></span><span class="tick unattempted" title="django__django-11066"></span><span class="tick unattempted" title="django__django-11087"></span><span class="tick unattempted" title="django__django-11095"></span></div>
@@ -478,10 +478,19 @@
 
       <div class="funnel-col">
         <div class="funnel-header" style="border-top: 4px solid var(--red)">
-          <h2>Dropped <span class="funnel-count">15</span></h2>
+          <h2>Dropped <span class="funnel-count">16</span></h2>
         </div>
         <div class="funnel-cards">
           
+            <article class="card dropped">
+              <div class="card-top">
+                <a class="hid" href="https://github.com/feodal01/evolving-agent-harness">H0027</a>
+                <span class="pill dropped">Dropped</span>
+              </div>
+              <h3>Strategy prompt refinement for better edit quality</h3>
+              <p>Refine system prompt to encourage multi-edit fixes and edit verification. REJECTED: caused regression on astropy-13033 (resolved=true→false). Minimal edit strategy works better with this model.</p>
+            </article>
+
             <article class="card dropped">
               <div class="card-top">
                 <a class="hid" href="https://github.com/feodal01/evolving-agent-harness/blob/main/artifacts/meta/hypotheses/H0017-patch-confirmed-finalization-latch.md">H0017</a>

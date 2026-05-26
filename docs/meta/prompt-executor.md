@@ -155,7 +155,7 @@ Rules:
 - **Trace-targeted** hypotheses: regression means worse `patch_published` or worse **named** trace metrics — not flat `resolved` alone when trace targets improved and patch publication held.
 - Low iteration caps (4, 8, 16, 32) are smoke checks only.
 - **NEVER** run or inspect instances from the test set. The test set is off-limits until the evolution set is fully resolved.
-- After each hypothesis attempt that produces **no Pareto improvement** on the active batch, increment `no_improvement_count` in `validation-sets.json`. Reset to 0 on any improvement. When `no_improvement_count` reaches 20, activate the next locked batch (set its status to `expanded`) and reset the counter.
+- After each hypothesis decision, run `uv run python scripts/update_artifacts.py` to recompute `no_improvement_count` (from the board), update `merged-results.jsonl` (from baseline runs), and rebuild the showcase. When `no_improvement_count` reaches 20, activate the next locked batch (set its status to `expanded`) and the counter resets on the next improvement.
 - **One-instance success is not validation.** The batch gate is the minimum evidence threshold for any merge decision.
 
 ---

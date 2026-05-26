@@ -42,6 +42,30 @@ def find_active_batch(validation_sets: dict) -> tuple[int, dict]:
     sys.exit(1)
 
 
+def _parse_result_json(stdout: str) -> dict | None:
+    """Find the JSON result object in evolve2 CLI stdout.
+
+    The CLI prints a JSON object containing 'run_id' at the end of output.
+    It may be multi-line or preceded by warning lines, so we scan for
+    the start of the JSON object and parse from there.
+    """
+    # Find the last occurrence of a line starting with '{'
+    # that can be parsed as a JSON object with 'run_id'
+    lines = stdout.split("\n")
+    for i in range(len(lines) - 1, -1, -1):
+        line = lines[i].strip()
+        if line.startswith("{"):
+            # Try parsing from this line to end
+            candidate = "\n".join(lines[i:])
+            try:
+                obj = json.loads(candidate)
+                if "run_id" in obj:
+                    return obj
+            except json.JSONDecodeError:
+                pass
+    return None
+
+
 def run_instance(instance_id: str, max_iterations: int = 100, evaluation_timeout: int = 1800) -> dict:
     """Run a single instance via the evolve2 CLI and return the result."""
     cmd = [
@@ -61,16 +85,14 @@ def run_instance(instance_id: str, max_iterations: int = 100, evaluation_timeout
     if result.stderr:
         print(result.stderr, file=sys.stderr)
 
-    # Try to parse the result JSON from stdout (evolve2 run-task prints it)
     output = result.stdout.strip()
-    if output:
-        try:
-            # The CLI prints JSON at the end
-            last_line = output.split("\n")[-1]
-            return json.loads(last_line)
-        except json.JSONDecodeError:
-            pass
 
+    # Try to parse the result JSON from stdout
+    parsed = _parse_result_json(output)
+    if parsed:
+        return parsed
+
+    # Fallback: build a minimal result dict
     return {"instance_id": instance_id, "raw_stdout": output, "returncode": result.returncode}
 
 
@@ -140,7 +162,8 @@ def main() -> int:
     resolved_count = 0
     for r in results:
         iid = r.get("instance_id", "unknown")
-        resolved = r.get("evaluation", {}).get("report", {}).get("resolved", False)
+        report = r.get("evaluation", {}).get("report", {})
+        resolved = iid in report.get("resolved_ids", []) or report.get("resolved_instances", 0) > 0
         patch_bytes = r.get("patch_bytes", 0)
         run_id = r.get("run_id", "unknown")
         status = "RESOLVED" if resolved else "NOT RESOLVED"
