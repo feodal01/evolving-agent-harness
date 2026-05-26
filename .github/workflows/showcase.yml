@@ -27,7 +27,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
       - name: Configure Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v4
       - name: Build showcase
         run: python3 scripts/build_showcase.py
       - name: Upload Pages artifact
