@@ -105,7 +105,7 @@ def main() -> int:
 
     validation_sets = load_validation_sets()
     batch_index, batch = find_active_batch(validation_sets)
-    instance_ids = batch["instances"]
+    instance_ids = batch.get("instance_ids", batch.get("instances", []))
     batch_status = batch.get("status", "unknown")
 
     print(f"Validation batch runner")

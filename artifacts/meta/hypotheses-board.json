@@ -343,6 +343,37 @@
       "value_headline": "REGRESSION: 'identify ALL locations' instruction causes over-editing. astropy-13033 resolved=true→false. Minimal edit strategy produces better patches with this model.",
       "revisit_refs": [],
       "updated_at": "2026-05-25"
+    },
+    {
+      "hypothesis_id": "H0028",
+      "title": "Fix reminder messages to reference edit_file instead of sed -i",
+      "summary": "Update all reminder messages to reference edit_file instead of sed -i/write_file. REJECTED: no Pareto improvement on batch gate — resolved count flat at 3/6, mixed trace health results.",
+      "status": "rejected",
+      "fix_type": "hypothesis",
+      "branch": "hyp/H0028-reminder-text-fix",
+      "dossier_path": "artifacts/meta/hypotheses/H0028-reminder-text-fix.md",
+      "parent_hypothesis_id": "H0026",
+      "parent_commit": "97723ed",
+      "correlation_id": "round-20260525-batch0-gate",
+      "baseline_run_ids": [
+        "20260525-194317-astropy__astropy-12907",
+        "20260525-194654-astropy__astropy-14309",
+        "20260525-195456-django__django-10097",
+        "20260525-200539-astropy__astropy-13033",
+        "20260525-201304-astropy__astropy-13236",
+        "20260525-202102-astropy__astropy-13398"
+      ],
+      "candidate_run_ids": [
+        "20260526-113632-astropy__astropy-12907",
+        "20260526-114059-astropy__astropy-14309",
+        "20260526-114427-django__django-10097",
+        "20260526-115755-astropy__astropy-13033",
+        "20260526-120315-astropy__astropy-13236",
+        "20260526-120820-astropy__astropy-13398"
+      ],
+      "value_headline": "No Pareto improvement: resolved 3/6 flat. astropy-13236 improved (7 vs 52 iters) but 13033 and 13398 regressed. Reminder text alignment alone insufficient.",
+      "revisit_refs": [],
+      "updated_at": "2026-05-26"
     }
   ]
 }
