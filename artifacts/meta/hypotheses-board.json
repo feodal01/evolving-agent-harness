@@ -370,6 +370,48 @@
           "deferred_child": "H0028-B"
         }
       ]
+    },
+    {
+      "hypothesis_id": "H0029",
+      "title": "Diff self-review before finish",
+      "summary": "Show the agent its git diff and prompt for completeness review before finishing, to catch missing downstream updates.",
+      "status": "rejected",
+      "fix_type": "hypothesis",
+      "branch": "hyp/H0029-diff-self-review",
+      "dossier_path": "artifacts/meta/hypotheses/H0029-diff-self-review.md",
+      "parent_hypothesis_id": "H0026",
+      "parent_commit": "ce48deb",
+      "correlation_id": "round-20260527-H0029",
+      "baseline_run_id": "20260526-115755-astropy__astropy-13033",
+      "candidate_run_id": "20260528-125708-astropy__astropy-13033",
+      "value_headline": "No resolved improvement (3/6 unchanged). Diff review improves awareness but model can't deduce correct downstream changes. Cost 2-4x increase.",
+      "revisit_refs": [
+        "H0029-B",
+        "H0029-C",
+        "H0030"
+      ],
+      "updated_at": "2026-05-28"
+    },
+    {
+      "hypothesis_id": "H0030",
+      "title": "Targeted pytest execution tool",
+      "summary": "Add run_test tool with targeted pytest, timeout, and scope limiting so agent can verify fixes against test suite.",
+      "status": "rejected",
+      "fix_type": "hypothesis",
+      "branch": "hyp/H0030-targeted-pytest",
+      "dossier_path": "artifacts/meta/hypotheses/H0030-targeted-pytest.md",
+      "parent_hypothesis_id": "H0026",
+      "parent_commit": "ce48deb",
+      "correlation_id": "round-20260528-H0030",
+      "baseline_run_id": "20260525-132812-astropy__astropy-13033",
+      "candidate_run_id": "20260528-162815-astropy__astropy-13033",
+      "value_headline": "Tool inoperable in SWE-bench worktrees (bare git checkouts, no pip install). pytest fails with import errors. Wasted iterations, no resolution gain.",
+      "revisit_refs": [
+        "H0030-B",
+        "H0030-C",
+        "H0029-C"
+      ],
+      "updated_at": "2026-05-29"
     }
   ]
 }
